@@ -78,6 +78,16 @@ def rank_expressiveness(d: int, ranks: list[int]) -> dict[int, float]:
     return {r: p for r, p in zip(ranks, percentage)}
 
 
+# ── TODO(human): implement scaling_grid() ────────────────────────────────────
+
+def scaling_grid(ranks: list[int], alphas: list[int]) -> dict[tuple, float]:
+    """
+    For every (r, alpha) combination, compute the scaling factor alpha/r.
+    Returns a dict mapping (r, alpha) → scaling factor.
+    """
+    pass  # TODO(human)
+
+
 if __name__ == "__main__":
     result = rank_expressiveness(4096, [1, 2, 4, 8, 16, 32, 64])
     if result:
@@ -85,3 +95,19 @@ if __name__ == "__main__":
         for rank, pct in result.items():
             bar = "█" * int(pct * 2)
             print(f"  r={rank:3d}: {pct:5.2f}%  {bar}")
+
+    grid = scaling_grid([4, 8, 16, 32], [4, 8, 16, 32, 64])
+    if grid:
+        print("\n=== Scaling Factor Grid (alpha/r) ===")
+        ranks_list = sorted(set(r for r, _ in grid))
+        alphas_list = sorted(set(a for _, a in grid))
+        print(f"{'':8}", end="")
+        for a in alphas_list:
+            print(f"  α={a:2d}", end="")
+        print()
+        for r in ranks_list:
+            print(f"  r={r:2d}  ", end="")
+            for a in alphas_list:
+                scaling = grid[(r, a)]
+                print(f"  {scaling:4.2f} ", end="")
+            print()
