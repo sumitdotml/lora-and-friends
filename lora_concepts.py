@@ -80,12 +80,13 @@ def rank_expressiveness(d: int, ranks: list[int]) -> dict[int, float]:
 
 # ── TODO(human): implement scaling_grid() ────────────────────────────────────
 
+
 def scaling_grid(ranks: list[int], alphas: list[int]) -> dict[tuple, float]:
     """
     For every (r, alpha) combination, compute the scaling factor alpha/r.
     Returns a dict mapping (r, alpha) → scaling factor.
     """
-    pass  # TODO(human)
+    return {(r, alpha): alpha / r for r in ranks for alpha in alphas}
 
 
 if __name__ == "__main__":
