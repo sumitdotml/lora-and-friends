@@ -2,6 +2,7 @@
 LoRA Concepts - Crash Course
 Demonstrates the math behind Low-Rank Adaptation.
 """
+
 import numpy as np
 
 # ── Simulated pretrained weight matrix ────────────────────────────────────────
@@ -14,8 +15,8 @@ W_pretrained = np.random.randn(d, d)  # frozen during fine-tuning
 # ── LoRA adapter initialization ────────────────────────────────────────────────
 # A: projects input DOWN to rank r  (shape: r × d_in)
 # B: projects back UP to d_out      (shape: d_out × r)
-A = np.random.randn(r, d) * 0.01   # small random init
-B = np.zeros((d, r))               # zero init → ΔW starts at 0
+A = np.random.randn(r, d) * 0.01  # small random init
+B = np.zeros((d, r))  # zero init → ΔW starts at 0
 
 alpha = 4  # scaling hyperparameter
 scaling = alpha / r
@@ -27,19 +28,21 @@ x = np.random.randn(d)  # input vector
 out_pretrained = W_pretrained @ x
 
 # LoRA output: W_pretrained stays frozen, adapter adds residual
-delta_W = scaling * (B @ A)        # ΔW = (alpha/r) × B × A
-W_adapted = W_pretrained + delta_W # combined weight (done at inference/merge)
+delta_W = scaling * (B @ A)  # ΔW = (alpha/r) × B × A
+W_adapted = W_pretrained + delta_W  # combined weight (done at inference/merge)
 out_lora = W_adapted @ x
 
 # Equivalent (and more efficient) — don't materialize ΔW, apply separately:
 out_lora_efficient = (W_pretrained @ x) + scaling * (B @ (A @ x))
 
 print("=== LoRA Weight Decomposition ===")
-print(f"W shape:     {W_pretrained.shape}  → {d*d} params  (frozen)")
-print(f"A shape:     {A.shape}  → {r*d} params  (trainable)")
-print(f"B shape:     {B.shape}  → {d*r} params  (trainable)")
-print(f"Total LoRA params: {r*d + d*r}  vs  {d*d} full  "
-      f"({100*(r*d + d*r)/(d*d):.1f}%)")
+print(f"W shape:     {W_pretrained.shape}  → {d * d} params  (frozen)")
+print(f"A shape:     {A.shape}  → {r * d} params  (trainable)")
+print(f"B shape:     {B.shape}  → {d * r} params  (trainable)")
+print(
+    f"Total LoRA params: {r * d + d * r}  vs  {d * d} full  "
+    f"({100 * (r * d + d * r) / (d * d):.1f}%)"
+)
 
 print(f"\nalpha={alpha}, r={r}, scaling factor={scaling}")
 print(f"\nΔW at init (should be ~0): max_abs = {np.abs(delta_W).max():.6f}")
@@ -56,11 +59,12 @@ d_real, r_real = 2048, 8
 full_params = d_real * d_real
 lora_params = r_real * d_real + d_real * r_real  # A + B
 print(f"Full W params:  {full_params:,}")
-print(f"LoRA params:    {lora_params:,}  ({100*lora_params/full_params:.2f}%)")
+print(f"LoRA params:    {lora_params:,}  ({100 * lora_params / full_params:.2f}%)")
 
 
 # ── TODO(human): implement rank_expressiveness() ──────────────────────────────
 # See the Learn by Doing section below before implementing this.
+
 
 def rank_expressiveness(d: int, ranks: list[int]) -> dict[int, float]:
     """
@@ -69,7 +73,9 @@ def rank_expressiveness(d: int, ranks: list[int]) -> dict[int, float]:
 
     Returns a dict mapping rank → percentage of params vs full matrix.
     """
-    pass  # TODO(human)
+    # r * d = total parameters in each A & B, hence also multiplied by 2
+    percentage = [((r * d * 2) / (d * d)) * 100 for r in ranks]
+    return {r: p for r, p in zip(ranks, percentage)}
 
 
 if __name__ == "__main__":
