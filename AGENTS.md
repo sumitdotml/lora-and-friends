@@ -11,3 +11,8 @@
 - Read `AGENT_MISTAKES.md` before proposing or applying edits.
 - If a known pattern appears, revise until compliant before finalizing.
 - Record every detected mistake occurrence in `AGENT_MISTAKES.md` using dedupe/update rules.
+
+## Repository Notes
+
+- `LOG.md` is the working field-notes log for the project. Append concrete findings there during research, planning, and implementation work instead of scattering notes across replies.
+- `TODO.md` is the current execution list. Update it when the next implementation steps become clearer or when completed items change the sequence of work.
