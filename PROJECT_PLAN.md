@@ -1,250 +1,485 @@
-# Fine-Tuning Research Project — Plan & Mental Model
+# Fine-Tuning Case Study — Scoped Plan
 
-**Status**: Pre-implementation. Core LoRA concepts covered, project scope under deliberation.
-**Date**: 2026-04
-**Author context**: Sumit, learning fine-tuning from scratch. M5 MacBook Pro (32GB unified memory, no CUDA). $150 Tinker credits. Solo researcher.
-
----
-
-## 1. Thesis
-
-Mainstream LoRA practice applies adapters only to attention projections (`q_proj`, `k_proj`, `v_proj`, `o_proj`). Thinking Machines' "LoRA Without Regret" blog challenges this: **attention-only LoRA is significantly suboptimal, and applying LoRA to all layers (especially MLP/MoE) is essential for matching full fine-tuning performance.**
-
-This project independently validates — or refutes — that claim through a controlled comparison:
-
-- **A. Standard LoRA** (attention-only, common defaults): the "industry baseline"
-- **B. Blog-informed LoRA** (all layers, adjusted LR, rank tuned): the proposed alternative
-- **C. Tinker API** (their product): black-box comparison point to see what opinionated defaults they ship
-
-The bet is that by doing A and B from scratch *before* reading the blog's specific hyperparameters, I build real understanding of the pipeline — not just recipe-following.
+**Status**: Scoped, pre-implementation  
+**Date**: 2026-04  
+**Author context**: Sumit, learning fine-tuning from scratch. M5 MacBook Pro (32GB unified memory, no CUDA). $150 Tinker credits. Solo, part-time.
 
 ---
 
-## 2. Research Questions (in priority order)
+## 1. Objective
 
-1. **Primary**: On a fixed task/dataset/model, how do A, B, and C compare on (i) training dynamics, (ii) held-out log loss, (iii) task-specific benchmark?
-2. **Secondary**: Does the blog's "10x higher LR than full fine-tuning" finding hold in our setup?
-3. **Tertiary**: Does rank 1-4 suffice for RL phase, as the blog claims? (Phase 2 of this project.)
-4. **Exploratory**: What is Tinker actually doing under the hood — which layers does their default `LoraConfig` target?
+Build one clean supervised fine-tuning case study on Tinker and write it up well.
 
----
+The project question is narrow:
 
-## 3. Current Learning State
+- On a fixed math task, fixed model, and fixed token budget, how does **attention-only LoRA** compare with **all-layer LoRA**?
 
-Concepts solidified in prior sessions:
+The project goals are:
 
-- [x] LoRA math: `ΔW = (α/r) × B × A`, parameter accounting as `2rd/d²`
-- [x] `r` and `α` as two independent knobs (capacity vs. update strength)
-- [x] `target_modules` — leaf-name matching in `peft`, default attention-only convention
-- [x] QLoRA concepts: NF4, double quantization, `BitsAndBytesConfig` — but **not directly applicable locally** due to M5 (no CUDA)
-- [x] Read research summary of "LoRA Without Regret" blog
-- [x] Researched Tinker's surface area (not Gemma — model lineup constrains choice)
+1. Learn the fine-tuning pipeline end to end.
+2. Produce a defensible comparison write-up.
+3. Leave behind code, logs, and configuration that make the work legible.
 
-Gaps remaining:
-
-- [ ] Training loop mechanics: `SFTTrainer` vs custom loop, gradient accumulation, LR scheduling
-- [ ] Data formatting (chat templates, `DataCollatorForCompletionOnlyLM`)
-- [ ] Evaluation methodology (log loss vs. benchmark vs. human eval)
-- [ ] Local Mac training stack selection (MLX-LM vs HuggingFace+MPS)
-- [ ] Tinker SDK usage
-- [ ] RL basics (GRPO, PPO) — deferred to Phase 2
+This is **not** a full replication of the "LoRA Without Regret" blog. It is a **scoped empirical case study** on one task and one model.
 
 ---
 
-## 4. Hard Constraints
+## 2. Locked Decisions
 
-| Constraint | Implication |
+| Decision | Commitment |
 |---|---|
-| M5 Mac, 32GB unified, no CUDA | `bitsandbytes` QLoRA path closed locally. Must use bfloat16 LoRA, or MLX, or push everything to Tinker. |
-| $150 Tinker budget | All "real" experiments must be budget-conscious. Favors small models + targeted experiments over broad sweeps. |
-| Solo, part-time effort | Cannot run broad architecture comparisons. Must pick *one* model family and stick to it. |
-| Gemma is NOT in Tinker's lineup | Must choose a model available on both local and Tinker for A/B/C comparison. |
+| Project type | Scoped empirical case study |
+| Task | Math reasoning |
+| Model | `Qwen3-8B` |
+| Training backend | Tinker |
+| Local role | Data inspection, rendering, token counting, evaluation glue, and scripting only |
+| Main comparison | Attention-only LoRA vs all-layer LoRA |
+| Training dataset | Mildly balanced `30k` subset from `nvidia/OpenMathInstruct-2` |
+| Benchmark | `GSM8K` test split |
+| Out of scope for phase one | FullFT, MoE, RL, transfer eval, Tinker-default as an equal arm |
 
 ---
 
-## 5. The Decision Space
+## 3. Why This Shape
 
-### 5.1 Model Choice (MOST CRITICAL DECISION)
+### 3.1 Why Math
 
-| Option | Train $/unit | Local fit (32GB bf16) | Blog replication | Notes |
-|---|---|---|---|---|
-| Llama-3.2-1B | $0.09 | ✓ trivial | Small-model caveats | Too small to test MLP/attn hypothesis well |
-| Llama-3.2-3B | $0.18 | ✓ trivial | No direct data | Good for pipeline debugging |
-| Llama-3.1-8B | $0.40 | ✓ tight | ✓ direct test subject in blog | Strong baseline |
-| Qwen3-4B-Instruct-2507 | $0.22 | ✓ comfortable | Close to blog's Qwen3 tests | Strong math/code |
-| Qwen3-8B | $0.40 | ✓ tight | ✓ direct test subject | Better math/code than Llama |
-| Qwen3.5-4B | $0.67 | ✓ comfortable | Beyond blog scope | Newest dense Qwen |
-| Qwen3-30B-A3B | $0.36 | ✗ (30B total) | Tests MoE hypothesis directly | Cannot run locally |
-| Nemotron-3-Nano-30B-A3B | $0.40 | ✗ | Modern MoE, not in blog | Interesting but adds scope |
+Math reasoning gives the cleanest evaluation story:
 
-**Proposed**: **Qwen3-8B** as primary, with pipeline developed on **Qwen3-4B-Instruct-2507** for cheap iteration.
+- public datasets exist
+- answers are objectively checkable
+- benchmark quality is better than open-ended chat
+- the task is still relevant if an RL phase happens later
 
-**Rationale**:
-- Direct subject of blog experiments → tight replication
-- Stronger math/code than Llama → cleaner RL signal in Phase 2
-- Fits on M5 locally in bfloat16 for local-vs-Tinker comparison
-- 4B family is conceptually similar for pipeline development without blowing the budget
+The task is generic in topic, but the project can still stand out through:
 
-**Alternative worth defending**: Llama 3.2 3B → Llama 3.1 8B track. Slightly worse for RL later, but more community tooling and tutorials.
+- a clean question
+- a constrained budget
+- a real comparison
+- a careful write-up
 
-**What I am NOT doing and why**:
-- Not picking MoE yet — adds methodological complexity on top of already-ambitious project
-- Not picking Gemma despite initial preference — breaks the Tinker comparison
+### 3.2 Why `Qwen3-8B`
 
-### 5.2 Local Training Framework
+`Qwen3-8B` is the working default because:
 
-| Option | Speed on M5 | Blog parity | Complexity |
-|---|---|---|---|
-| MLX-LM | Fastest native | Deviates from HF tooling | Lower — purpose-built |
-| HuggingFace `transformers` + `peft` + MPS | Slower | Matches blog/industry tooling | Higher — but transferable |
+- it is strong for math and reasoning
+- it is available in Tinker
+- it has the same Tinker train price as `Qwen3-8B-Base`
+- it is easier to use for a first task-specific SFT study than a raw base model
 
-**Proposed**: **HuggingFace stack** despite speed penalty.
+Tinker currently lists `Qwen3-8B` at:
 
-**Rationale**: The *learning goal* is to understand the standard fine-tuning pipeline. MLX is Apple-specific; `peft`+`transformers` is the transferable skill. Tinker's cookbook uses the HF stack. Pipeline code translates 1:1 to any GPU rental later.
+- `Prefill`: `$0.13 / M` tokens
+- `Sample`: `$0.40 / M` tokens
+- `Train`: `$0.40 / M` tokens
 
-**Risk**: MPS backend has known issues with some `peft` features and custom kernels. Mitigation: use Tinker for anything that fails locally.
+Source: [Tinker model lineup](https://tinker-docs.thinkingmachines.ai/model-lineup)
 
-### 5.3 Dataset / Task / Domain
+### 3.3 Why Not `Qwen3-8B-Base`
 
-**Still undecided.** This is the biggest open question.
+`Qwen3-8B-Base` would be better if the project were about post-training a foundation model from a cleaner starting point. That is a different story. For phase one, the cleaner question is LoRA strategy on a strong task-ready model.
 
-Requirements the task must satisfy:
-- **Verifiable rewards for RL Phase 2** — rules out open-ended chat, favors math/code/structured output
-- **Public dataset available** — avoid data-curation time sink
-- **Small enough** for budget — under ~20M training tokens
-- **Clear benchmark exists** — so "did it work?" has a defensible answer
+### 3.4 Why Not `OpenMathReasoning-mini`
 
-Candidate tasks (not committed):
-- Math reasoning: GSM8K training → GSM8K/MATH eval
-- Code completion: CodeAlpaca training → HumanEval
-- Structured output: a function-calling or JSON-extraction task
-- Instruction following on reasoning: OpenThoughts3 (blog used this) → AIME/MATH
+`OpenMathReasoning-mini` looked attractive at first because the data feels richer and less generic. The token profile made it a bad first choice:
 
-**Needs separate brainstorm session.**
-
-### 5.4 Evaluation
-
-Required regardless of task:
-- **Training/validation loss curves** — compare convergence
-- **Held-out log loss** (blog's primary metric) — dataset-agnostic, clean scaling
-- **Task benchmark** — depends on 5.3
-
-Anti-patterns to avoid:
-- Eval-on-train
-- LLM-as-judge without controls
-- Vibe checks as primary evidence
+- very long reasoning traces
+- much higher budget risk
+- more moving parts for a first case study
 
 ---
 
-## 6. Proposed Plan (Phased)
+## 4. Dataset Plan
 
-### Phase 0 — Pipeline Development (LOCAL, free)
-Build and debug the end-to-end training pipeline on **Qwen3-4B-Instruct-2507** locally with a tiny dataset (1k examples).
+### 4.1 Benchmark Anchor
 
-Deliverable: A working script that loads the model with `peft`, applies LoRA, trains on a chat-formatted dataset, and produces a saved adapter. No real results expected — this is pipeline infrastructure.
+Use [`openai/gsm8k`](https://huggingface.co/datasets/openai/gsm8k) as the external benchmark.
 
-Budget: $0.
+Why:
 
-### Phase 1 — Standard LoRA Baseline (Direction A)
-Run the "industry default" LoRA config on **Qwen3-8B** on Tinker:
-- `target_modules = ["q_proj", "k_proj", "v_proj", "o_proj"]`
-- `r=8, lora_alpha=16`
-- Default LR for LoRA (usually 1e-4 to 3e-4)
-- One full training run + held-out eval
+- clean schema
+- standard math benchmark
+- cheap to evaluate
+- easy to explain in the write-up
 
-Deliverable: Baseline metrics (loss curves, benchmark score).
+Important boundary:
 
-Budget: ~$6-$12.
+- training uses public math instruction data
+- evaluation uses **GSM8K test**
+- no benchmark examples from the held-out test split belong in training
 
-### Phase 2 — Blog-Informed LoRA (Direction B)
-Apply blog-specific modifications:
-- All layers: `target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]`
-- Rank sweep: r ∈ {8, 32, 128}
-- LR ~10x baseline (blog's specific finding)
+### 4.2 Training Source
 
-Deliverable: Comparison table vs. Phase 1.
+Use [`nvidia/OpenMathInstruct-2`](https://huggingface.co/datasets/nvidia/OpenMathInstruct-2) as the training source.
 
-Budget: ~$30-$50.
+This dataset has the right SFT shape:
 
-### Phase 3 — Tinker Defaults (Direction C)
-Use Tinker's cookbook default LoRA config (whatever that is) as a third reference point. Extract their actual settings from code.
+- `problem`
+- `generated_solution`
+- `expected_answer`
+- `problem_source`
 
-Deliverable: Third column in comparison table + analysis of what Tinker ships.
+It is far too large to use directly. The project will train on a subset.
 
-Budget: ~$10-$15.
+### 4.3 Subset Policy
 
-### Phase 4 — Optional Extensions (if budget and time allow)
-- MoE test on Qwen3-30B-A3B (Tinker only)
-- Full fine-tune baseline (Tinker only, expensive)
-- RL phase (GRPO on math rewards)
+The working policy is a **mildly balanced `30k` subset**:
 
-Budget: remainder.
+```text
+30k working subset
+- 21,000  augmented_math
+-  7,000  augmented_gsm8k
+-  1,000  math
+-  1,000  gsm8k
+```
 
----
+Why this instead of plain random sampling:
 
-## 7. Critical Risks & Assumptions
+- preserves the dominant `augmented_math` source
+- gives `augmented_gsm8k` more weight
+- keeps a visible slice of the smaller original sources
+- stays simpler than elaborate filtering
 
-These are the places where this plan could break. Listed so another reviewer can attack them.
+This is deliberately mild. The goal is not to engineer a bespoke academic mixture. The goal is to avoid the laziness of a pure random subset while keeping the experiment easy to explain.
 
-1. **"MPS backend just works" — probably false.**
-   `peft`+`bitsandbytes`+`trl` on MPS is a known minefield. Phase 0 may reveal that the local path is more painful than expected, pushing everything to Tinker and eating budget.
+### 4.4 Train/Validation Split
 
-2. **"Blog findings generalize to Qwen3-8B" — assumed.**
-   The blog tested Qwen3 variants, but not every variant. Fine-tuning findings are notoriously sensitive to tokenizer/chat-template differences.
+Split the `30k` subset into:
 
-3. **"One seed is enough."**
-   Blog shows results with multiple seeds. A solo project doing 3 runs of each config means high variance in any comparison. We should design evaluation to be *robust* to this — favoring log loss on held-out sets over narrow benchmark numbers that move ±2% across seeds.
+```text
+train / val
+- 27,000 train
+-  3,000 val
+```
 
-4. **"Tinker unit = 1M tokens" — unverified assumption.**
-   Budget math depends on this. Must confirm before committing to a full experiment slate.
+By source:
 
-5. **"Task-independence is fine for Phase 0/1 decisions."**
-   Actually false. Reasoning tasks and chat tasks respond differently to LoRA config. If the final task is math-focused, we should pick an instruction-tuned *math-capable* base — `Qwen3-8B` is fine here but e.g. `Qwen3-4B-Instruct-2507` might already be too instruction-saturated for pipeline debugging.
+```text
+train split
+- 18,900  augmented_math
+-  6,300  augmented_gsm8k
+-    900  math
+-    900  gsm8k
 
-6. **"Single-task experiments are enough to validate the blog."**
-   The blog's claim is about multiple domains. A single-task replication is weaker evidence. Acknowledge this framing in write-up: we're doing a *case study*, not a *replication study*.
-
-7. **Scope creep risk.**
-   Phase 4 contains everything interesting. There will be temptation to skip ahead to MoE / RL / full fine-tune before Phases 1-3 are clean. Resist.
-
----
-
-## 8. Open Questions (for Review)
-
-These are the specific places where I want debate:
-
-1. **Is Qwen3-8B the right primary model**, or would Llama 3.1-8B make for cleaner replication given the blog's Llama-heavy results?
-2. **Should Phase 0 use the 4B Qwen or drop to 1B Llama** for maximally fast iteration even if it breaks family consistency?
-3. **Is HuggingFace on MPS the right local stack**, given its known fragility, or should we just do everything on Tinker and skip the local dev loop entirely (saves headaches, costs ~$20 more)?
-4. **Is the task/domain deferral a blocker?** Right now the plan picks models before picking a task. A reviewer could argue task should come first.
-5. **Is the $150 budget actually enough** for the planned 3-5 proper experiments on 8B models plus exploration? Break-even math is tight.
-6. **Should full fine-tune be a baseline**, not an optional extension? The blog's main claim is "LoRA matches FullFT" — without FullFT, you can't verify that claim.
-7. **Evaluation design** — enough to use held-out log loss + one benchmark, or do we need multiple benchmarks to be convincing?
+val split
+- 2,100  augmented_math
+-   700  augmented_gsm8k
+-   100  math
+-   100  gsm8k
+```
 
 ---
 
-## 9. What "Done" Looks Like
+## 5. Token Sizing
+
+Tokenizer-based sizing was done with the `Qwen3-8B` tokenizer on a spread sample of `OpenMathInstruct-2` rows rendered as actual chat-style training examples.
+
+Observed example lengths:
+
+```text
+OpenMathInstruct-2 rendered example lengths
+- mean:   456.9 tokens
+- median: 403
+- p75:    596
+- p90:    813
+- p95:    963
+- max:    1260
+```
+
+A broader `2k` sample gave similar results and showed the source mix:
+
+```text
+source mix in sample
+- augmented_math:  82.9%
+- augmented_gsm8k: 14.3%
+- math:             1.7%
+- gsm8k:            1.1%
+```
+
+Source-specific mean lengths:
+
+```text
+- augmented_math:   510.2 tokens
+- augmented_gsm8k:  254.3
+- math:             297.3
+- gsm8k:            211.1
+```
+
+Weighted by the planned subset recipe, the working mean is:
+
+```text
+weighted mean length
+- 433.4 tokens / example
+```
+
+That yields:
+
+```text
+27k train split
+- 11.70M train tokens / epoch
+- $4.68 / epoch at $0.40 / M train tokens
+```
+
+---
+
+## 6. Experiment Design
+
+### 6.1 Base Model Checkpoint
+
+Evaluate the untouched `Qwen3-8B` checkpoint on `GSM8K` before any fine-tuning.
+
+That baseline matters. It tells the write-up whether the adapters actually improved the model or just moved it sideways.
+
+### 6.2 Training Arms
+
+#### Arm A — Attention-Only LoRA
+
+Target modules:
+
+```python
+["q_proj", "k_proj", "v_proj", "o_proj"]
+```
+
+#### Arm B — All-Layer LoRA
+
+Target modules:
+
+```python
+["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+```
+
+### 6.3 What Stays Matched Across Arms
+
+- same base model
+- same dataset subset
+- same train/val split
+- same token budget
+- same epoch count
+- same batch-size strategy
+- same renderer/template strategy
+- same evaluation code
+
+### 6.4 What Is Held Fixed in Phase One
+
+To keep the first comparison attributable, phase one does **not** sweep everything.
+
+Hold fixed:
+
+- LoRA rank
+- LoRA alpha
+- LoRA dropout
+
+Only `target_modules` and the selected LR differ between the arms.
+
+Working phase-one default:
+
+```text
+r = 8
+lora_alpha = 16
+lora_dropout = 0.0
+```
+
+Rank sweeps are explicitly deferred.
+
+---
+
+## 7. Tuning Protocol
+
+The comparison has to avoid the original strawman problem. That means both arms get the same tuning budget.
+
+### 7.1 Pilot Sweep
+
+Pilot subset:
+
+```text
+- 5,000 train
+-   500 val
+```
+
+Pilot grid:
+
+```text
+- 2 arms
+- 3 LR values
+- 1 seed
+- 1 epoch
+```
+
+Initial LR grid:
+
+```text
+1e-4, 3e-4, 1e-3
+```
+
+Selection rule:
+
+- choose the best LR **per arm**
+- use lowest validation loss on the pilot val split
+- freeze that LR for the main comparison
+
+### 7.2 Thesis Comparison
+
+Main runs:
+
+```text
+- 27,000 train
+-  3,000 val
+- 2 arms
+- 3 seeds each
+- 2 epochs
+```
+
+This is the core study. Everything else is supporting infrastructure.
+
+---
+
+## 8. Evaluation Plan
+
+### 8.1 Validation Metric
+
+Primary training-time metric:
+
+- held-out validation loss on the `3k` val split
+
+Checkpoint selection:
+
+- report the checkpoint with the **lowest validation loss**
+- do not select checkpoints post hoc by benchmark score
+
+### 8.2 Benchmark Metric
+
+Primary task metric:
+
+- `GSM8K` accuracy
+
+All three checkpoints should be evaluated under the same prompt/render setup:
+
+1. off-the-shelf `Qwen3-8B`
+2. `Qwen3-8B + attention-only LoRA`
+3. `Qwen3-8B + all-layer LoRA`
+
+### 8.3 Comparison Basis
+
+All comparisons are:
+
+- **training-token matched**
+- evaluated with the same benchmark protocol
+
+This is the correct comparison basis for the question being asked.
+
+### 8.4 Falsification Rule
+
+The plan commits to a numeric null region, but the exact threshold is still conditional.
+
+Current rule:
+
+- set the numeric null region after task metric and pilot design are fixed
+- require the threshold to exceed observed seed noise on the critical comparison setup
+
+The threshold should not be invented in advance just to look rigorous.
+
+---
+
+## 9. Budget and Run Sheet
+
+### 9.1 Training Cost
+
+Pilot sweep:
+
+```text
+5k train pilot
+- 2 arms x 3 LR values x 1 seed x 1 epoch
+- about $5.20 total training cost
+```
+
+Main comparison:
+
+```text
+27k train main run
+- about $4.68 / epoch
+- about $9.36 / 2-epoch run
+- 6 runs total for 2 arms x 3 seeds
+- about $56.17 total training cost
+```
+
+Combined:
+
+```text
+pilot + main training
+- about $61.37 total
+```
+
+### 9.2 Benchmark Cost
+
+`GSM8K` evaluation cost is small relative to training.
+
+Using current `Qwen3-8B` prefill/sample pricing and a reasonable output-length assumption:
+
+```text
+one full GSM8K eval
+- roughly $0.11
+```
+
+Even repeated benchmark passes are unlikely to dominate the budget.
+
+### 9.3 Budget Read
+
+The `$150` cap still looks workable.
+
+The rough picture is:
+
+- training core: about `$61`
+- benchmark passes: low single digits
+- remaining margin: enough for reruns, one extra tuning pass, and mistakes
+
+This is the first point in the project where the budget looks genuinely plausible rather than hopeful.
+
+---
+
+## 10. Risks
+
+### 10.1 Synthetic Data Bias
+
+`OpenMathInstruct-2` is synthetic/augmented. That is acceptable for phase one, but the write-up should say it plainly.
+
+### 10.2 Effect Size Risk
+
+All-layer LoRA may not beat attention-only LoRA by much on this task. That is a valid outcome. The project still works if the result is null.
+
+### 10.3 Benchmark Scope
+
+`GSM8K` is a clean anchor, but still a single benchmark. The write-up should avoid broad claims.
+
+### 10.4 Hyperparameter Drift
+
+If the first LR grid is clearly wrong, one extra pilot pass may be needed. The current budget leaves room for that, but not for careless reruns.
+
+---
+
+## 11. Deliverables
 
 Minimum successful outcome:
-- A working reproducible training pipeline on M5 + Tinker
-- A comparison table: Standard LoRA vs. Blog-informed LoRA vs. Tinker default, on one model, one task, with log loss and one benchmark score per cell
-- Written analysis: what did we replicate, what didn't we, and why
 
-Stretch outcome:
-- Add full fine-tune baseline
-- Add MoE datapoint
-- Phase 2 RL experiments
+- one reproducible Tinker SFT pipeline
+- one `30k` subset recipe
+- one pilot sweep with matched LR tuning budget
+- one final comparison table across the three checkpoints
+- one write-up explaining what changed, what did not, and what the case study can and cannot claim
+
+Desired artifact set:
+
+- training config or script
+- logged subset recipe
+- benchmark command/config
+- `LOG.md` field notes
+- revised plan and final write-up
 
 ---
 
-## 10. Summary of Current Recommendation
+## 12. Immediate Next Steps
 
-| Decision | Current pick | Confidence |
-|---|---|---|
-| Primary model | Qwen3-8B | Medium — Llama-8B is a defensible alternative |
-| Dev model | Qwen3-4B-Instruct-2507 | Medium |
-| Local stack | HuggingFace + MPS | Medium-low — MPS risk is real |
-| Task/domain | **Unresolved** | N/A — blocker |
-| Evaluation | Log loss + one benchmark | Medium |
-| Budget allocation | $40 dev + $100 experiments + $10 buffer | Low — many unknowns |
-| Include full fine-tune? | No (extension) | Low — this is a weakness |
+1. Implement the `30k` subset recipe.
+2. Create the train/val splits.
+3. Encode the pilot LR sweep exactly once.
+4. Finalize renderer and evaluation code for `GSM8K`.
+5. Start the first pilot run on Tinker.
