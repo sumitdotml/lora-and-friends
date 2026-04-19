@@ -73,7 +73,7 @@ Tinker currently lists `Qwen3-8B` at:
 - `Sample`: `$0.40 / M` tokens
 - `Train`: `$0.40 / M` tokens
 
-Source: [Tinker model lineup](https://tinker-docs.thinkingmachines.ai/model-lineup)
+Source: [Tinker model lineup](https://tinker-docs.thinkingmachines.ai/models)
 
 ### 3.3 Why Not `Qwen3-8B-Base`
 
