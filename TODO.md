@@ -26,6 +26,13 @@
 - [ ] Reserve budget for one extra pilot correction pass.
 - [ ] Recheck that the preferred `1 + 3` seed policy still fits under the `$150` cap.
 
+## Results Logging
+
+- [ ] Define the results schema before real runs begin.
+- [ ] Decide the raw metrics format for plots and comparisons: CSV, JSONL, or both.
+- [ ] Capture the minimum fields needed for curves and tables: step, split, loss, checkpoint, arm, seed, eval metric, token count, and cost.
+- [ ] Keep the schema consistent across the untouched base model, attention-only LoRA, and all-layer LoRA evaluations.
+
 ## Logging
 
 - [ ] Log the actual subset recipe once implemented.
