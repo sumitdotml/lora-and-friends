@@ -1,6 +1,6 @@
 # Fine-Tuning Case Study — Scoped Plan
 
-**Status**: Scoped, pre-implementation  
+**Status**: Scoped, dataset frozen, pre-training  
 **Date**: 2026-04  
 **Author context**: Sumit, learning fine-tuning from scratch. M5 MacBook Pro (32GB unified memory, no CUDA). $150 Tinker credits. Solo, part-time.
 
@@ -34,7 +34,7 @@ This is **not** a full replication of the "LoRA Without Regret" blog. It is a **
 | Training backend | Tinker |
 | Local role | Data inspection, rendering, token counting, evaluation glue, and scripting only |
 | Main comparison | Attention-only LoRA vs all-layer LoRA |
-| Training dataset | Mildly balanced `30k` subset from `nvidia/OpenMathInstruct-2` |
+| Training dataset | Frozen original-only subset from `nvidia/OpenMathInstruct-2 train_1M` (`gsm8k` + `math`) |
 | Benchmark | `GSM8K` test split |
 | Out of scope for phase one | FullFT, MoE, RL, transfer eval, Tinker-default as an equal arm |
 
@@ -119,106 +119,92 @@ This dataset has the right SFT shape:
 - `expected_answer`
 - `problem_source`
 
-It is far too large to use directly. The project will train on a subset.
+It is far too large to use directly. The project will train on a strict original-only subset built from the `train_1M` split.
 
 ### 4.3 Subset Policy
 
-The working policy is a **mildly balanced `30k` subset**:
+The frozen policy is a **strict original-only subset**:
 
 ```text
-30k working subset
-- 21,000  augmented_math
--  7,000  augmented_gsm8k
--  1,000  math
--  1,000  gsm8k
+accepted rows
+- 14,618  gsm8k
+- 13,548  math
+- 28,166  total
 ```
 
-Why this instead of plain random sampling:
+Why this replaced the earlier augmented recipe:
 
-- preserves the dominant `augmented_math` source
-- gives `augmented_gsm8k` more weight
-- keeps a visible slice of the smaller original sources
-- stays simpler than elaborate filtering
+- repeated repair passes on the augmented branch still leaked obvious bad rows
+- the original-only branch cleared the same audits cleanly
+- the smaller final size is worth the quality gain
+- phase one needs one trustworthy recipe more than one large synthetic mixture
 
-This is deliberately mild. The goal is not to engineer a bespoke academic mixture. The goal is to avoid the laziness of a pure random subset while keeping the experiment easy to explain.
+The frozen artifact lives at `artifacts/subsets/openmath_original_clean/`.
 
 ### 4.4 Train/Validation Split
 
-Split the `30k` subset into:
+Split the frozen subset into:
 
 ```text
 train / val
-- 27,000 train
--  3,000 val
+- 25,349 train
+-  2,817 val
 ```
 
 By source:
 
 ```text
 train split
-- 18,900  augmented_math
--  6,300  augmented_gsm8k
--    900  math
--    900  gsm8k
+- 13,156  gsm8k
+- 12,193  math
 
 val split
-- 2,100  augmented_math
--   700  augmented_gsm8k
--   100  math
--   100  gsm8k
+- 1,462  gsm8k
+- 1,355  math
+```
+
+Rows were rejected before the split when they failed strict quality gates:
+
+```text
+reject reasons
+- math:boxed_mismatch     1,064
+- gsm8k:boxed_mismatch      141
+- math:suspicious_pattern    92
+- gsm8k:suspicious_pattern    5
 ```
 
 ---
 
 ## 5. Token Sizing
 
-Tokenizer-based sizing was done with the `Qwen3-8B` tokenizer on a spread sample of `OpenMathInstruct-2` rows rendered as actual chat-style training examples.
+Tokenizer-based sizing was finalized on the frozen `openmath_original_clean` split with the `Qwen3-8B` tokenizer and the chosen `qwen3_disable_thinking` renderer.
 
-Observed example lengths:
-
-```text
-OpenMathInstruct-2 rendered example lengths
-- mean:   456.9 tokens
-- median: 403
-- p75:    596
-- p90:    813
-- p95:    963
-- max:    1260
-```
-
-A broader `2k` sample gave similar results and showed the source mix:
+Observed lengths with the kept system prompt:
 
 ```text
-source mix in sample
-- augmented_math:  82.9%
-- augmented_gsm8k: 14.3%
-- math:             1.7%
-- gsm8k:            1.1%
+frozen dataset rendered lengths
+- train mean: 340.25 tokens
+- val mean:   338.45 tokens
 ```
 
-Source-specific mean lengths:
+Exact train cost at current Tinker pricing:
 
 ```text
-- augmented_math:   510.2 tokens
-- augmented_gsm8k:  254.3
-- math:             297.3
-- gsm8k:            211.1
+25,349 train split
+- 8.625M train tokens / epoch
+- $3.45 / epoch at $0.40 / M train tokens
 ```
 
-Weighted by the planned subset recipe, the working mean is:
+Render sanity check also measured the system-prompt overhead directly:
 
 ```text
-weighted mean length
-- 433.4 tokens / example
+system prompt overhead
+- 27 tokens / example
+- 684,423 extra train tokens / epoch
+- about $0.27 / epoch
 ```
 
-That yields:
-
-```text
-27k train split
-- 11.70M train tokens / epoch
-- $4.68 / epoch at $0.40 / M train tokens
-```
+The prompt stays fixed because the dataset problems do not themselves encode the step-by-step and `\boxed{}` output contract.
 
 ---
 
@@ -232,7 +218,7 @@ That baseline matters. It tells the write-up whether the adapters actually impro
 
 ### 6.2 Training Arms
 
-#### Arm A — Attention-Only LoRA
+#### Arm A - Attention-Only LoRA
 
 Target modules:
 
@@ -240,7 +226,7 @@ Target modules:
 ["q_proj", "k_proj", "v_proj", "o_proj"]
 ```
 
-#### Arm B — All-Layer LoRA
+#### Arm B - All-Layer LoRA
 
 Target modules:
 
@@ -322,8 +308,8 @@ Selection rule:
 Main runs:
 
 ```text
-- 27,000 train
--  3,000 val
+- 25,349 train
+-  2,817 val
 - 2 arms
 - 3 seeds each
 - 2 epochs
@@ -339,7 +325,7 @@ This is the core study. Everything else is supporting infrastructure.
 
 Primary training-time metric:
 
-- held-out validation loss on the `3k` val split
+- held-out validation loss on the frozen `2,817`-row val split
 
 Checkpoint selection:
 
@@ -389,24 +375,24 @@ Pilot sweep:
 ```text
 5k train pilot
 - 2 arms x 3 LR values x 1 seed x 1 epoch
-- about $5.20 total training cost
+- about $4.08 total training cost
 ```
 
 Main comparison:
 
 ```text
-27k train main run
-- about $4.68 / epoch
-- about $9.36 / 2-epoch run
+25,349 train main run
+- about $3.45 / epoch
+- about $6.90 / 2-epoch run
 - 6 runs total for 2 arms x 3 seeds
-- about $56.17 total training cost
+- about $41.40 total training cost
 ```
 
 Combined:
 
 ```text
 pilot + main training
-- about $61.37 total
+- about $45.48 total
 ```
 
 ### 9.2 Benchmark Cost
@@ -428,7 +414,7 @@ The `$150` cap still looks workable.
 
 The rough picture is:
 
-- training core: about `$61`
+- training core: about `$45.5`
 - benchmark passes: low single digits
 - remaining margin: enough for reruns, one extra tuning pass, and mistakes
 
@@ -438,19 +424,23 @@ This is the first point in the project where the budget looks genuinely plausibl
 
 ## 10. Risks
 
-### 10.1 Synthetic Data Bias
+### 10.1 Dataset Narrowness
 
-`OpenMathInstruct-2` is synthetic/augmented. That is acceptable for phase one, but the write-up should say it plainly.
+The frozen subset intentionally excludes the augmented sources. That improves trustworthiness, but it also narrows the training distribution to the original `gsm8k` and `math` slices.
 
-### 10.2 Effect Size Risk
+### 10.2 Prompt Contract Dependence
+
+The current recipe depends on a fixed system prompt to keep the step-by-step and boxed-answer contract explicit. The same prompt has to be mirrored in evaluation.
+
+### 10.3 Effect Size Risk
 
 All-layer LoRA may not beat attention-only LoRA by much on this task. That is a valid outcome. The project still works if the result is null.
 
-### 10.3 Benchmark Scope
+### 10.4 Benchmark Scope
 
 `GSM8K` is a clean anchor, but still a single benchmark. The write-up should avoid broad claims.
 
-### 10.4 Hyperparameter Drift
+### 10.5 Hyperparameter Drift
 
 If the first LR grid is clearly wrong, one extra pilot pass may be needed. The current budget leaves room for that, but not for careless reruns.
 
@@ -461,7 +451,7 @@ If the first LR grid is clearly wrong, one extra pilot pass may be needed. The c
 Minimum successful outcome:
 
 - one reproducible Tinker SFT pipeline
-- one `30k` subset recipe
+- one frozen dataset recipe with retained audit evidence
 - one pilot sweep with matched LR tuning budget
 - one final comparison table across the three checkpoints
 - one write-up explaining what changed, what did not, and what the case study can and cannot claim
@@ -478,8 +468,8 @@ Desired artifact set:
 
 ## 12. Immediate Next Steps
 
-1. Implement the `30k` subset recipe.
-2. Create the train/val splits.
-3. Encode the pilot LR sweep exactly once.
-4. Finalize renderer and evaluation code for `GSM8K`.
+1. Reuse the frozen `openmath_original_clean` dataset and fixed prompt contract.
+2. Encode the pilot LR sweep exactly once.
+3. Finalize renderer and evaluation code for `GSM8K`.
+4. Run the untouched `Qwen3-8B` baseline on `GSM8K`.
 5. Start the first pilot run on Tinker.

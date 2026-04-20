@@ -637,3 +637,58 @@ The main dataset decision is done. The next uncertainty is no longer curation qu
 **Next**
 
 Run the baseline render sanity check against the frozen dataset, decide whether the system prompt stays, and then lock the first LoRA config for the Tinker pilot.
+
+## 2026-04-21: Ran the baseline render sanity check and kept the system prompt fixed.
+
+**Config**
+
+The render check compared the frozen dataset with and without the current system prompt under the actual `Qwen/Qwen3-8B` chat template. The rendered samples confirmed that the prompt is the only difference. The assistant side still carries the empty `<think>\n\n</think>` block from the `qwen3_disable_thinking` path, and the user problem text does not redundantly carry the boxed-answer instruction on its own.
+
+Retained sanity-check artifacts:
+
+- `artifacts/audits/openmath_original_clean_render_sanity/report.json`
+- `artifacts/audits/openmath_original_clean_render_sanity/sample_renders.txt`
+
+**Numbers**
+
+The system prompt adds a constant `27` tokens per example.
+
+```json
+{
+  "train_rows": 25349,
+  "full_mean_with_system": 340.25,
+  "full_mean_without_system": 313.25,
+  "full_mean_delta": 27.0,
+  "prompt_mean_with_system": 104.83,
+  "prompt_mean_without_system": 77.83,
+  "prompt_mean_delta": 27.0
+}
+```
+
+That overhead is small in absolute cost:
+
+- extra train tokens per epoch: `684,423`
+- extra train cost per epoch at `$0.40 / M`: about `$0.27`
+
+**Decision**
+
+The system prompt stays fixed.
+
+Why:
+
+- the frozen dataset problems themselves do not encode the output contract
+- the prompt keeps the boxed-answer and step-by-step behavior explicit
+- the absolute token-cost overhead is negligible relative to the training budget
+- keeping it fixed makes the train/eval contract easier to mirror during `GSM8K` evaluation
+
+**Plan sync**
+
+`PROJECT_PLAN.md` now matches the frozen workflow instead of the retired `30k` augmented branch. The plan now points at `openmath_original_clean`, uses the exact `25,349 / 2,817` split, carries the updated `$3.45 / epoch` train cost, and records the fixed system prompt as part of the training and evaluation contract.
+
+**Risk**
+
+The main prompt decision is done. The next risk is not rendering anymore. It is experimental setup: LoRA defaults, baseline eval wiring, and making sure the exact same prompt contract is used for the untouched model and both adapter arms.
+
+**Next**
+
+Wire the `GSM8K` baseline evaluation path with the fixed system prompt, then lock the first LoRA config and pilot sweep.

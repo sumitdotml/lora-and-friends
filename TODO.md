@@ -11,8 +11,9 @@
 - [x] Freeze the dataset recipe explicitly: keep `openmath_original_clean`.
 - [x] Remove stale augmented-dataset artifacts and scripts.
 - [x] Update `AGENTS.md` with the final dataset location and the purpose of the retained audit folders.
-- [ ] Decide whether the system prompt stays fixed or drops out entirely after the first baseline render check.
-- [ ] Prepare the first baseline render sanity check against the frozen dataset.
+- [x] Decide whether the system prompt stays fixed or drops out entirely after the first baseline render check.
+- [x] Prepare the first baseline render sanity check against the frozen dataset.
+- [x] Reconcile `PROJECT_PLAN.md` with the frozen dataset recipe and the prompt decision.
 
 ## Training Setup
 
