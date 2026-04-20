@@ -1,0 +1,14 @@
+{
+  "created_at": "2026-04-20T13:34:38.031161+00:00",
+  "seed": 20260420,
+  "input_path": "artifacts/subsets/openmath_original_clean/train.jsonl",
+  "per_source": 50,
+  "sample_rows": 100,
+  "sampled_counts": {
+    "gsm8k": 50,
+    "math": 50
+  },
+  "artifacts": {
+    "sample_jsonl": "artifacts/audits/openmath_original_clean_manual_review_100/sample.jsonl"
+  }
+}

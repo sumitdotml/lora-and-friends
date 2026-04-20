@@ -1,0 +1,18 @@
+{
+  "created_at": "2026-04-20T13:34:28.489931+00:00",
+  "input_path": "artifacts/subsets/openmath_original_clean/val.jsonl",
+  "rows": 2817,
+  "boxed_matches_expected": 2817,
+  "boxed_match_rate": 1.0,
+  "missing_box": 0,
+  "boxed_mismatches": 0,
+  "source_counts": {
+    "gsm8k": 1462,
+    "math": 1355
+  },
+  "mismatch_by_source": {},
+  "suspicious_pattern_counts": {},
+  "suspicious_pattern_counts_by_source": {},
+  "mismatch_examples": [],
+  "suspicious_examples": []
+}

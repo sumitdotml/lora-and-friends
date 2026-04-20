@@ -1,0 +1,39 @@
+{
+  "created_at": "2026-04-20T13:34:14.748138+00:00",
+  "dataset_name": "nvidia/OpenMathInstruct-2",
+  "dataset_split": "train_1M",
+  "seed": 20260420,
+  "sources": [
+    "gsm8k",
+    "math"
+  ],
+  "val_ratio": 0.1,
+  "input_source_counts": {
+    "gsm8k": 14764,
+    "math": 14704
+  },
+  "accepted_source_counts": {
+    "gsm8k": 14618,
+    "math": 13548
+  },
+  "split_source_counts": {
+    "train": {
+      "gsm8k": 13156,
+      "math": 12193
+    },
+    "val": {
+      "gsm8k": 1462,
+      "math": 1355
+    }
+  },
+  "reject_reasons": {
+    "math:boxed_mismatch": 1064,
+    "gsm8k:boxed_mismatch": 141,
+    "math:suspicious_pattern": 92,
+    "gsm8k:suspicious_pattern": 5
+  },
+  "artifacts": {
+    "train_jsonl": "artifacts/subsets/openmath_original_clean/train.jsonl",
+    "val_jsonl": "artifacts/subsets/openmath_original_clean/val.jsonl"
+  }
+}
