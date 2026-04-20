@@ -2,13 +2,21 @@
 
 ## Immediate
 
-- [ ] Build the mildly balanced `30k` `OpenMathInstruct-2` subset.
-- [ ] Split the subset into `27k` train and `3k` validation by source.
-- [ ] Save the subset recipe and split metadata in a reproducible format.
+- [x] Build the mildly balanced `30k` `OpenMathInstruct-2` subset.
+- [x] Split the subset into `27k` train and `3k` validation by source.
+- [x] Save the subset recipe and split metadata in a reproducible format.
+- [x] Spot-check the final subset for reasoning quality before training starts.
+- [x] Decide whether to filter the obvious disclaimer-heavy `augmented_gsm8k` rows before training starts.
+- [x] Build the stricter original-only candidate from `gsm8k` and `math`.
+- [x] Freeze the dataset recipe explicitly: keep `openmath_original_clean`.
+- [x] Remove stale augmented-dataset artifacts and scripts.
+- [x] Update `AGENTS.md` with the final dataset location and the purpose of the retained audit folders.
+- [ ] Decide whether the system prompt stays fixed or drops out entirely after the first baseline render check.
+- [ ] Prepare the first baseline render sanity check against the frozen dataset.
 
 ## Training Setup
 
-- [ ] Choose the exact chat rendering path for `Qwen3-8B`.
+- [x] Choose the exact chat rendering path for `Qwen3-8B`.
 - [ ] Define the phase-one LoRA defaults: `r`, `lora_alpha`, and `lora_dropout`.
 - [ ] Define the pilot LR sweep exactly once.
 - [ ] Prepare the Tinker training config or script for the pilot sweep.
@@ -35,6 +43,6 @@
 
 ## Logging
 
-- [ ] Log the actual subset recipe once implemented.
+- [x] Log the actual subset recipe once implemented.
 - [ ] Log the pilot sweep configuration before the first run.
 - [ ] Log the baseline `GSM8K` result for the untouched model.
