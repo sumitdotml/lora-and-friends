@@ -32,3 +32,20 @@ Initialized on 2026-03-24.
   - commit:hash
 ```
 
+### MISTAKE-20260420-001
+
+- status: active
+- severity: low
+- scope_tags: [infra, planning]
+- pattern: parallelized commands that had a producer-consumer dependency
+- prevention_rule: only use parallel tool execution when each command can succeed without outputs created by the others
+- validation_check: if command B reads a file or artifact produced by command A, run them sequentially and verify A completed first
+- first_seen: 2026-04-20
+- last_seen: 2026-04-21
+- occurrence_count: 5
+- evidence:
+  - file:scripts/build_manual_audit_sample.py:1
+  - file:scripts/filter_reviewed_bad_rows.py:1
+  - file:artifacts/audits/openmath_30k_curated_v6_replacement_review/manifest.json:1
+  - file:artifacts/audits/openmath_30k_curated_v8_replacement_review_60/manifest.json:1
+  - file:artifacts/audits/openmath_original_clean_manual_review_100/manifest.json:1
