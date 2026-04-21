@@ -692,3 +692,66 @@ The main prompt decision is done. The next risk is not rendering anymore. It is 
 **Next**
 
 Wire the `GSM8K` baseline evaluation path with the fixed system prompt, then lock the first LoRA config and pilot sweep.
+
+## 2026-04-22: Stopped reshuffling docs and started filling the experiment contracts.
+
+**Execution docs**
+
+`TODO.md` is now the only live execution tracker for this phase. The redundant execution packet was archived to `docs/archive/002-2026-04-22-finetuning-execution-plan.md`, and the earlier debate remains archived at `docs/archive/001-2026-04-22-finetuning-execution-debate.md`.
+
+**Freeze files**
+
+The freeze docs stopped being empty shells. `results_schema.md` now names `JSONL` as the canonical raw format, gives a concrete one-row example, fixes the retained artifact paths under `artifacts/results/<run_id>/`, and defines the dataset manifest hash as SHA-256 of the retained subset `manifest.json`.
+
+`eval_contract.md` now locks the system prompt text, greedy decoding, `enable_thinking=False`, boxed-answer extraction, exact-match-after-normalization scoring, and the contamination report path at `artifacts/audits/contamination_check/report.json`. The contamination check is still a gate, not a warning.
+
+`lora_defaults.md` now owns the target-module lists for both arms and says explicitly that LR is not part of the LoRA-defaults contract. It also carries a visible status-transition procedure for the provisional -> locked update after the smoke pass.
+
+**Run protocol**
+
+Added `docs/freeze/run_protocol.md` to hold the items that freeze later than schema and eval contract. The early decisions are now written down instead of being implied:
+
+- pilot seed: `7`
+- main seeds: `0`, `1`, `2`
+- per-arm reduction: mean across `3` seeds with min/max range reported
+- correction reserve: `$25`
+- smoke-pass artifact path: `artifacts/smoke_pass/001/`
+
+The pilot and main-run sections still have `Frozen on: not yet`, which is correct. Those sections depend on smoke-pass output.
+
+**Plan cleanup**
+
+`PROJECT_PLAN.md` no longer pretends to own the live execution order. Its stale `Immediate Next Steps` list was replaced with a pointer to `TODO.md`, and the mutable LoRA defaults were redirected into `docs/freeze/lora_defaults.md`.
+
+**Next**
+
+The next real work is to finish freezing `results_schema.md` and `eval_contract.md`, then run the thin Tinker smoke pass. The docs are finally close enough to binding that the next run can produce artifacts worth keeping.
+
+## 2026-04-22: Froze the schema and evaluation contract before any retained benchmark numbers land.
+
+**Results schema**
+
+`docs/freeze/results_schema.md` is now frozen. `JSONL` is the canonical raw format, the retained results paths now live under `artifacts/results/<run_id>/`, the baseline event shape is explicit, and the dataset manifest hash is defined as SHA-256 over the retained subset `manifest.json`.
+
+One important rule is now fixed instead of implied: `token_count` and `cost` stay in the canonical schema even before the smoke pass, but they may be `null` until Tinker exposes stable telemetry for them.
+
+**Evaluation contract**
+
+`docs/freeze/eval_contract.md` is now frozen. The project is no longer carrying placeholder language for the benchmark rules.
+
+Locked now:
+
+- system prompt matches training verbatim
+- greedy decoding with `temperature = 0`
+- `enable_thinking = False`
+- `max_new_tokens = 512`
+- no custom stop tokens
+- boxed-answer extraction only
+- exact-match after normalization
+- contamination report path at `artifacts/audits/contamination_check/report.json`
+
+The contamination check is now operationally clearer too. It compares only the training-side `problem` field for `gsm8k` rows, preserves punctuation and numeric literals during normalization, and requires a retained report artifact with pass/fail status.
+
+**Next**
+
+The next real step is no longer doc filling. It is execution: run the contamination check and the thin Tinker smoke pass, then update `docs/freeze/lora_defaults.md` from provisional to locked.

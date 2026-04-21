@@ -257,13 +257,9 @@ Hold fixed:
 
 Only `target_modules` and the selected LR differ between the arms.
 
-Working phase-one default:
+Current adapter defaults now live in `docs/freeze/lora_defaults.md`.
 
-```text
-r = 8
-lora_alpha = 16
-lora_dropout = 0.0
-```
+Those values are provisional until the smoke pass completes. LR selection is not part of the LoRA defaults contract.
 
 Rank sweeps are explicitly deferred.
 
@@ -302,6 +298,8 @@ Selection rule:
 - choose the best LR **per arm**
 - use lowest validation loss on the pilot val split
 - freeze that LR for the main comparison
+
+Active pilot and main-run protocol details now live in `docs/freeze/run_protocol.md`.
 
 ### 7.2 Thesis Comparison
 
@@ -363,6 +361,8 @@ Current rule:
 - require the threshold to exceed observed seed noise on the critical comparison setup
 
 The threshold should not be invented in advance just to look rigorous.
+
+The binding home for this rule is now `docs/freeze/run_protocol.md`.
 
 ---
 
@@ -468,8 +468,12 @@ Desired artifact set:
 
 ## 12. Immediate Next Steps
 
-1. Reuse the frozen `openmath_original_clean` dataset and fixed prompt contract.
-2. Encode the pilot LR sweep exactly once.
-3. Finalize renderer and evaluation code for `GSM8K`.
-4. Run the untouched `Qwen3-8B` baseline on `GSM8K`.
-5. Start the first pilot run on Tinker.
+The active execution order now lives in `TODO.md`.
+
+The immediate contract-filling steps are:
+
+1. freeze `docs/freeze/results_schema.md`
+2. freeze `docs/freeze/eval_contract.md`
+3. run the thin Tinker smoke pass
+4. lock `docs/freeze/lora_defaults.md`
+5. run the untouched `Qwen3-8B` baseline under the frozen eval contract
