@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project State"
+  short_description: "Snapshot the repo current project state"
+  default_prompt: "Use $project-state to reconstruct the current repo state and summarize it in compact bullets."
