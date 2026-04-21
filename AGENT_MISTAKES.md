@@ -50,3 +50,17 @@ Initialized on 2026-03-24.
   - file:artifacts/audits/openmath_30k_curated_v8_replacement_review_60/manifest.json:1
   - file:artifacts/audits/openmath_original_clean_manual_review_100/manifest.json:1
   - file:PROJECT_PLAN.md:1
+
+### MISTAKE-20260422-001
+
+- status: active
+- severity: low
+- scope_tags: [infra, planning]
+- pattern: parallelized git commands that contended on the same repository index lock
+- prevention_rule: never run multiple git stage or commit commands in parallel against the same repository
+- validation_check: if two git commands would both write `.git/index` or create `.git/index.lock`, run them sequentially
+- first_seen: 2026-04-22
+- last_seen: 2026-04-22
+- occurrence_count: 1
+- evidence:
+  - file:.git/index.lock:1
