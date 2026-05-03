@@ -1,4 +1,3 @@
-.DS_Module
 __pycache__
 
 .env
@@ -7,3 +6,5 @@ __pycache__
 __marimo__
 
 DEBATE.md
+
+.DS_Store
