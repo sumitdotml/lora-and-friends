@@ -64,3 +64,17 @@ Initialized on 2026-03-24.
 - occurrence_count: 1
 - evidence:
   - file:.git/index.lock:1
+
+### MISTAKE-20260503-001
+
+- status: active
+- severity: medium
+- scope_tags: [docs, planning]
+- pattern: opaque execution labels hid concrete inputs outputs pass fail conditions or consequences
+- prevention_rule: rewrite non-obvious open planning tasks with what this means, it matters because, done when, and if it fails labels before treating the tracker as human-readable
+- validation_check: every non-obvious open task in TODO.md or a run protocol names the concrete action, artifact or decision proving completion, and consequence of failure
+- first_seen: 2026-05-03
+- last_seen: 2026-05-03
+- occurrence_count: 1
+- evidence:
+  - file:TODO.md:77

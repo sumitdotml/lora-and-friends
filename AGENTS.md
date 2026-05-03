@@ -12,6 +12,13 @@
 - If a known pattern appears, revise until compliant before finalizing.
 - Record every detected mistake occurrence in `AGENT_MISTAKES.md` using dedupe/update rules.
 
+## Execution Clarity
+
+- Use `.agents/skills/execution-clarity/SKILL.md` when editing planning docs, TODO trackers, run protocols, freeze docs, or execution checklists.
+- Open tasks must be understandable without hidden expert context.
+- For non-obvious open tasks, include: `What this means:`, `It matters because:`, `Done when:`, and `If it fails:`.
+- Prefer concrete task names over shorthand labels. For example, write "check whether any training questions duplicate GSM8K test questions" instead of only "run contamination check".
+
 ## Repository Notes
 
 - `LOG.md` is the working field-notes log for the project. Append concrete findings there during research, planning, and implementation work instead of scattering notes across replies.
