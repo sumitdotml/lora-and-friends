@@ -61,7 +61,7 @@ The alternative, `unsloth/OpenMathReasoning-mini`, has more character and much l
 Sizing pass
 Ran a tokenizer-based sizing pass with the `Qwen3-8B` tokenizer over a spread sample of `500` rows from `OpenMathInstruct-2`. The average rendered training example came out to `456.9` tokens, with a median of `403`, a `p90` of `813`, and a `p95` of `963`.
 
-By source, the split matters. `augmented_math` averaged `502.9` tokens, while `augmented_gsm8k` averaged `243.1`, so a subset recipe will change the budget more than the raw row count suggests.
+By source, the split matters. `augmented_math` averaged `502.9` tokens, while `augmented_gsm8k` averaged `243.1`, so the raw dataset recipe will change the budget more than the raw row count suggests.
 
 ```text
 OpenMathInstruct-2 rendered example lengths
@@ -86,7 +86,7 @@ GSM8K test set
 ```
 
 Budget read
-At Tinker's current `Qwen3-8B` training price of `$0.40 / M` tokens, the subset sizing finally started to look concrete rather than hypothetical.
+At Tinker's current `Qwen3-8B` training price of `$0.40 / M` tokens, the selected-data sizing finally started to look concrete rather than hypothetical.
 
 ```text
 approximate train cost per epoch
@@ -98,30 +98,30 @@ approximate train cost per epoch
 The `30k` target looks like the best middle ground. `10k` starts to feel toy-like, and `50k` starts eating budget once pilot sweeps, reruns, and the final multi-seed comparison are added.
 
 Decision
-Locked the working subset target at `30k` examples for now. `20k` remains the fallback if the run sheet tightens later, but `30k` is the first serious target.
+Locked the working raw dataset target at `30k` examples for now. `20k` remains the fallback if the run sheet tightens later, but `30k` is the first serious target.
 
-**Subset policy**
+**Raw dataset policy**
 
-A plain random `30k` subset now looks too lazy for the write-up. The source mix in a broader `2k` sample came out to `82.9%` `augmented_math`, `14.3%` `augmented_gsm8k`, `1.7%` `math`, and `1.1%` `gsm8k`, which means a random draw would mostly preserve the dominant synthetic math source.
+A plain random `30k` raw dataset now looks too lazy for the write-up. The source mix in a broader `2k` sample came out to `82.9%` `augmented_math`, `14.3%` `augmented_gsm8k`, `1.7%` `math`, and `1.1%` `gsm8k`, which means a random draw would mostly preserve the dominant synthetic math source.
 
 The working recipe is a mildly balanced `30k` instead:
 
 ```text
-30k working subset
+30k working raw dataset
 - 21,000  augmented_math
 -  7,000  augmented_gsm8k
 -  1,000  math
 -  1,000  gsm8k
 ```
 
-That keeps the majority source intact, gives `augmented_gsm8k` more presence, and lifts the original-source slices enough to matter without turning the subset into a handcrafted curiosity.
+That keeps the majority source intact, gives `augmented_gsm8k` more presence, and lifts the original-source slices enough to matter without turning the raw dataset into a handcrafted curiosity.
 
 **Run sheet draft**
 
 The first run sheet is now concrete enough to reason about:
 
 ```text
-main subset
+main raw dataset
 - total rows: 30,000
 - train rows: 27,000
 - val rows:    3,000
@@ -155,13 +155,13 @@ The benchmark shape is no longer vague. The comparison should run across three c
 
 **Next**
 
-Rewrite `PROJECT_PLAN.md` around the converged shape: `Qwen3-8B`, math reasoning, a mildly balanced `30k` `OpenMathInstruct-2` subset, `GSM8K` as the benchmark anchor, and attention-only versus all-layer LoRA as the main experiment.
+Rewrite `PROJECT_PLAN.md` around the converged shape: `Qwen3-8B`, math reasoning, a mildly balanced `30k` `OpenMathInstruct-2` raw dataset, `GSM8K` as the benchmark anchor, and attention-only versus all-layer LoRA as the main experiment.
 
-## 2026-04-20: Turned the planned subset into real artifacts, locked the first `Qwen3` rendering path, and found the first sign that the synthetic math data needs a light audit.
+## 2026-04-20: Turned the planned raw dataset into real artifacts, locked the first `Qwen3` rendering path, and found the first sign that the synthetic math data needs a light audit.
 
-**Subset build**
+**Raw dataset build**
 
-Ran the full streamed pass over `nvidia/OpenMathInstruct-2 train_1M` and materialized the planned split under `artifacts/subsets/openmath_30k/`. The output matched the recipe exactly: `27,000` train rows and `3,000` validation rows, with the intended `21k / 7k / 1k / 1k` source mix.
+Ran the full streamed pass over `nvidia/OpenMathInstruct-2 train_1M` and materialized the planned split under `artifacts/raw_datasets/openmath_30k/`. The output matched the recipe exactly: `27,000` train rows and `3,000` validation rows, with the intended `21k / 7k / 1k / 1k` source mix.
 
 ```json
 {
@@ -174,7 +174,7 @@ Ran the full streamed pass over `nvidia/OpenMathInstruct-2 train_1M` and materia
 }
 ```
 
-The raw subset is not tiny anymore. `train.jsonl` landed at about `39.6 MB`, and `val.jsonl` at about `4.4 MB`, which is still manageable enough for local inspection.
+The raw dataset is not tiny anymore. `train.jsonl` landed at about `39.6 MB`, and `val.jsonl` at about `4.4 MB`, which is still manageable enough for local inspection.
 
 **Seen counts**
 
@@ -197,7 +197,7 @@ That removes one normalization pass from the pipeline. The data already wants a 
 
 Locked the first rendering path to `qwen3_disable_thinking`. The choice follows two separate checks: the live `Qwen/Qwen3-8B` tokenizer template, which prepends an empty `<think>\n\n</think>` block when `enable_thinking=False`, and the official Tinker cookbook renderer registry, which exposes the matching key as `qwen3_disable_thinking`.
 
-The first chat-format dataset is now materialized under `artifacts/datasets/openmath_30k_qwen3_disable_thinking/` with this system prompt:
+The first chat-format dataset is now materialized under `artifacts/rendered_datasets/openmath_30k_qwen3_disable_thinking/` with this system prompt:
 
 ```text
 You are a careful math solver. Solve the problem step by step. Put the final answer in \boxed{}.
@@ -248,12 +248,12 @@ Most of those look like formatting drift rather than label corruption: `\\left(\
 
 The manual pass came out acceptable, not pristine. `18 / 20` audit rows passed cleanly, `1 / 20` was questionable because of decimal truncation, and `1 / 20` was a real fail: an `augmented_math` tetrahedron problem that notices a fractional tetrahedron count is impossible and still pushes through to a final ratio.
 
-The localized warning remains `augmented_gsm8k`. A simple pattern search over the full subset found at least two rows with disclaimer-heavy repair language like `cannot spend more than she has`, `doesn't align with the logical outcome`, and `we need to set the value to 100`. That is enough evidence to justify a tiny pre-training filter rather than trusting the source blindly.
+The localized warning remains `augmented_gsm8k`. A simple pattern search over the full raw dataset found at least two rows with disclaimer-heavy repair language like `cannot spend more than she has`, `doesn't align with the logical outcome`, and `we need to set the value to 100`. That is enough evidence to justify a tiny pre-training filter rather than trusting the source blindly.
 
 Made that decision concrete instead of leaving it as a future discussion. A surgical filter now removes exactly `2` flagged `augmented_gsm8k` rows, one from train and one from validation, and writes the cleaned artifacts to:
 
-- `artifacts/subsets/openmath_30k_filtered/`
-- `artifacts/datasets/openmath_30k_qwen3_disable_thinking_filtered/`
+- `artifacts/raw_datasets/openmath_30k_filtered/`
+- `artifacts/rendered_datasets/openmath_30k_qwen3_disable_thinking_filtered/`
 
 ```json
 {
@@ -270,7 +270,7 @@ That barely changes the dataset size, but it moves the working default away from
 The audit is broader now, not just deeper. Two new review packs exist on top of the filtered train split:
 
 - `artifacts/audits/openmath_30k_filtered_manual_review_100/` for a random `100`-row pass with `25` rows per source
-- `artifacts/audits/openmath_30k_filtered_suspicious_manual_review_25/` for a targeted `55`-row pass over the phrase-flagged subset
+- `artifacts/audits/openmath_30k_filtered_suspicious_manual_review_25/` for a targeted `55`-row pass over the phrase-flagged raw dataset rows
 
 The heuristic scan over the filtered train split came back with:
 
@@ -307,8 +307,8 @@ Validation got the same treatment instead of being treated as a passive aftertho
 
 The current working dataset is now `curated_v2`:
 
-- `artifacts/subsets/openmath_30k_curated_v2/`
-- `artifacts/datasets/openmath_30k_qwen3_disable_thinking_curated_v2/`
+- `artifacts/raw_datasets/openmath_30k_curated_v2/`
+- `artifacts/rendered_datasets/openmath_30k_qwen3_disable_thinking_curated_v2/`
 
 ```json
 {
@@ -396,7 +396,7 @@ Review the `61`-row `curated_v4` suspicious train pack and the fresh `100`-row r
 
 The `61`-row `curated_v4` suspicious train pack produced `30` hard removals, all from `augmented_math`. Those rows were not borderline. They were contaminated prompts, invalid proofs, contradictory setups, or accidental answers carried by broken reasoning.
 
-Instead of shrinking the subset again, the rebuild pulled replacements from `OpenMathInstruct-2 train_1M` under a stricter automatic gate:
+Instead of shrinking the raw dataset again, the rebuild pulled replacements from `OpenMathInstruct-2 train_1M` under a stricter automatic gate:
 
 - final `\\boxed{...}` must normalize to `expected_answer`
 - no suspicious repair-language patterns in the solution
@@ -529,7 +529,7 @@ Review the `v6` replacement rows and keep cutting down the `augmented_math` susp
 
 The `curated_v8` and `curated_v9` passes removed the obvious contamination and heuristic junk, but a random spot check still surfaced clear bad rows. That changed the conclusion: the problem was no longer “find one more regex,” it was “stop trusting `augmented_math` as the backbone of the dataset.”
 
-`OpenMathInstruct-2 train_1M` turned out to contain `29,468` original-source rows across `gsm8k` and `math`. After running the strict shared gate on that pool, `28,166` rows survived cleanly enough to build a new original-only subset.
+`OpenMathInstruct-2 train_1M` turned out to contain `29,468` original-source rows across `gsm8k` and `math`. After running the strict shared gate on that pool, `28,166` rows survived cleanly enough to build a new original-only raw dataset.
 
 ```json
 {
@@ -580,8 +580,8 @@ The original-only recipe looks far better than the augmented recipe, but not mag
 
 Current working candidate:
 
-- `artifacts/subsets/openmath_original_clean/`
-- `artifacts/datasets/openmath_original_clean_qwen3_disable_thinking/`
+- `artifacts/raw_datasets/openmath_original_clean/`
+- `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/`
 - `artifacts/audits/openmath_original_clean_quality_train/`
 - `artifacts/audits/openmath_original_clean_quality_val/`
 - `artifacts/audits/openmath_original_clean_manual_review_100/`
@@ -590,7 +590,7 @@ Current working candidate:
 
 Treat `openmath_original_clean` as the leading freeze candidate. The remaining repo work is cleanup, documentation updates, and removing the stale augmented branch artifacts once the freeze decision is final.
 
-## 2026-04-21: Froze the dataset recipe on the original-only subset and retired the augmented branch.
+## 2026-04-21: Froze the dataset recipe on the original-only raw dataset and retired the augmented branch.
 
 **Dataset decision**
 
@@ -598,8 +598,8 @@ The freeze call is no longer ambiguous. The augmented-heavy lineage took too man
 
 Retained canonical paths:
 
-- `artifacts/subsets/openmath_original_clean/`
-- `artifacts/datasets/openmath_original_clean_qwen3_disable_thinking/`
+- `artifacts/raw_datasets/openmath_original_clean/`
+- `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/`
 
 **Numbers**
 
@@ -628,7 +628,7 @@ The retained audit evidence for the frozen recipe is:
 
 **Cleanup**
 
-The retired `openmath_30k*` subsets, datasets, audits, and curation scripts are gone. The repository now keeps only the artifacts needed to rebuild or verify the frozen original-only subset, plus the small set of audit scripts used to check it.
+The retired `openmath_30k*` raw datasets, rendered datasets, audits, and curation scripts are gone. The repository now keeps only the artifacts needed to rebuild or verify the frozen original-only raw dataset, plus the small set of audit scripts used to check it.
 
 **Risk**
 
@@ -701,7 +701,7 @@ Wire the `GSM8K` baseline evaluation path with the fixed system prompt, then loc
 
 **Freeze files**
 
-The freeze docs stopped being empty shells. `results_schema.md` now names `JSONL` as the canonical raw format, gives a concrete one-row example, fixes the retained artifact paths under `artifacts/results/<run_id>/`, and defines the dataset manifest hash as SHA-256 of the retained subset `manifest.json`.
+The freeze docs stopped being empty shells. `results_schema.md` now names `JSONL` as the canonical raw format, gives a concrete one-row example, fixes the retained artifact paths under `artifacts/results/<run_id>/`, and defines the dataset manifest hash as SHA-256 of the retained raw dataset `manifest.json`.
 
 `eval_contract.md` now locks the system prompt text, greedy decoding, `enable_thinking=False`, boxed-answer extraction, exact-match-after-normalization scoring, and the contamination report path at `artifacts/audits/contamination_check/report.json`. The contamination check is still a gate, not a warning.
 
@@ -731,7 +731,7 @@ The next real work is to finish freezing `results_schema.md` and `eval_contract.
 
 **Results schema**
 
-`docs/freeze/results_schema.md` is now frozen. `JSONL` is the canonical raw format, the retained results paths now live under `artifacts/results/<run_id>/`, the baseline event shape is explicit, and the dataset manifest hash is defined as SHA-256 over the retained subset `manifest.json`.
+`docs/freeze/results_schema.md` is now frozen. `JSONL` is the canonical raw format, the retained results paths now live under `artifacts/results/<run_id>/`, the baseline event shape is explicit, and the dataset manifest hash is defined as SHA-256 over the retained raw dataset `manifest.json`.
 
 One important rule is now fixed instead of implied: `token_count` and `cost` stay in the canonical schema even before the smoke pass, but they may be `null` until Tinker exposes stable telemetry for them.
 
@@ -786,3 +786,121 @@ The skill requires non-obvious open tasks to use this shape:
 **Terminology cleanup**
 
 `TODO.md` and `docs/freeze/run_protocol.md` now explain `pilot` as the small LR-selection run: a small practice training experiment that tries a learning-rate grid before the real comparison. They also spell out validation-loss cadence as how often Tinker reports validation loss during training.
+
+## 2026-05-03: Ran the dataset-integrity gate and repaired the train/validation split.
+
+**Integrity audit**
+
+Added and ran:
+
+- `scripts/check_dataset_integrity.py`
+
+Pedagogical note: `artifacts/raw_datasets/openmath_original_clean/` and `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/` are not two independent datasets. The raw dataset is the selected data before model-specific formatting, with explicit fields like `source`, `problem`, `generated_solution`, and `expected_answer`. The rendered dataset is made from that same selected data after applying the `Qwen3` chat format, fixed system prompt, and `qwen3_disable_thinking` renderer.
+
+The flow is:
+
+```text
+artifacts/raw_datasets/openmath_original_clean/train.jsonl
+-> render with Qwen3 chat format and fixed system prompt
+-> artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/train.jsonl
+-> Tinker training
+```
+
+So the integrity check used the raw dataset files because they expose the clean audit fields. Checking `source == "gsm8k"` and `problem` in the raw dataset is checking the same examples that later appear in rendered chat form under `rendered_datasets/`.
+
+There were two separate questions:
+
+1. Do training examples that came from `gsm8k` duplicate the external `openai/gsm8k` test questions?
+2. Do our own local train and validation splits contain the same questions?
+
+The first question protects the final benchmark. Since the final external benchmark is `GSM8K` test, any matching `gsm8k`-sourced training question would mean the trained model had seen a benchmark question during training.
+
+The second question protects validation loss. Validation should measure held-out questions. If the same question appears in train and validation, validation loss can look better than it should and can bias learning-rate or checkpoint decisions.
+
+The first pass found no benchmark contamination but did find local train/validation leakage. The benchmark side was clean:
+
+```json
+{
+  "overlap_count": 0,
+  "pass_fail_outcome": {
+    "benchmark_contamination": "pass"
+  }
+}
+```
+
+The failed part was the local split. OpenMath includes multiple accepted solutions for the same problem, and the original builder split rows independently. That allowed repeated problem variants to land in both train and validation.
+
+**Repair**
+
+Updated `scripts/build_openmath_original_clean_raw_dataset.py` so it groups rows by canonical problem text before the train/validation split. This keeps repeated or answer-variant solutions for the same problem on only one side of the split.
+
+Rebuilt the raw dataset and chat-format rendered dataset:
+
+```json
+{
+  "train_rows": 25348,
+  "val_rows": 2818,
+  "train_source_counts": {
+    "gsm8k": 13145,
+    "math": 12203
+  },
+  "val_source_counts": {
+    "gsm8k": 1473,
+    "math": 1345
+  }
+}
+```
+
+Regenerated retained evidence:
+
+- `artifacts/audits/openmath_original_clean_quality_train/report.json`
+- `artifacts/audits/openmath_original_clean_quality_val/report.json`
+- `artifacts/audits/openmath_original_clean_manual_review_100/`
+- `artifacts/audits/openmath_original_clean_render_sanity/report.json`
+- `artifacts/audits/contamination_check/report.json`
+
+The final retained integrity report passes:
+
+```json
+{
+  "status": "pass",
+  "overlap_count": 0,
+  "train_val_overlap": {
+    "row_id_overlap_count": 0,
+    "problem_text_overlap_count": 0,
+    "overlapped_val_row_count": 0
+  }
+}
+```
+
+**Updated sizing**
+
+The repaired split changes sizing slightly:
+
+- train rows: `25,348`
+- validation rows: `2,818`
+- train mean with system prompt: `340.82` tokens
+- validation mean with system prompt: `333.36` tokens
+- train tokens per epoch: `8.639M`
+- train cost per epoch at `$0.40 / M`: about `$3.46`
+
+**Next**
+
+The evaluation-contract gate is now cleared. The next open step is to define provisional batch-size and gradient-accumulation assumptions before the thin Tinker smoke pass.
+
+## 2026-05-03: Filled the provisional batch assumptions for the Tinker smoke pass.
+
+**LoRA defaults**
+
+Updated `docs/freeze/lora_defaults.md` with explicit smoke-pass batch assumptions:
+
+- micro-batch size: `1` rendered training example per `forward_backward` call
+- gradient accumulation: `8` `forward_backward` calls before one optimizer step
+- effective batch size: `8` rendered training examples per optimizer step
+- fallback: if Tinker rejects that shape, run the smoke pass with micro-batch size `1` and gradient accumulation `1`, then record the backend constraint before locking defaults
+
+These values remain provisional. They exist so the smoke pass has a concrete starting shape; they do not lock final batch behavior for the main study.
+
+**Next**
+
+Run the thin Tinker smoke pass and use its observed backend behavior to lock `docs/freeze/lora_defaults.md`.
