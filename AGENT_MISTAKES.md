@@ -75,6 +75,52 @@ Initialized on 2026-03-24.
 - validation_check: every non-obvious open task in TODO.md or a run protocol names the concrete action, artifact or decision proving completion, and consequence of failure
 - first_seen: 2026-05-03
 - last_seen: 2026-05-03
-- occurrence_count: 1
+- occurrence_count: 2
 - evidence:
   - file:TODO.md:77
+  - file:TODO.md:99
+
+### MISTAKE-20260503-002
+
+- status: active
+- severity: high
+- scope_tags: [data, planning]
+- pattern: train validation split was created at row level even when multiple rows represented the same canonical problem
+- prevention_rule: group rows by canonical problem text before splitting train and validation for SFT datasets with repeated or answer-variant solutions
+- validation_check: retained dataset-integrity report must show benchmark overlap count 0, train-val row_id overlap count 0, and train-val problem_text overlap count 0
+- first_seen: 2026-05-03
+- last_seen: 2026-05-03
+- occurrence_count: 1
+- evidence:
+  - file:scripts/build_openmath_original_clean_raw_dataset.py:1
+  - file:artifacts/audits/contamination_check/report.json:1
+
+### MISTAKE-20260503-003
+
+- status: active
+- severity: low
+- scope_tags: [infra]
+- pattern: shell search pattern used unescaped backticks so the shell executed fragments instead of passing them literally to rg
+- prevention_rule: wrap rg patterns containing backticks in single quotes or remove the backtick terms from the shell pattern before running the command
+- validation_check: rerun the search with single-quoted or escaped patterns and confirm it exits with only intended literal matches
+- first_seen: 2026-05-03
+- last_seen: 2026-05-03
+- occurrence_count: 1
+- evidence:
+  - command:rg pattern containing legacy artifact-directory labels without shell-safe quoting
+
+### MISTAKE-20260503-004
+
+- status: active
+- severity: medium
+- scope_tags: [docs, planning]
+- pattern: diagram connected evidence artifacts as if they were transformation steps in the main pipeline
+- prevention_rule: separate transformation steps from audit or evidence notes in lineage diagrams, using explicit labels such as evidence retained not a transformation step
+- validation_check: every solid edge in a dataset lineage diagram must represent data transformation or consumption, while audit evidence must be grouped separately or linked with a non-solid labeled edge
+- first_seen: 2026-05-03
+- last_seen: 2026-05-03
+- occurrence_count: 3
+- evidence:
+  - file:artifacts/README.md:125
+  - file:artifacts/README.md:128
+  - file:artifacts/dataset_lineage.excalidraw:1
