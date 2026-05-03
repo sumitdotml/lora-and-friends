@@ -1,29 +1,37 @@
 # Run Protocol
 
 **Status**: partial  
-**Purpose**: hold the pilot and main-run contracts that freeze later than the schema and eval contract.
+**Purpose**: hold the small LR-selection and main-run contracts that freeze later than the schema and eval contract.
 
-## Pilot Sweep
+## Small LR-Selection Run
 
 **Frozen on**: not yet
 
 Goal:
 
+- run a small practice training experiment before the main comparison
+- try a small learning-rate grid for both LoRA arms
 - select LR fairly for both arms after the smoke pass
+
+Meaning:
+
+- this is not the final result
+- this exists to choose learning rates without spending the full experiment budget
+- validation-loss cadence means how often Tinker reports validation loss during training
 
 Already fixed:
 
-- pilot seed: `7`
-- pilot seed must be held out from the main-run seed set
+- small-run seed: `7`
+- small-run seed must be held out from the main-run seed set
 
 Still open:
 
-- pilot subset identity
-- pilot validation identity
+- small-run training subset identity
+- small-run validation identity
 - LR grid
-- validation-loss cadence
+- how often validation loss is measured during training
 - per-arm LR selection rule
-- pilot budget estimate
+- small-run budget estimate
 
 ## Main Run
 

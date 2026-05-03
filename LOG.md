@@ -755,3 +755,34 @@ The contamination check is now operationally clearer too. It compares only the t
 **Next**
 
 The next real step is no longer doc filling. It is execution: run the contamination check and the thin Tinker smoke pass, then update `docs/freeze/lora_defaults.md` from provisional to locked.
+
+## 2026-05-03: Added execution-clarity guardrails so TODO items explain the concrete action and consequence.
+
+**Planning clarity**
+
+The execution tracker was too compressed for human planning. Labels like `contamination check` were precise to an agent but did not expose the actual operation, pass condition, or consequence quickly enough.
+
+Added a project-local skill:
+
+- `.agents/skills/execution-clarity/SKILL.md`
+
+The skill requires non-obvious open tasks to use this shape:
+
+- `What this means:`
+- `It matters because:`
+- `Done when:`
+- `If it fails:`
+
+**Repo guardrails**
+
+`AGENTS.md` now tells future agents to use the execution-clarity skill when editing planning docs, TODO trackers, run protocols, freeze docs, or execution checklists.
+
+`AGENT_MISTAKES.md` now records the underlying mistake pattern: opaque execution labels that hide concrete inputs, outputs, pass/fail conditions, or consequences.
+
+**TODO sync**
+
+`TODO.md` now folds the plain-English fields directly into the execution order instead of keeping a separate guide. The `GSM8K` contamination item was renamed to the concrete action: check whether any training `gsm8k` questions duplicate `GSM8K` test questions. A separate train-vs-validation overlap check was also added because it is a different dataset-integrity risk.
+
+**Terminology cleanup**
+
+`TODO.md` and `docs/freeze/run_protocol.md` now explain `pilot` as the small LR-selection run: a small practice training experiment that tries a learning-rate grid before the real comparison. They also spell out validation-loss cadence as how often Tinker reports validation loss during training.
