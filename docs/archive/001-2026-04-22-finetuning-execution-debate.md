@@ -131,7 +131,7 @@ All three are avoidable by reordering. Working harder on the current order does 
 2. **Evaluation contract.** GSM8K prompt, sampling/decoding policy, answer-extractor regex + normalization, scoring rule, reference-answer handling, one-shot contamination check against the GSM8K test split.
 3. **Tinker smoke pass.** Tentative LoRA defaults (`r=8`, `alpha=16`, `dropout=0.0`, best-guess batch and grad-accum) → 100-row, 100-step run end to end → lock defaults with rationale grounded in actual Tinker behavior.
 4. **Baseline evaluation** of untouched `Qwen3-8B` on GSM8K under the step-1 schema and step-2 contract. Runs in parallel with step 3.
-5. **Pilot sweep design.** LR grid conditional on locked defaults and smoke-pass findings; pilot subset and val identity; pilot seed held out from the main-run seed set; null-region trigger rule; budget check.
+5. **Pilot sweep design.** LR grid conditional on locked defaults and smoke-pass findings; pilot row-slice and val identity; pilot seed held out from the main-run seed set; null-region trigger rule; budget check.
 6. **Tinker configs for both arms.** Matched except `target_modules` and selected LR. Reuses the smoke-pass skeleton.
 7. **Pilot execution.** LR-per-arm selection. Observed seed noise recorded. Null threshold set from seed noise.
 8. **Main comparison readiness.** Lock run sheet (`2` arms × `3` seeds × `2` epochs), per-seed checkpoint-selection rule (lowest validation loss), per-arm reduction rule, reserve `$25` for a correction pass.
@@ -209,7 +209,7 @@ This is the order I would now endorse:
    This can run in parallel with step 4 once steps 1 and 2 are frozen.
 6. **Lock LoRA defaults after smoke-pass findings**
 7. **Freeze the pilot sweep design**
-   Includes LR grid, pilot subset identity, pilot seed identity, validation-loss cadence, and per-arm LR selection rule.
+   Includes LR grid, pilot row-slice identity, pilot seed identity, validation-loss cadence, and per-arm LR selection rule.
 8. **Prepare final arm-specific Tinker configs**
    Matched except `target_modules` and selected LR.
 9. **Freeze main-run protocol**

@@ -17,7 +17,7 @@ Meaning:
 
 - this is not the final result
 - this exists to choose learning rates without spending the full experiment budget
-- validation-loss cadence means how often Tinker reports validation loss during training
+- "how often validation loss is measured" means how often Tinker reports validation loss during training
 
 Already fixed:
 
@@ -26,7 +26,7 @@ Already fixed:
 
 Still open:
 
-- small-run training subset identity
+- small-run training row-slice identity
 - small-run validation identity
 - LR grid
 - how often validation loss is measured during training

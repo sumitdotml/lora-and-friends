@@ -23,8 +23,8 @@ under a matched token budget on math reasoning.
 - Model: `Qwen3-8B`
 - Backend: Tinker
 - Benchmark anchor: `GSM8K`
-- Frozen subset: `artifacts/subsets/openmath_original_clean/`
-- Training-ready dataset: `artifacts/datasets/openmath_original_clean_qwen3_disable_thinking/`
+- Frozen raw dataset: `artifacts/raw_datasets/openmath_original_clean/`
+- Training-ready rendered dataset: `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/`
 - Prompt contract: fixed system prompt kept after render sanity review
 - Main question: does all-layer LoRA beat attention-only LoRA on this setup?
 
@@ -32,10 +32,10 @@ under a matched token budget on math reasoning.
 
 - Source: `nvidia/OpenMathInstruct-2 train_1M`
 - Retained sources only: `gsm8k`, `math`
-- Train rows: `25,349`
-- Val rows: `2,817`
-- Mean rendered train length: `340.25` tokens
-- Train cost per epoch at current Tinker pricing: about `$3.45`
+- Train rows: `25,348`
+- Val rows: `2,818`
+- Mean rendered train length: `340.82` tokens
+- Train cost per epoch at current Tinker pricing: about `$3.46`
 
 Retained evidence:
 
@@ -140,7 +140,7 @@ Freeze exactly one pilot protocol.
 
 Required content:
 
-- pilot subset identity
+- pilot row-slice identity
 - pilot validation identity
 - LR grid
 - pilot seed identity

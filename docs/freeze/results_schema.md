@@ -104,7 +104,7 @@ Current intended fields:
 
 Hashing convention:
 
-- `dataset_manifest_hash` means SHA-256 of the bytes of the retained subset `manifest.json`
+- `dataset_manifest_hash` means SHA-256 of the bytes of the retained raw dataset `manifest.json`
 
 Field requirement rule:
 

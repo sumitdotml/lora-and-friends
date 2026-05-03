@@ -23,7 +23,7 @@
 
 - `LOG.md` is the working field-notes log for the project. Append concrete findings there during research, planning, and implementation work instead of scattering notes across replies.
 - `TODO.md` is the current execution list. Update it when the next implementation steps become clearer or when completed items change the sequence of work.
-- `artifacts/subsets/openmath_original_clean/` is the frozen raw training dataset candidate. Treat it as the canonical subset unless a future log entry explicitly supersedes it.
-- `artifacts/datasets/openmath_original_clean_qwen3_disable_thinking/` is the matching chat-format dataset for `Qwen3-8B` with the current renderer and system prompt.
+- `artifacts/raw_datasets/openmath_original_clean/` is the frozen raw dataset used for audits, integrity checks, and rebuilding rendered training files. Do not feed this raw schema directly to fine-tuning.
+- `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/` is the training-ready rendered dataset for `Qwen3-8B`. Use its `train.jsonl` for fine-tuning and its `val.jsonl` for validation unless a future log entry explicitly supersedes it.
 - Retained audit evidence for the frozen dataset lives under `artifacts/audits/openmath_original_clean_quality_train/`, `artifacts/audits/openmath_original_clean_quality_val/`, and `artifacts/audits/openmath_original_clean_manual_review_100/`.
 - The old augmented-dataset lineage was retired during cleanup. Do not recreate `openmath_30k*` artifacts unless the project explicitly reopens dataset curation.

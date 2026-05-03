@@ -13,8 +13,8 @@ Execution design is converged. Dataset curation is done. The next work is freezi
 - Model: `Qwen3-8B`
 - Backend: Tinker
 - Benchmark anchor: `GSM8K`
-- Frozen subset: `artifacts/subsets/openmath_original_clean/`
-- Training-ready dataset: `artifacts/datasets/openmath_original_clean_qwen3_disable_thinking/`
+- Frozen raw dataset: `artifacts/raw_datasets/openmath_original_clean/`
+- Training-ready rendered dataset: `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/`
 - Prompt contract: fixed system prompt kept after render sanity review
 - Main question: does all-layer LoRA beat attention-only LoRA on this setup?
 
@@ -22,10 +22,10 @@ Execution design is converged. Dataset curation is done. The next work is freezi
 
 - Source: `nvidia/OpenMathInstruct-2 train_1M`
 - Retained sources only: `gsm8k`, `math`
-- Train rows: `25,349`
-- Val rows: `2,817`
-- Mean rendered train length: `340.25` tokens
-- Train cost per epoch at current Tinker pricing: about `$3.45`
+- Train rows: `25,348`
+- Val rows: `2,818`
+- Mean rendered train length: `340.82` tokens
+- Train cost per epoch at current Tinker pricing: about `$3.46`
 
 Retained evidence:
 
@@ -33,6 +33,7 @@ Retained evidence:
 - `artifacts/audits/openmath_original_clean_quality_val/report.json`
 - `artifacts/audits/openmath_original_clean_manual_review_100/sample.jsonl`
 - `artifacts/audits/openmath_original_clean_render_sanity/report.json`
+- `artifacts/audits/contamination_check/report.json`
 
 ## Already Done
 
@@ -70,7 +71,7 @@ Done when:
 
 ### 2. Freeze Evaluation Contract
 
-Status: mostly done; two data-integrity checks remain.
+Status: done.
 
 What this means:
 Define the exact `GSM8K` benchmark rules before the untouched baseline is run, then run the local checks that protect those rules.
@@ -89,16 +90,16 @@ For benchmark contamination, remove overlapping training rows or choose a differ
 - [x] Define the sampling / decoding policy.
 - [x] Define answer extraction regex and normalization.
 - [x] Define the scoring rule.
-- [ ] Check whether any training `gsm8k` questions duplicate `GSM8K` test questions.
-- [ ] Check whether local train and validation rows overlap.
+- [x] Check whether any training `gsm8k` questions duplicate `GSM8K` test questions.
+- [x] Check whether local train and validation rows overlap.
 - [x] Precommit the benchmark-contamination failure rule: test-set overlap `> 0` means rebuild without contaminated rows or change the benchmark anchor.
 
-### 3. Define Provisional LoRA Defaults
+### 3. Define Pre-Smoke Provisional LoRA Defaults
 
-Status: partially done.
+Status: done for the smoke-pass starting point only. Not locked for real training yet.
 
 What this means:
-Create the provisional adapter defaults needed to run the smoke pass, including the starting batch-size and gradient-accumulation assumptions.
+Create the provisional adapter defaults needed to run the smoke pass, including the starting batch-size and gradient-accumulation assumptions. This step only gives the smoke pass concrete settings to try. It does not mean the final LoRA defaults are frozen.
 
 It matters because:
 The smoke pass needs concrete settings before it can reveal whether Tinker accepts the planned setup or forces a change.
@@ -113,7 +114,10 @@ Keep `lora_defaults` provisional and use the smoke pass to discover the smallest
 - [x] Define provisional `r`.
 - [x] Define provisional `lora_alpha`.
 - [x] Define provisional `lora_dropout`.
-- [ ] Define provisional batch-size and gradient-accumulation assumptions.
+- [x] Define provisional batch-size and gradient-accumulation assumptions.
+
+Important boundary:
+Do not treat these values as locked until Step 6 is complete.
 
 ### 4. Run A Thin Tinker Smoke Pass
 
@@ -197,7 +201,7 @@ If it fails:
 Do not start the small LR-selection runs; unresolved selection design would let results influence the protocol after the fact.
 
 - [ ] Create and fill the small LR-selection section in `docs/freeze/run_protocol.md`.
-- [ ] Define the small-run training subset source and exact row count.
+- [ ] Define the small-run training row slice source and exact row count.
 - [ ] Define the small-run validation split source and exact row count.
 - [ ] Freeze the LR grid once.
 - [x] Define the small-run seed identity: `7`.
@@ -280,6 +284,7 @@ Record the failure and cost impact in `LOG.md`, use the `$25` correction reserve
 - [x] `docs/freeze/eval_contract.md` includes answer extraction regex and normalization.
 - [x] `docs/freeze/eval_contract.md` includes sampling and decoding policy.
 - [x] `docs/freeze/eval_contract.md` includes the contamination gate and failure consequence.
+- [x] `artifacts/audits/contamination_check/report.json` reports no training `gsm8k` overlap with `GSM8K` test and no train-vs-validation overlap.
 - [x] Small LR-selection protocol includes seed identity.
 - [ ] Small LR-selection protocol says how often validation loss is measured.
 - [x] Main-run protocol includes per-arm reduction rule.

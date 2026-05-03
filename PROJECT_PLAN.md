@@ -34,7 +34,7 @@ This is **not** a full replication of the "LoRA Without Regret" blog. It is a **
 | Training backend | Tinker |
 | Local role | Data inspection, rendering, token counting, evaluation glue, and scripting only |
 | Main comparison | Attention-only LoRA vs all-layer LoRA |
-| Training dataset | Frozen original-only subset from `nvidia/OpenMathInstruct-2 train_1M` (`gsm8k` + `math`) |
+| Training dataset | Frozen original-only raw dataset built from `nvidia/OpenMathInstruct-2 train_1M` (`gsm8k` + `math`), then rendered for `Qwen3-8B` |
 | Benchmark | `GSM8K` test split |
 | Out of scope for phase one | FullFT, MoE, RL, transfer eval, Tinker-default as an equal arm |
 
@@ -119,11 +119,11 @@ This dataset has the right SFT shape:
 - `expected_answer`
 - `problem_source`
 
-It is far too large to use directly. The project will train on a strict original-only subset built from the `train_1M` split.
+It is far too large to use directly. The project will train on a strict original-only raw dataset built from the `train_1M` split.
 
-### 4.3 Subset Policy
+### 4.3 Raw Dataset Policy
 
-The frozen policy is a **strict original-only subset**:
+The frozen policy is a **strict original-only raw dataset**:
 
 ```text
 accepted rows
@@ -139,29 +139,31 @@ Why this replaced the earlier augmented recipe:
 - the smaller final size is worth the quality gain
 - phase one needs one trustworthy recipe more than one large synthetic mixture
 
-The frozen artifact lives at `artifacts/subsets/openmath_original_clean/`.
+The frozen raw dataset lives at `artifacts/raw_datasets/openmath_original_clean/`.
 
 ### 4.4 Train/Validation Split
 
-Split the frozen subset into:
+Split the frozen raw dataset into:
 
 ```text
 train / val
-- 25,349 train
--  2,817 val
+- 25,348 train
+-  2,818 val
 ```
 
 By source:
 
 ```text
 train split
-- 13,156  gsm8k
-- 12,193  math
+- 13,145  gsm8k
+- 12,203  math
 
 val split
-- 1,462  gsm8k
-- 1,355  math
+- 1,473  gsm8k
+- 1,345  math
 ```
+
+The split is grouped by canonical problem text so repeated or answer-variant solutions for the same problem cannot cross from train into validation.
 
 Rows were rejected before the split when they failed strict quality gates:
 
@@ -183,16 +185,16 @@ Observed lengths with the kept system prompt:
 
 ```text
 frozen dataset rendered lengths
-- train mean: 340.25 tokens
-- val mean:   338.45 tokens
+- train mean: 340.82 tokens
+- val mean:   333.36 tokens
 ```
 
 Exact train cost at current Tinker pricing:
 
 ```text
-25,349 train split
-- 8.625M train tokens / epoch
-- $3.45 / epoch at $0.40 / M train tokens
+25,348 train split
+- 8.639M train tokens / epoch
+- $3.46 / epoch at $0.40 / M train tokens
 ```
 
 Render sanity check also measured the system-prompt overhead directly:
@@ -200,7 +202,7 @@ Render sanity check also measured the system-prompt overhead directly:
 ```text
 system prompt overhead
 - 27 tokens / example
-- 684,423 extra train tokens / epoch
+- 684,396 extra train tokens / epoch
 - about $0.27 / epoch
 ```
 
@@ -237,7 +239,7 @@ Target modules:
 ### 6.3 What Stays Matched Across Arms
 
 - same base model
-- same dataset subset
+- same raw dataset and rendered dataset
 - same train/val split
 - same token budget
 - same epoch count
@@ -269,16 +271,16 @@ Rank sweeps are explicitly deferred.
 
 The comparison has to avoid the original strawman problem. That means both arms get the same tuning budget.
 
-### 7.1 Pilot Sweep
+### 7.1 Small LR-Selection Run
 
-Pilot subset:
+Small-run row slice:
 
 ```text
 - 5,000 train
 -   500 val
 ```
 
-Pilot grid:
+Small-run grid:
 
 ```text
 - 2 arms
@@ -296,18 +298,18 @@ Initial LR grid:
 Selection rule:
 
 - choose the best LR **per arm**
-- use lowest validation loss on the pilot val split
+- use lowest validation loss on the small-run validation split
 - freeze that LR for the main comparison
 
-Active pilot and main-run protocol details now live in `docs/freeze/run_protocol.md`.
+Active small LR-selection and main-run protocol details now live in `docs/freeze/run_protocol.md`.
 
 ### 7.2 Thesis Comparison
 
 Main runs:
 
 ```text
-- 25,349 train
--  2,817 val
+- 25,348 train
+-  2,818 val
 - 2 arms
 - 3 seeds each
 - 2 epochs
@@ -323,7 +325,7 @@ This is the core study. Everything else is supporting infrastructure.
 
 Primary training-time metric:
 
-- held-out validation loss on the frozen `2,817`-row val split
+- held-out validation loss on the frozen `2,818`-row val split
 
 Checkpoint selection:
 
@@ -357,7 +359,7 @@ The plan commits to a numeric null region, but the exact threshold is still cond
 
 Current rule:
 
-- set the numeric null region after task metric and pilot design are fixed
+- set the numeric null region after task metric and small LR-selection design are fixed
 - require the threshold to exceed observed seed noise on the critical comparison setup
 
 The threshold should not be invented in advance just to look rigorous.
@@ -370,10 +372,10 @@ The binding home for this rule is now `docs/freeze/run_protocol.md`.
 
 ### 9.1 Training Cost
 
-Pilot sweep:
+Small LR-selection run:
 
 ```text
-5k train pilot
+5k train small run
 - 2 arms x 3 LR values x 1 seed x 1 epoch
 - about $4.08 total training cost
 ```
@@ -381,18 +383,18 @@ Pilot sweep:
 Main comparison:
 
 ```text
-25,349 train main run
-- about $3.45 / epoch
-- about $6.90 / 2-epoch run
+25,348 train main run
+- about $3.46 / epoch
+- about $6.91 / 2-epoch run
 - 6 runs total for 2 arms x 3 seeds
-- about $41.40 total training cost
+- about $41.47 total training cost
 ```
 
 Combined:
 
 ```text
-pilot + main training
-- about $45.48 total
+small LR-selection + main training
+- about $45.55 total
 ```
 
 ### 9.2 Benchmark Cost
@@ -426,7 +428,7 @@ This is the first point in the project where the budget looks genuinely plausibl
 
 ### 10.1 Dataset Narrowness
 
-The frozen subset intentionally excludes the augmented sources. That improves trustworthiness, but it also narrows the training distribution to the original `gsm8k` and `math` slices.
+The frozen raw dataset intentionally excludes the augmented sources. That improves trustworthiness, but it also narrows the training distribution to the original `gsm8k` and `math` slices.
 
 ### 10.2 Prompt Contract Dependence
 
@@ -442,7 +444,7 @@ All-layer LoRA may not beat attention-only LoRA by much on this task. That is a 
 
 ### 10.5 Hyperparameter Drift
 
-If the first LR grid is clearly wrong, one extra pilot pass may be needed. The current budget leaves room for that, but not for careless reruns.
+If the first LR grid is clearly wrong, one extra small LR-selection pass may be needed. The current budget leaves room for that, but not for careless reruns.
 
 ---
 
@@ -452,14 +454,14 @@ Minimum successful outcome:
 
 - one reproducible Tinker SFT pipeline
 - one frozen dataset recipe with retained audit evidence
-- one pilot sweep with matched LR tuning budget
+- one small LR-selection sweep with matched LR tuning budget
 - one final comparison table across the three checkpoints
 - one write-up explaining what changed, what did not, and what the case study can and cannot claim
 
 Desired artifact set:
 
 - training config or script
-- logged subset recipe
+- logged raw dataset recipe
 - benchmark command/config
 - `LOG.md` field notes
 - revised plan and final write-up
