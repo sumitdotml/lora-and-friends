@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Run lightweight quality checks over an OpenMath subset.
+Run lightweight quality checks over an OpenMath raw dataset.
 
 Usage:
   uv run python scripts/audit_openmath_quality.py
-  uv run python scripts/audit_openmath_quality.py --input artifacts/subsets/openmath_original_clean/train.jsonl --output-dir artifacts/audits/openmath_original_clean_quality_train
+  uv run python scripts/audit_openmath_quality.py --input artifacts/raw_datasets/openmath_original_clean/train.jsonl --output-dir artifacts/audits/openmath_original_clean_quality_train
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from collections import Counter, defaultdict
 from datetime import UTC, datetime
 from pathlib import Path
 
-DEFAULT_INPUT = Path("artifacts/subsets/openmath_original_clean/train.jsonl")
+DEFAULT_INPUT = Path("artifacts/raw_datasets/openmath_original_clean/train.jsonl")
 DEFAULT_OUTPUT = Path("artifacts/audits/openmath_original_clean_quality_train")
 
 SUSPICIOUS_PATTERNS = {

@@ -22,7 +22,7 @@ SYSTEM_PROMPT = (
     "Put the final answer in \\boxed{}."
 )
 
-RAW_INPUT_DIR = Path("artifacts/subsets/openmath_original_clean")
+RAW_INPUT_DIR = Path("artifacts/raw_datasets/openmath_original_clean")
 OUTPUT_DIR = Path("artifacts/audits/openmath_original_clean_render_sanity")
 SAMPLE_ROW_IDS = [
     "d15265ccf80f2ef19132",

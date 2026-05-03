@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Extract suspicious rows from an OpenMath subset using simple phrase heuristics.
+Extract suspicious rows from an OpenMath raw dataset using simple phrase heuristics.
 
 Usage:
   uv run python scripts/extract_suspicious_openmath_rows.py
-  uv run python scripts/extract_suspicious_openmath_rows.py --input artifacts/subsets/openmath_original_clean/train.jsonl --output-dir artifacts/audits/openmath_original_clean_suspicious_rows_train
+  uv run python scripts/extract_suspicious_openmath_rows.py --input artifacts/raw_datasets/openmath_original_clean/train.jsonl --output-dir artifacts/audits/openmath_original_clean_suspicious_rows_train
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 
-DEFAULT_INPUT = Path("artifacts/subsets/openmath_original_clean/train.jsonl")
+DEFAULT_INPUT = Path("artifacts/raw_datasets/openmath_original_clean/train.jsonl")
 DEFAULT_OUTPUT = Path("artifacts/audits/openmath_original_clean_suspicious_rows_train")
 
 SUSPICIOUS_PATTERNS = {

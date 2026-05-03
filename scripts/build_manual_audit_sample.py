@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Build a deterministic manual-review sample from a training subset.
+Build a deterministic manual-review sample from a raw training dataset.
 
 Usage:
   uv run python scripts/build_manual_audit_sample.py
-  uv run python scripts/build_manual_audit_sample.py --input artifacts/subsets/openmath_original_clean/train.jsonl --output-dir artifacts/audits/openmath_original_clean_manual_review_100 --per-source 50
+  uv run python scripts/build_manual_audit_sample.py --input artifacts/raw_datasets/openmath_original_clean/train.jsonl --output-dir artifacts/audits/openmath_original_clean_manual_review_100 --per-source 50
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ from pathlib import Path
 
 SEED = 20260420
 DEFAULT_PER_SOURCE = 5
-DEFAULT_INPUT_PATH = Path("artifacts/subsets/openmath_original_clean/train.jsonl")
+DEFAULT_INPUT_PATH = Path("artifacts/raw_datasets/openmath_original_clean/train.jsonl")
 DEFAULT_OUTPUT_DIR = Path("artifacts/audits/openmath_original_clean_manual_review")
 
 

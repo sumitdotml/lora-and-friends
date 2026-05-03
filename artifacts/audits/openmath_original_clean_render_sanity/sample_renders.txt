@@ -11,20 +11,12 @@ The terms $140, a, \frac{45}{28}$ are the first, second and third terms, respect
 
 </think>
 
-In a geometric sequence, consecutive terms are related by the same ratio, which we call the common ratio $r$. Given the terms $140, a, \frac{45}{28}$, we can set up the following equations based on the definition of a geometric sequence:
+Let's denote the common ratio of the geometric sequence as $r$.
+\[ r = \frac{\text{second term}}{\text{first term}} = \frac{a}{140} \]
+\[ r = \frac{\text{third term}}{\text{second term}} = \frac{45/28}{a} \]
 
-1. $\frac{a}{140} = r$
-2. $\frac{45/28}{a} = r$
-
-Since both expressions equal $r$, we can set them equal to each other:
-\[ \frac{a}{140} = \frac{45/28}{a} \]
-
-Solving for $a$, first cross-multiply:
-\[ a^2 = 140 \cdot \frac{45}{28} \]
-
-\[ a^2 = \frac{140 \cdot 45}{28} = \frac{6300}{28} = 225 \]
-
-\[ a = \sqrt{225} = \boxed{15} \]<|im_end|>
+Equating the two expressions for $r$ gives us:
+\[ \frac{a}{140} = \frac{45/28}{a} \Rightarrow a^2 = 140 \times \frac{45}{28} = 225 \Rightarrow a = \sqrt{225} \Rightarrow a = \boxed{15} \]<|im_end|>
 
 
 ### WITHOUT SYSTEM
@@ -35,20 +27,12 @@ The terms $140, a, \frac{45}{28}$ are the first, second and third terms, respect
 
 </think>
 
-In a geometric sequence, consecutive terms are related by the same ratio, which we call the common ratio $r$. Given the terms $140, a, \frac{45}{28}$, we can set up the following equations based on the definition of a geometric sequence:
+Let's denote the common ratio of the geometric sequence as $r$.
+\[ r = \frac{\text{second term}}{\text{first term}} = \frac{a}{140} \]
+\[ r = \frac{\text{third term}}{\text{second term}} = \frac{45/28}{a} \]
 
-1. $\frac{a}{140} = r$
-2. $\frac{45/28}{a} = r$
-
-Since both expressions equal $r$, we can set them equal to each other:
-\[ \frac{a}{140} = \frac{45/28}{a} \]
-
-Solving for $a$, first cross-multiply:
-\[ a^2 = 140 \cdot \frac{45}{28} \]
-
-\[ a^2 = \frac{140 \cdot 45}{28} = \frac{6300}{28} = 225 \]
-
-\[ a = \sqrt{225} = \boxed{15} \]<|im_end|>
+Equating the two expressions for $r$ gives us:
+\[ \frac{a}{140} = \frac{45/28}{a} \Rightarrow a^2 = 140 \times \frac{45}{28} = 225 \Rightarrow a = \sqrt{225} \Rightarrow a = \boxed{15} \]<|im_end|>
 
 
 ====================================================================================================

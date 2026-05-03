@@ -1,14 +1,14 @@
 {
-  "created_at": "2026-04-20T13:34:28.590050+00:00",
-  "input_path": "artifacts/subsets/openmath_original_clean/train.jsonl",
-  "rows": 25349,
-  "boxed_matches_expected": 25349,
+  "created_at": "2026-05-03T08:57:45.977287+00:00",
+  "input_path": "artifacts/raw_datasets/openmath_original_clean/train.jsonl",
+  "rows": 25348,
+  "boxed_matches_expected": 25348,
   "boxed_match_rate": 1.0,
   "missing_box": 0,
   "boxed_mismatches": 0,
   "source_counts": {
-    "gsm8k": 13156,
-    "math": 12193
+    "math": 12203,
+    "gsm8k": 13145
   },
   "mismatch_by_source": {},
   "suspicious_pattern_counts": {},

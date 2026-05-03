@@ -1,0 +1,39 @@
+{
+  "created_at": "2026-05-03T09:23:58.451949+00:00",
+  "status": "pass",
+  "benchmark": {
+    "name": "GSM8K",
+    "dataset": "openai/gsm8k",
+    "config": "main",
+    "split": "test",
+    "rows": 1319
+  },
+  "training_source_filter": {
+    "source": "gsm8k",
+    "compared_field": "problem"
+  },
+  "normalization_rule": "Unicode NFKC, lowercase, strip leading/trailing whitespace, collapse repeated internal whitespace, preserve punctuation and numeric literals",
+  "inputs": {
+    "train_path": "artifacts/raw_datasets/openmath_original_clean/train.jsonl",
+    "val_path": "artifacts/raw_datasets/openmath_original_clean/val.jsonl",
+    "train_rows": 25348,
+    "val_rows": 2818,
+    "train_gsm8k_rows_compared_to_benchmark": 13145
+  },
+  "overlap_count": 0,
+  "overlapping_question_ids_or_hashes": [],
+  "overlapping_question_record_count": 0,
+  "train_val_overlap": {
+    "row_id_overlap_count": 0,
+    "row_id_overlap_examples": [],
+    "problem_text_overlap_count": 0,
+    "problem_text_overlap_examples": [],
+    "overlapped_val_row_count": 0,
+    "overlapped_val_row_id_examples": []
+  },
+  "pass_fail_outcome": {
+    "benchmark_contamination": "pass",
+    "train_val_overlap": "pass"
+  },
+  "failure_rule": "If benchmark overlap is greater than 0, rebuild without contaminated rows or change the benchmark anchor before comparison proceeds. If train/val overlap is greater than 0, rebuild the split before training."
+}

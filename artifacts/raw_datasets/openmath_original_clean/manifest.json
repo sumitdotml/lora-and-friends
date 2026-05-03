@@ -1,0 +1,44 @@
+{
+  "created_at": "2026-05-03T08:57:06.419545+00:00",
+  "dataset_name": "nvidia/OpenMathInstruct-2",
+  "dataset_split": "train_1M",
+  "seed": 20260420,
+  "sources": [
+    "gsm8k",
+    "math"
+  ],
+  "val_ratio": 0.1,
+  "input_source_counts": {
+    "gsm8k": 14764,
+    "math": 14704
+  },
+  "accepted_source_counts": {
+    "gsm8k": 14618,
+    "math": 13548
+  },
+  "split_source_counts": {
+    "train": {
+      "gsm8k": 13145,
+      "math": 12203
+    },
+    "val": {
+      "gsm8k": 1473,
+      "math": 1345
+    }
+  },
+  "split_group_counts": {
+    "train": 13005,
+    "val": 1441
+  },
+  "split_rule": "group rows by canonical problem text before train/validation split so repeated or answer-variant solutions for the same problem cannot cross splits",
+  "reject_reasons": {
+    "math:boxed_mismatch": 1064,
+    "gsm8k:boxed_mismatch": 141,
+    "math:suspicious_pattern": 92,
+    "gsm8k:suspicious_pattern": 5
+  },
+  "artifacts": {
+    "train_jsonl": "artifacts/raw_datasets/openmath_original_clean/train.jsonl",
+    "val_jsonl": "artifacts/raw_datasets/openmath_original_clean/val.jsonl"
+  }
+}
