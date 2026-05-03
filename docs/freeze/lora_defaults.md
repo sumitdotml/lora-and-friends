@@ -10,6 +10,13 @@ This file should exist before the smoke pass.
 
 Its contents should only be treated as locked after the smoke pass findings are incorporated and the updated file is committed.
 
+Current interpretation:
+
+- the pre-smoke defaults are defined, so the smoke pass has concrete settings to try
+- the final LoRA defaults are not locked yet
+- `TODO.md` step 3 being done means only "provisional defaults exist"
+- `TODO.md` step 6 is the later lock step that turns this file into the real adapter contract
+
 ## Provisional Defaults
 
 Current provisional values:
@@ -17,6 +24,15 @@ Current provisional values:
 - `r = 8`
 - `lora_alpha = 16`
 - `lora_dropout = 0.0`
+
+Provisional batch assumptions for the smoke pass:
+
+- micro-batch size: `1` rendered training example per `forward_backward` call
+- gradient accumulation: `8` `forward_backward` calls before one optimizer step
+- effective batch size: `8` rendered training examples per optimizer step
+- fallback if Tinker rejects this shape: use micro-batch size `1` and gradient accumulation `1` for the smoke pass, then record the backend constraint before locking this file
+
+These are smoke-pass assumptions, not final locked defaults.
 
 Target modules by arm:
 
@@ -36,14 +52,14 @@ Target modules by arm:
 
 Explicit non-scope:
 
-- LR is not owned by this file. LR is selected by the pilot sweep and frozen in the run protocol.
+- LR is not owned by this file. LR is selected by the small LR-selection run and frozen in the run protocol.
 
 ## Still Provisional
 
 These are not locked yet:
 
-- batch-size strategy
-- gradient accumulation
+- final batch-size strategy
+- final gradient accumulation
 - any backend-constrained defaults surfaced by Tinker
 
 ## Intended Scope When Locked
