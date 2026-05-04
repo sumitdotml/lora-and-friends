@@ -34,7 +34,7 @@ Provisional batch assumptions for the smoke pass:
 
 These are smoke-pass assumptions, not final locked defaults.
 
-Target modules by arm:
+Target modules by condition:
 
 - attention-only:
   - `q_proj`
@@ -62,6 +62,25 @@ These are not locked yet:
 - final gradient accumulation
 - any backend-constrained defaults surfaced by Tinker
 
+## Smoke-Pass Findings
+
+Observed on `2026-05-04` in `artifacts/smoke_pass/001/` with `tinker==0.18.2`:
+
+- `Qwen/Qwen3-8B` was accepted by Tinker.
+- attention-only LoRA was accepted as `train_attn=true`, `train_mlp=false`, `train_unembed=false`.
+- all-layer LoRA for this project was accepted as `train_attn=true`, `train_mlp=true`, `train_unembed=false`.
+- explicit target-module strings such as `q_proj` and `gate_proj` were not part of the observed Tinker API; the current SDK exposes layer-family switches instead.
+- `r=8` was accepted.
+- `lora_alpha` and `lora_dropout` were not exposed by `create_lora_training_client` in `tinker==0.18.2`.
+- micro-batch size `1` and eight forward/backward calls before one optimizer step ran successfully for the all-layer condition.
+- validation loss was measured by a local forward pass; Tinker did not automatically emit validation cadence.
+- token counts were retained locally from each datum; backend responses did not expose cost telemetry in the observed response shape.
+
+Resolved setup issue:
+
+- the first smoke attempt printed `Your Tinker SDK version is outdated. Please upgrade to the latest version.`
+- after upgrading to `tinker==0.18.2`, the smoke pass was rerun and the warning did not reappear
+
 ## Intended Scope When Locked
 
 The locked version of this file should define:
@@ -70,8 +89,8 @@ The locked version of this file should define:
 - final `lora_alpha`
 - final `lora_dropout`
 - final batch-size and gradient-accumulation assumptions
-- the rationale for why these values are fixed across both arms
-- the target module lists for both arms
+- the rationale for why these values are fixed across both conditions
+- the target module lists for both conditions
 
 ## Open Items Before Lock
 

@@ -66,7 +66,7 @@ Done when:
 
 - [x] Fill and freeze `docs/freeze/results_schema.md`.
 - [x] Define the raw metrics format: CSV, JSONL, or both.
-- [x] Define the minimum retained fields: `step`, `split`, `loss`, `checkpoint`, `arm`, `seed`, `eval_metric`, `token_count`, `cost`.
+- [x] Define the minimum retained fields: `step`, `split`, `loss`, `checkpoint`, `condition`, `seed`, `eval_metric`, `token_count`, `cost`.
 - [x] Define the minimal pre-smoke run-manifest fields: git SHA, dataset manifest hash, renderer version, LoRA config, LR, seed.
 - [x] Define where metrics and summaries will live in the repo.
 
@@ -106,7 +106,7 @@ It matters because:
 The smoke pass needs concrete settings before it can reveal whether Tinker accepts the planned setup or forces a change.
 
 Done when:
-`docs/freeze/lora_defaults.md` names provisional `r`, `lora_alpha`, `lora_dropout`, target modules for both arms, batch-size strategy, and gradient-accumulation assumption.
+`docs/freeze/lora_defaults.md` names provisional `r`, `lora_alpha`, `lora_dropout`, target modules for both conditions, batch-size strategy, and gradient-accumulation assumption.
 
 If it fails:
 Keep `lora_defaults` provisional and use the smoke pass to discover the smallest valid backend settings.
@@ -122,7 +122,7 @@ Do not treat these values as locked until Step 6 is complete.
 
 ### 4. Run A Thin Tinker Smoke Pass
 
-Status: not started.
+Status: done on 2026-05-04, with one follow-up warning recorded.
 
 What this means:
 Run the smallest practical Tinker training job on a tiny slice of the frozen rendered dataset, then record what the backend actually accepts and returns. This is a backend check, not a result we will compare in the write-up.
@@ -136,13 +136,23 @@ Done when:
 If it fails:
 Record the failure in `docs/project/LOG.md`, adjust only the blocked config fields, and rerun a tiny smoke pass before freezing LoRA defaults or the small LR-selection design.
 
-- [ ] Run a tiny Tinker job on a tiny slice.
-- [ ] Verify target-module compatibility for `Qwen3-8B`.
-- [ ] Verify renderer behavior matches local assumptions.
-- [ ] Observe batch and grad-accum behavior.
-- [ ] Observe checkpoint naming and retention.
-- [ ] Observe how often Tinker reports validation loss during training.
-- [ ] Observe what Tinker actually returns for token and cost telemetry.
+- [x] Run a tiny Tinker job on a tiny slice.
+- [x] Verify target-module compatibility for `Qwen3-8B`.
+- [x] Verify renderer behavior matches local assumptions.
+- [x] Observe batch and grad-accum behavior.
+- [x] Observe checkpoint naming and retention.
+- [x] Observe how often Tinker reports validation loss during training.
+- [x] Observe what Tinker actually returns for token and cost telemetry.
+
+Retained smoke-pass artifacts:
+
+- `artifacts/smoke_pass/001/manifest.json`
+- `artifacts/smoke_pass/001/metrics.jsonl`
+- `artifacts/smoke_pass/001/summary.json`
+- `artifacts/smoke_pass/001/sample_render.txt`
+
+Follow-up resolved:
+The first smoke attempt printed `Your Tinker SDK version is outdated. Please upgrade to the latest version.` The SDK was upgraded to `tinker==0.18.2`, the smoke pass was rerun, and the warning did not reappear.
 
 ### 5. Run The Untouched `Qwen3-8B` Baseline
 
@@ -167,33 +177,34 @@ Fix the eval script or config before running small LR-selection or main training
 
 ### 6. Lock LoRA Defaults
 
-Status: blocked on smoke pass.
+Status: ready to do next.
 
 What this means:
-Turn `docs/freeze/lora_defaults.md` from provisional settings into the adapter contract used by both comparison arms.
+Turn `docs/freeze/lora_defaults.md` from provisional settings into the adapter contract used by both comparison conditions.
 
 It matters because:
 The study should compare adapter scope, not drifting adapter hyperparameters.
 
 Done when:
-`docs/freeze/lora_defaults.md` has `Status: locked`, a freeze date, final shared values, target modules for both arms, and rationale recorded in `docs/project/LOG.md`.
+`docs/freeze/lora_defaults.md` has `Status: locked`, a freeze date, final shared values, target modules for both conditions, and rationale recorded in `docs/project/LOG.md`.
 
 If it fails:
 Do not run the small LR-selection sweep; rerun or inspect the smoke pass until the blocked defaults are concrete.
 
+- [x] Upgrade `tinker` after the smoke-pass SDK warning and rerun the smoke pass.
 - [ ] Update `docs/freeze/lora_defaults.md` from provisional to locked.
 - [ ] Record the rationale for the locked values.
-- [ ] Confirm that the locked defaults apply to both arms.
+- [ ] Confirm that the locked defaults apply to both conditions.
 
 ### 7. Freeze The Small LR-Selection Run
 
 Status: partially done; blocked on smoke-pass findings.
 
 What this means:
-Define the small practice training experiment that chooses learning rates before the real comparison. It is not the final result. It runs both LoRA arms on a smaller dataset slice, tries a small learning-rate grid, and picks the best learning rate per arm by validation loss. Also define the exact train rows, validation rows, seed, budget estimate, and how often validation loss is measured during the run.
+Define the small practice training experiment that chooses learning rates before the real comparison. It is not the final result. It runs both LoRA conditions on a smaller dataset slice, tries a small learning-rate grid, and picks the best learning rate per condition by validation loss. Also define the exact train rows, validation rows, seed, budget estimate, and how often validation loss is measured during the run.
 
 It matters because:
-Both arms need a fair learning-rate choice before the paid main comparison, and that choice should be made without spending the full experiment budget.
+Both conditions need a fair learning-rate choice before the paid main comparison, and that choice should be made without spending the full experiment budget.
 
 Done when:
 `docs/freeze/run_protocol.md` has a frozen small-run section and `docs/project/LOG.md` records the learning-rate selection protocol before the first small run starts.
@@ -208,11 +219,11 @@ Do not start the small LR-selection runs; unresolved selection design would let 
 - [x] Define the small-run seed identity: `7`.
 - [x] Ensure the small-run seed is held out from the main-run seed set.
 - [ ] Define how often validation loss is measured using smoke-pass findings.
-- [ ] State the selection rule clearly: best LR per arm by lowest validation loss.
+- [ ] State the selection rule clearly: best LR per condition by lowest validation loss.
 - [ ] Confirm that the small LR-selection run stays inside the budget envelope.
 - [ ] Log the LR-selection protocol before the first run.
 
-### 8. Prepare Final Arm-Specific Tinker Configs
+### 8. Prepare Final Condition-Specific Tinker Configs
 
 Status: not started.
 
@@ -239,21 +250,21 @@ Do not start main runs; config mismatch would make the comparison hard to interp
 Status: partially done.
 
 What this means:
-Define the final comparison before paid runs: arms, seeds, epochs, checkpoint-selection rule, null-result interpretation rule, and budget check.
+Define the final comparison before paid runs: conditions, seeds, epochs, checkpoint-selection rule, null-result interpretation rule, and budget check.
 
 It matters because:
 The main result should be judged against rules written before the numbers are known.
 
 Done when:
-`docs/freeze/run_protocol.md` has a frozen main-run section covering `2` arms, `3` seeds each, `2` epochs, checkpoint selection, reduction across seeds, null-result rule, and budget.
+`docs/freeze/run_protocol.md` has a frozen main-run section covering `2` conditions, `3` seeds each, `2` epochs, checkpoint selection, reduction across seeds, null-result rule, and budget.
 
 If it fails:
 Do not start main comparison runs; missing rules would make the study vulnerable to post-result interpretation drift.
 
 - [ ] Create and fill the main-run section in `docs/freeze/run_protocol.md`.
 - [ ] Freeze the checkpoint-selection rule to lowest validation loss.
-- [ ] Freeze the main-run protocol: `2` arms, `3` seeds each, `2` epochs.
-- [x] Freeze the per-arm reduction rule across seeds: mean across `3` seeds, report min/max range.
+- [ ] Freeze the main-run protocol: `2` conditions, `3` seeds each, `2` epochs.
+- [x] Freeze the per-condition reduction rule across seeds: mean across `3` seeds, report min/max range.
 - [ ] Freeze the null-result interpretation rule.
 - [ ] Recheck that the `1 + 3` seed policy still fits under the `$150` cap.
 - [x] Add an explicit `$25` correction-pass reserve to the budget sheet.
@@ -263,7 +274,7 @@ Do not start main comparison runs; missing rules would make the study vulnerable
 Status: not started.
 
 What this means:
-Execute the frozen small LR-selection runs, select the best learning rate per arm by the frozen rule, run the full attention-only and all-layer LoRA comparison, then evaluate every retained checkpoint under the frozen `GSM8K` contract.
+Execute the frozen small LR-selection runs, select the best learning rate per condition by the frozen rule, run the full attention-only and all-layer LoRA comparison, then evaluate every retained checkpoint under the frozen `GSM8K` contract.
 
 It matters because:
 This is the actual experiment the project is built to answer.
@@ -275,7 +286,7 @@ If it fails:
 Record the failure and cost impact in `docs/project/LOG.md`, use the `$25` correction reserve only for a clearly scoped correction pass, and avoid changing frozen rules unless the run is invalid.
 
 - [ ] Run the small LR-selection sweep.
-- [ ] Select the best LR per arm.
+- [ ] Select the best LR per condition.
 - [ ] Run the main comparison.
 - [ ] Evaluate all checkpoints under the frozen `GSM8K` contract.
 - [ ] Save results in the retained schema.
@@ -288,7 +299,7 @@ Record the failure and cost impact in `docs/project/LOG.md`, use the `$25` corre
 - [x] `artifacts/audits/contamination_check/report.json` reports no training `gsm8k` overlap with `GSM8K` test and no train-vs-validation overlap.
 - [x] Small LR-selection protocol includes seed identity.
 - [ ] Small LR-selection protocol says how often validation loss is measured.
-- [x] Main-run protocol includes per-arm reduction rule.
+- [x] Main-run protocol includes per-condition reduction rule.
 - [x] `docs/freeze/results_schema.md` includes the minimal run-manifest fields.
 
 ## Logging

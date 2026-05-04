@@ -105,10 +105,11 @@ Initialized on 2026-03-24.
 - validation_check: rerun the search with single-quoted or escaped patterns and confirm it exits with only intended literal matches
 - first_seen: 2026-05-03
 - last_seen: 2026-05-04
-- occurrence_count: 2
+- occurrence_count: 3
 - evidence:
   - command:rg pattern containing legacy artifact-directory labels without shell-safe quoting
   - command:rg pattern containing backticked LOG.md and PROJECT_PLAN.md terms without shell-safe quoting
+  - command:rg pattern containing backticked tinker term without shell-safe quoting
 
 ### MISTAKE-20260503-004
 
@@ -125,3 +126,17 @@ Initialized on 2026-03-24.
   - file:artifacts/README.md:125
   - file:artifacts/README.md:128
   - file:artifacts/dataset_lineage.excalidraw:1
+
+### MISTAKE-20260504-001
+
+- status: active
+- severity: medium
+- scope_tags: [code, data, planning]
+- pattern: smoke runner used a backend cookbook renderer without first comparing its rendered SFT text to the frozen tokenizer render contract
+- prevention_rule: before using a backend renderer for training, write and inspect a retained sample render that must match the frozen chat-template contract for special tokens and thinking-mode markers
+- validation_check: for `qwen3_disable_thinking`, the retained smoke sample render must include the empty `<think>\n\n</think>` block before the assistant answer and must be built from `AutoTokenizer.apply_chat_template(..., enable_thinking=False)`
+- first_seen: 2026-05-04
+- last_seen: 2026-05-04
+- occurrence_count: 1
+- evidence:
+  - command:first smoke attempt sample render showed `<think>` without the empty closing `</think>` block before correction

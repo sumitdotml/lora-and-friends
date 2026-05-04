@@ -1,12 +1,16 @@
 # Results Schema
 
 **Status**: frozen  
-**Frozen on**: 2026-04-22  
+**Frozen on**: 2026-05-04
 **Purpose**: define the retained metrics shape before any baseline or smoke-pass artifact lands.
 
 ## Freeze Rule
 
 This file must be committed in frozen form before any retained numeric artifact is treated as canonical.
+
+Naming revision:
+
+- `condition` is the canonical comparison label for baseline, attention-only LoRA, and all-layer LoRA results.
 
 ## Scope
 
@@ -35,7 +39,7 @@ These are the current intended minimum fields:
 - `split`
 - `loss`
 - `checkpoint`
-- `arm`
+- `condition`
 - `seed`
 - `eval_metric`
 - `token_count`
@@ -49,7 +53,7 @@ Canonical event row example:
 {
   "run_id": "baseline-qwen3-8b-gsm8k-20260422",
   "checkpoint": "Qwen3-8B",
-  "arm": "base",
+  "condition": "base",
   "seed": null,
   "step": null,
   "split": "gsm8k_test",
@@ -75,7 +79,7 @@ Minimum fields:
 
 - `run_id`
 - `checkpoint`
-- `arm`
+- `condition`
 - `seed`
 - `dataset`
 - `primary_metric`
@@ -114,5 +118,12 @@ Field requirement rule:
 
 ## Open Items After Smoke Pass
 
-- Update the schema if Tinker exposes token and cost telemetry in a shape that should be captured directly.
-- Lock any additional manifest fields needed for reproducibility.
+Post-smoke note from `artifacts/smoke_pass/001/`:
+
+- Tinker responses exposed backend metric fields such as `loss:sum` and `clock_cycle:unique`.
+- The smoke pass did not observe backend cost telemetry in the response shape.
+- Keep `cost` nullable until a later Tinker response or dashboard export gives a stable cost field.
+
+Still open:
+
+- Lock any additional manifest fields needed for reproducibility before the small LR-selection runs.

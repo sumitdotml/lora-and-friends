@@ -36,7 +36,7 @@ This is **not** a full replication of the "LoRA Without Regret" blog. It is a **
 | Main comparison | Attention-only LoRA vs all-layer LoRA |
 | Training dataset | Frozen original-only raw dataset built from `nvidia/OpenMathInstruct-2 train_1M` (`gsm8k` + `math`), then rendered for `Qwen3-8B` |
 | Benchmark | `GSM8K` test split |
-| Out of scope for phase one | FullFT, MoE, RL, transfer eval, Tinker-default as an equal arm |
+| Out of scope for phase one | FullFT, MoE, RL, transfer eval, Tinker-default as an equal condition |
 
 ---
 
@@ -218,9 +218,9 @@ Evaluate the untouched `Qwen3-8B` checkpoint on `GSM8K` before any fine-tuning.
 
 That baseline matters. It tells the write-up whether the adapters actually improved the model or just moved it sideways.
 
-### 6.2 Training Arms
+### 6.2 Training Conditions
 
-#### Arm A - Attention-Only LoRA
+#### Condition A - Attention-Only LoRA
 
 Target modules:
 
@@ -228,7 +228,7 @@ Target modules:
 ["q_proj", "k_proj", "v_proj", "o_proj"]
 ```
 
-#### Arm B - All-Layer LoRA
+#### Condition B - All-Layer LoRA
 
 Target modules:
 
@@ -236,7 +236,7 @@ Target modules:
 ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
 ```
 
-### 6.3 What Stays Matched Across Arms
+### 6.3 What Stays Matched Across Conditions
 
 - same base model
 - same raw dataset and rendered dataset
@@ -257,7 +257,7 @@ Hold fixed:
 - LoRA alpha
 - LoRA dropout
 
-Only `target_modules` and the selected LR differ between the arms.
+Only `target_modules` and the selected LR differ between the conditions.
 
 Current adapter defaults now live in `docs/freeze/lora_defaults.md`.
 
@@ -269,7 +269,7 @@ Rank sweeps are explicitly deferred.
 
 ## 7. Tuning Protocol
 
-The comparison has to avoid the original strawman problem. That means both arms get the same tuning budget.
+The comparison has to avoid the original strawman problem. That means both conditions get the same tuning budget.
 
 ### 7.1 Small LR-Selection Run
 
@@ -283,7 +283,7 @@ Small-run row slice:
 Small-run grid:
 
 ```text
-- 2 arms
+- 2 conditions
 - 3 LR values
 - 1 seed
 - 1 epoch
@@ -297,7 +297,7 @@ Initial LR grid:
 
 Selection rule:
 
-- choose the best LR **per arm**
+- choose the best LR **per condition**
 - use lowest validation loss on the small-run validation split
 - freeze that LR for the main comparison
 
@@ -310,7 +310,7 @@ Main runs:
 ```text
 - 25,348 train
 -  2,818 val
-- 2 arms
+- 2 conditions
 - 3 seeds each
 - 2 epochs
 ```
@@ -376,7 +376,7 @@ Small LR-selection run:
 
 ```text
 5k train small run
-- 2 arms x 3 LR values x 1 seed x 1 epoch
+- 2 conditions x 3 LR values x 1 seed x 1 epoch
 - about $4.08 total training cost
 ```
 
@@ -386,7 +386,7 @@ Main comparison:
 25,348 train main run
 - about $3.46 / epoch
 - about $6.91 / 2-epoch run
-- 6 runs total for 2 arms x 3 seeds
+- 6 runs total for 2 conditions x 3 seeds
 - about $41.47 total training cost
 ```
 

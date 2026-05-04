@@ -145,7 +145,7 @@ Required content:
 - LR grid
 - pilot seed identity
 - validation-loss cadence
-- per-arm LR selection rule
+- per-condition LR selection rule
 - pilot budget check
 
 Two details that must not vanish:
@@ -153,7 +153,7 @@ Two details that must not vanish:
 - pilot seed must be held out from the main-run seed set
 - validation-loss cadence must be based on smoke-pass findings, not assumption
 
-### 8. Prepare Final Arm-Specific Tinker Configs
+### 8. Prepare Final Condition-Specific Tinker Configs
 
 Prepare the final configs for:
 
@@ -171,11 +171,11 @@ Freeze the full study contract before paid runs begin.
 
 Required content:
 
-- `2` arms
+- `2` conditions
 - `3` seeds each
 - `2` epochs
 - checkpoint-selection rule
-- per-arm reduction rule across seeds
+- per-condition reduction rule across seeds
 - null-result interpretation rule
 - final budget sheet
 
@@ -188,7 +188,7 @@ Named budget line:
 Execute:
 
 - pilot sweep
-- per-arm LR selection
+- per-condition LR selection
 - main runs
 - per-checkpoint `GSM8K` evaluation
 
@@ -203,7 +203,7 @@ The earlier debate identified seven items that were easy to lose during refactor
 - contamination gate and pass/fail rule -> `docs/freeze/eval_contract.md`
 - pilot seed identity -> pilot sweep section of this file and `TODO.md`
 - validation-loss cadence -> smoke-pass outputs, then pilot/main protocol sections
-- per-arm reduction rule across seeds -> main-run protocol section
+- per-condition reduction rule across seeds -> main-run protocol section
 - minimal run manifest -> `docs/freeze/results_schema.md`
 
 ## Immediate File Work

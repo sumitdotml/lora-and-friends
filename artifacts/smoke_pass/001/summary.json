@@ -1,0 +1,90 @@
+{
+  "conditions": [
+    {
+      "condition": "attention_only",
+      "checkpoint": {
+        "name": "smoke-001-attention_only-final",
+        "path": "tinker://68fd2ea0-e4bd-54eb-b9f0-4119c1ecba4a:train:0/weights/smoke-001-attention_only-final",
+        "ttl_seconds": 604800
+      },
+      "lora_config": {
+        "lora_alpha": "not exposed by tinker 0.18.2 create_lora_training_client",
+        "lora_dropout": "not exposed by tinker 0.18.2 create_lora_training_client",
+        "rank": 8,
+        "train_attn": true,
+        "train_mlp": false,
+        "train_unembed": false
+      },
+      "optimizer_steps": 1,
+      "train_examples": 1,
+      "validation": {
+        "condition": "attention_only",
+        "backend_metrics": {
+          "clock_cycle:unique": 8017443.0,
+          "loss:sum": 716.3157806396484
+        },
+        "checkpoint": null,
+        "cost": null,
+        "eval_metric": {
+          "name": "validation_mean_nll",
+          "value": 1.5048651695251465
+        },
+        "loss": 1.5048651695251465,
+        "run_id": "smoke-001",
+        "seed": 7,
+        "split": "smoke_val",
+        "step": 1,
+        "token_count": 622
+      }
+    },
+    {
+      "condition": "all_layer",
+      "checkpoint": {
+        "name": "smoke-001-all_layer-final",
+        "path": "tinker://68fd2ea0-e4bd-54eb-b9f0-4119c1ecba4a:train:1/weights/smoke-001-all_layer-final",
+        "ttl_seconds": 604800
+      },
+      "lora_config": {
+        "lora_alpha": "not exposed by tinker 0.18.2 create_lora_training_client",
+        "lora_dropout": "not exposed by tinker 0.18.2 create_lora_training_client",
+        "rank": 8,
+        "train_attn": true,
+        "train_mlp": true,
+        "train_unembed": false
+      },
+      "optimizer_steps": 1,
+      "train_examples": 8,
+      "validation": {
+        "condition": "all_layer",
+        "backend_metrics": {
+          "clock_cycle:unique": 7492552.0,
+          "loss:sum": 701.3374328613281
+        },
+        "checkpoint": null,
+        "cost": null,
+        "eval_metric": {
+          "name": "validation_mean_nll",
+          "value": 1.4733978509902954
+        },
+        "loss": 1.4733978509902954,
+        "run_id": "smoke-001",
+        "seed": 7,
+        "split": "smoke_val",
+        "step": 8,
+        "token_count": 622
+      }
+    }
+  ],
+  "artifact_paths": {
+    "manifest": "artifacts/smoke_pass/001/manifest.json",
+    "metrics": "artifacts/smoke_pass/001/metrics.jsonl",
+    "sample_render": "artifacts/smoke_pass/001/sample_render.txt",
+    "summary": "artifacts/smoke_pass/001/summary.json"
+  },
+  "finished_at": "2026-05-04T14:07:53.610185+00:00",
+  "run_id": "smoke-001",
+  "status": "pass",
+  "supported_model_checked": true,
+  "token_telemetry": "local datum token counts retained; backend cost telemetry not observed in tinker 0.18.2 responses",
+  "validation_loss_reporting": "manual forward pass controlled by the local training loop"
+}

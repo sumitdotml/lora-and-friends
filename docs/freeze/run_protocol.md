@@ -10,8 +10,8 @@
 Goal:
 
 - run a small practice training experiment before the main comparison
-- try a small learning-rate grid for both LoRA arms
-- select LR fairly for both arms after the smoke pass
+- try a small learning-rate grid for both LoRA conditions
+- select LR fairly for both conditions after the smoke pass
 
 Meaning:
 
@@ -30,7 +30,7 @@ Still open:
 - small-run validation identity
 - LR grid
 - how often validation loss is measured during training
-- per-arm LR selection rule
+- per-condition LR selection rule
 - small-run budget estimate
 
 ## Main Run
@@ -47,13 +47,13 @@ Still open:
 - final run shape confirmation
 - null-result interpretation rule
 
-## Per-Arm Reduction
+## Per-Condition Reduction
 
 **Frozen on**: 2026-04-22
 
-- report arm score as the mean across `3` seeds
+- report condition score as the mean across `3` seeds
 - report min/max range alongside the mean
-- apply any null-region threshold to the arm mean, not to a single seed
+- apply any null-region threshold to the condition mean, not to a single seed
 
 ## Budget Reserve
 

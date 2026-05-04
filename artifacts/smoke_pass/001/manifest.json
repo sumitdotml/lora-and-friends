@@ -1,0 +1,69 @@
+{
+  "conditions": {
+    "all_layer": {
+      "train_attn": true,
+      "train_examples": 8,
+      "train_mlp": true,
+      "train_unembed": false
+    },
+    "attention_only": {
+      "train_attn": true,
+      "train_examples": 1,
+      "train_mlp": false,
+      "train_unembed": false
+    }
+  },
+  "created_at": "2026-05-04T14:06:35.673305+00:00",
+  "dataset": {
+    "raw_manifest_sha256": "a85122a4c45809f216c7545279475278907725a198e0c0e556a6530d932d6476",
+    "rendered_manifest_sha256": "2cc5b2d2331bdc6cd16003c48f7693b0544650141e2f2d616de2b59f6fc9d0ee",
+    "train_path": "artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/train.jsonl",
+    "train_row_ids": [
+      "69ceb448cb3954b6f34e",
+      "89bbf4145757bc1b95cb",
+      "204dff6956dd578c95c5",
+      "e2513e6fc1e9bb0c156b",
+      "d8772d66066cf8e649d2",
+      "3a36a69368b0bb8a5d0d",
+      "3b8a9b14de1ee47bb8dc",
+      "8b7a43e1a1215be16627"
+    ],
+    "val_path": "artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/val.jsonl",
+    "val_row_ids": [
+      "5c57a662df426e29b7de",
+      "d34500ef09e1960f7c60"
+    ]
+  },
+  "finished_at": "2026-05-04T14:07:53.610185+00:00",
+  "git": {
+    "dirty": true,
+    "sha": "2d6e818fdd6b850287f786687f20ba1c88ba8a12",
+    "status_short": [
+      "M AGENT_MISTAKES.md",
+      " M TODO.md",
+      " M docs/freeze/lora_defaults.md",
+      " M docs/freeze/results_schema.md",
+      " M docs/project/LOG.md",
+      " M pyproject.toml",
+      " M uv.lock",
+      "?? artifacts/smoke_pass/",
+      "?? tinker/run_smoke_pass.py"
+    ]
+  },
+  "model_name": "Qwen/Qwen3-8B",
+  "package_versions": {
+    "tinker": "0.18.2",
+    "tinker-cookbook": "0.1.0",
+    "transformers": "5.7.0"
+  },
+  "renderer_name": "qwen3_disable_thinking",
+  "run_id": "smoke-001",
+  "smoke_shape": {
+    "checkpoint_ttl_seconds": 604800,
+    "gradient_accumulation_tested_by_all_layer_condition": 8,
+    "learning_rate": 0.0001,
+    "micro_batch_size": 1,
+    "seed": 7
+  },
+  "status": "pass"
+}

@@ -42,7 +42,7 @@ User prompt:
 
 Contract rule:
 
-- mirror the frozen training contract as closely as possible so the untouched baseline and both LoRA arms are judged under the same behavioral expectation
+- mirror the frozen training contract as closely as possible so the untouched baseline and both LoRA conditions are judged under the same behavioral expectation
 
 ## Sampling And Decoding Policy
 

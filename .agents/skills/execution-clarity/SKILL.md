@@ -47,7 +47,7 @@ Expand terms like these the first time they appear in a live tracker:
 - `contamination`: duplicate or overlapping examples between training data and held-out evaluation data.
 - `smoke pass`: the smallest cheap backend run that reveals whether the planned setup works.
 - `pilot`: a small selection run used to choose settings before the main comparison.
-- `arm`: one experimental condition being compared against another.
+- `condition`: one experimental condition being compared against another.
 - `freeze`: a committed decision that should not change after results are known.
 - `manifest`: a small metadata file that records what artifact was produced and under what inputs.
 - `cadence`: how often something happens during a run, such as validation loss logging.

@@ -28,7 +28,7 @@ The next phase is where the project can still become sloppy. The risk is not “
 - solo, part-time execution
 - local machine is not the training backend
 - Tinker is the real execution path
-- the untouched baseline matters because both LoRA arms need to beat something real
+- the untouched baseline matters because both LoRA conditions need to beat something real
 - the prompt contract is fixed and must stay consistent across baseline and fine-tuned evaluation
 - the dataset is frozen, so the next mistakes are process mistakes, not data mistakes
 
@@ -56,7 +56,7 @@ This ordering assumes that baseline evaluation is the first operational anchor. 
 
 - The current ordering may put `results schema` too late. If metrics storage is not defined before baseline eval, the first retained artifact may already be inconsistent with later runs.
 - `LoRA defaults` and `pilot sweep design` may be more coupled than the current order admits. The LR grid can depend on assumptions about rank, alpha, dropout, and effective batch size.
-- `Tinker training setup` might need to start earlier, even if only as a skeleton, because the actual backend interface can constrain what “cleanly matched across arms” means in practice.
+- `Tinker training setup` might need to start earlier, even if only as a skeleton, because the actual backend interface can constrain what “cleanly matched across conditions” means in practice.
 - The baseline step itself is under-specified unless it explicitly says where predictions, scores, and prompt settings are stored.
 
 ### Questions for Opus 4.7
@@ -79,7 +79,7 @@ GPT 5.4 diagnoses the ordering weaknesses correctly but then stops short of reor
 
 Results schema first. The baseline evaluation is the first step in the current plan that produces a retained numeric artifact. If the schema is undefined when the baseline lands, the options are (a) rerun the baseline later — cheap at ~`$0.11` but unprincipled, (b) retrofit a schema onto the existing baseline JSON — fragile, or (c) keep baseline under one shape and fine-tuned runs under another — compromises the three-way comparison that is the whole point of the write-up. None are acceptable for a project whose main deliverable is a defensible comparison table.
 
-The schema itself does not need to be elaborate. One page, one JSONL row example, agreed fields (`step`, `split`, `loss`, `checkpoint_id`, `arm`, `seed`, `eval_metric`, `token_count`, `cost`, `run_id`), a file-layout convention, a retention rule. An hour of work. `TODO.md` step 6 — Results Schema — must move to position 1.
+The schema itself does not need to be elaborate. One page, one JSONL row example, agreed fields (`step`, `split`, `loss`, `checkpoint_id`, `condition`, `seed`, `eval_metric`, `token_count`, `cost`, `run_id`), a file-layout convention, a retention rule. An hour of work. `TODO.md` step 6 — Results Schema — must move to position 1.
 
 Separately, the evaluation *contract* — prompt, sampling policy, answer-extraction regex, scoring rule — is not the schema, and `TODO.md` step 1 "Baseline Evaluation Wiring" conflates them. The contract is load-bearing for baseline, pilot, and main runs; the harness plumbing is not. Split them.
 
@@ -98,7 +98,7 @@ Seven items the current execution plan either does not mention or leaves as a de
 3. **GSM8K test-split contamination check.** Training uses `OpenMathInstruct-2` rows tagged `gsm8k`, augmented from the GSM8K *train* split. A one-shot normalized-question overlap check against the GSM8K *test* split is cheap insurance; if any overlap exists, the headline claim is void.
 4. **Pilot seed identity.** `PROJECT_PLAN.md` §7.1 says "1 seed" but does not name it. The main run uses 3 seeds. If the pilot seed is one of those three, the LR selected on it is biased in that seed's favour; holding the pilot seed out of the main-run set avoids that.
 5. **Validation-loss cadence.** "Checkpoint at lowest validation loss" is meaningful only on a defined step grid. Tinker's default measurement cadence is unknown until the smoke pass surfaces it.
-6. **Per-arm reduction rule for three seeds.** Do you report mean, median, or all three? Does the null-region threshold apply to the per-seed minimum, the per-seed mean, or the arm mean? Freeze before looking at results, not after.
+6. **Per-condition reduction rule for three seeds.** Do you report mean, median, or all three? Does the null-region threshold apply to the per-seed minimum, the per-seed mean, or the condition mean? Freeze before looking at results, not after.
 7. **Run manifest per training job.** Git SHA, dataset manifest hash, renderer version, LoRA config, LR, seed, token budget, dollar cost. Without this, the write-up cannot cite runs back to their inputs without archaeology.
 
 ### Q4 — Thin Tinker Pass Earlier?
@@ -132,9 +132,9 @@ All three are avoidable by reordering. Working harder on the current order does 
 3. **Tinker smoke pass.** Tentative LoRA defaults (`r=8`, `alpha=16`, `dropout=0.0`, best-guess batch and grad-accum) → 100-row, 100-step run end to end → lock defaults with rationale grounded in actual Tinker behavior.
 4. **Baseline evaluation** of untouched `Qwen3-8B` on GSM8K under the step-1 schema and step-2 contract. Runs in parallel with step 3.
 5. **Pilot sweep design.** LR grid conditional on locked defaults and smoke-pass findings; pilot row-slice and val identity; pilot seed held out from the main-run seed set; null-region trigger rule; budget check.
-6. **Tinker configs for both arms.** Matched except `target_modules` and selected LR. Reuses the smoke-pass skeleton.
-7. **Pilot execution.** LR-per-arm selection. Observed seed noise recorded. Null threshold set from seed noise.
-8. **Main comparison readiness.** Lock run sheet (`2` arms × `3` seeds × `2` epochs), per-seed checkpoint-selection rule (lowest validation loss), per-arm reduction rule, reserve `$25` for a correction pass.
+6. **Tinker configs for both conditions.** Matched except `target_modules` and selected LR. Reuses the smoke-pass skeleton.
+7. **Pilot execution.** LR-per-condition selection. Observed seed noise recorded. Null threshold set from seed noise.
+8. **Main comparison readiness.** Lock run sheet (`2` conditions × `3` seeds × `2` epochs), per-seed checkpoint-selection rule (lowest validation loss), per-condition reduction rule, reserve `$25` for a correction pass.
 9. **Main runs + per-checkpoint GSM8K evaluation** under the step-1 schema and step-2 contract.
 
 ### One Thing Not Negotiable
@@ -189,7 +189,7 @@ The seven missing prerequisites are good catches and should be folded into the p
 3. GSM8K test contamination check
 4. pilot seed identity
 5. validation-loss cadence
-6. per-arm reduction rule across seeds
+6. per-condition reduction rule across seeds
 7. per-job run manifest
 
 None of these are optional cleanup. They are part of the actual experiment definition.
@@ -209,11 +209,11 @@ This is the order I would now endorse:
    This can run in parallel with step 4 once steps 1 and 2 are frozen.
 6. **Lock LoRA defaults after smoke-pass findings**
 7. **Freeze the pilot sweep design**
-   Includes LR grid, pilot row-slice identity, pilot seed identity, validation-loss cadence, and per-arm LR selection rule.
-8. **Prepare final arm-specific Tinker configs**
+   Includes LR grid, pilot row-slice identity, pilot seed identity, validation-loss cadence, and per-condition LR selection rule.
+8. **Prepare final condition-specific Tinker configs**
    Matched except `target_modules` and selected LR.
 9. **Freeze main-run protocol**
-   Includes `2 x 3 x 2`, checkpoint-selection rule, per-arm reduction rule, null-region rule, and updated budget sheet.
+   Includes `2 x 3 x 2`, checkpoint-selection rule, per-condition reduction rule, null-region rule, and updated budget sheet.
 10. **Run pilot, then main comparison**
 
 That is a better sequence than the original six-step ordering because it front-loads the steps that define artifact shape and backend truth.
@@ -340,7 +340,7 @@ The execution order should now be treated as:
 5. run untouched `Qwen3-8B` baseline in parallel once steps 1 and 2 are frozen
 6. lock LoRA defaults after smoke-pass findings
 7. freeze pilot sweep design
-8. prepare final arm-specific Tinker configs
+8. prepare final condition-specific Tinker configs
 9. freeze main-run protocol and explicit budget sheet, including the `$25` correction-pass reserve
 10. run pilot, then main comparison
 
@@ -378,7 +378,7 @@ One small pre-implementation reminder worth flagging before the file rewrites be
 - `docs/freeze/eval_contract.md` — items 1 (answer-extraction regex + normalization), 2 (sampling/decoding policy), 3 (contamination gate with predeclared pass/fail rule)
 - `docs/freeze/results_schema.md` — item 7 (run-manifest fields, minimal-before-smoke then expanded after)
 - Pilot sweep section of `plan-finetuning-execution.md` — items 4 (pilot seed identity, held out from main-run seed set) and 5 (validation-loss cadence, informed by smoke-pass findings)
-- Main-run protocol section of `plan-finetuning-execution.md` — item 6 (per-arm reduction rule across the three seeds, committed before results are viewed)
+- Main-run protocol section of `plan-finetuning-execution.md` — item 6 (per-condition reduction rule across the three seeds, committed before results are viewed)
 
 With that mapping stated, the file-update work is unambiguous. No further debate pass needed from my side.
 

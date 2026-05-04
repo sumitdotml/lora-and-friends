@@ -4,7 +4,7 @@
 
 **Objective**
 
-The project now has a defensible shape: one model, one task, one supervised fine-tuning comparison. FullFT, MoE, RL, transfer evaluation, and Tinker-default as a co-equal arm dropped out of phase one.
+The project now has a defensible shape: one model, one task, one supervised fine-tuning comparison. FullFT, MoE, RL, transfer evaluation, and Tinker-default as a co-equal condition dropped out of phase one.
 
 **Core comparison**
 
@@ -132,11 +132,11 @@ main raw dataset
 pilot sweep
 - train rows: 5,000
 - val rows:     500
-- 2 arms x 3 LR values x 1 seed x 1 epoch
+- 2 conditions x 3 LR values x 1 seed x 1 epoch
 - total train cost: about $5.20
 
 thesis comparison
-- 2 arms x 3 seeds x 2 epochs
+- 2 conditions x 3 seeds x 2 epochs
 - total train cost: about $56.17
 
 pilot + thesis train cost
@@ -687,7 +687,7 @@ Why:
 
 **Risk**
 
-The main prompt decision is done. The next risk is not rendering anymore. It is experimental setup: LoRA defaults, baseline eval wiring, and making sure the exact same prompt contract is used for the untouched model and both adapter arms.
+The main prompt decision is done. The next risk is not rendering anymore. It is experimental setup: LoRA defaults, baseline eval wiring, and making sure the exact same prompt contract is used for the untouched model and both adapter conditions.
 
 **Next**
 
@@ -705,7 +705,7 @@ The freeze docs stopped being empty shells. `results_schema.md` now names `JSONL
 
 `eval_contract.md` now locks the system prompt text, greedy decoding, `enable_thinking=False`, boxed-answer extraction, exact-match-after-normalization scoring, and the contamination report path at `artifacts/audits/contamination_check/report.json`. The contamination check is still a gate, not a warning.
 
-`lora_defaults.md` now owns the target-module lists for both arms and says explicitly that LR is not part of the LoRA-defaults contract. It also carries a visible status-transition procedure for the provisional -> locked update after the smoke pass.
+`lora_defaults.md` now owns the target-module lists for both conditions and says explicitly that LR is not part of the LoRA-defaults contract. It also carries a visible status-transition procedure for the provisional -> locked update after the smoke pass.
 
 **Run protocol**
 
@@ -713,7 +713,7 @@ Added `docs/freeze/run_protocol.md` to hold the items that freeze later than sch
 
 - pilot seed: `7`
 - main seeds: `0`, `1`, `2`
-- per-arm reduction: mean across `3` seeds with min/max range reported
+- per-condition reduction: mean across `3` seeds with min/max range reported
 - correction reserve: `$25`
 - smoke-pass artifact path: `artifacts/smoke_pass/001/`
 
@@ -935,3 +935,67 @@ The full frozen dataset payloads now live at `sumitdotml/lora-and-friends-datase
 **Next**
 
 Remove the JSONL payloads from Git tracking while leaving local paths usable for training and validation.
+
+## 2026-05-04: Ran the first Tinker smoke pass and corrected the SFT renderer path.
+
+**Config**
+
+Smoke artifacts landed under `artifacts/smoke_pass/001/`.
+
+```json
+{
+  "run_id": "smoke-001",
+  "model_name": "Qwen/Qwen3-8B",
+  "renderer_name": "qwen3_disable_thinking",
+  "tinker": "0.18.2",
+  "transformers": "5.7.0",
+  "seed": 7,
+  "learning_rate": 0.0001,
+  "micro_batch_size": 1
+}
+```
+
+**Notes**
+
+The first smoke attempt exposed a renderer trap. The Tinker cookbook `qwen3_disable_thinking` renderer is correct for generation prompts, but its supervised-training path left the answer after an opening `<think>` tag. The project contract is the Hugging Face chat template with `enable_thinking=False`, which renders an empty `<think>\n\n</think>` block before the assistant answer. The smoke runner now builds Tinker datums from `AutoTokenizer.apply_chat_template(..., enable_thinking=False)` and masks loss only after the rendered prompt prefix.
+
+**Numbers**
+
+- attention-only condition: `1` train example, `1` optimizer step, validation mean NLL `1.5048651695251465`
+- all-layer condition: `8` train examples, `1` optimizer step after `8` forward/backward calls, validation mean NLL `1.4733978509902954`
+- validation rows used: `2`
+- all-layer train token count before optimizer step: `2,461`
+- validation token count per condition: `622`
+
+**Backend**
+
+Tinker accepted `Qwen/Qwen3-8B`, `r=8`, attention-only LoRA as `train_attn=true`, `train_mlp=false`, `train_unembed=false`, and all-layer LoRA as `train_attn=true`, `train_mlp=true`, `train_unembed=false`. The observed SDK API did not expose explicit `q_proj` / `gate_proj` target-module strings, `lora_alpha`, or `lora_dropout`.
+
+Checkpoint paths were created with a seven-day TTL:
+
+- `tinker://68fd2ea0-e4bd-54eb-b9f0-4119c1ecba4a:train:0/weights/smoke-001-attention_only-final`
+- `tinker://68fd2ea0-e4bd-54eb-b9f0-4119c1ecba4a:train:1/weights/smoke-001-all_layer-final`
+
+**Risk**
+
+The first smoke attempt printed: `Your Tinker SDK version is outdated. Please upgrade to the latest version.` The SDK was upgraded to `tinker==0.18.2`, the smoke pass was rerun, and the warning did not reappear.
+
+**Next**
+
+Lock `docs/freeze/lora_defaults.md` using the observed layer-family flags instead of raw module-name strings.
+
+## 2026-05-04: Re-froze the result schema with condition naming.
+
+**Decision**
+
+The retained result schema now uses `condition` as the comparison label. The old experiment-label term was removed from `docs/freeze/results_schema.md`, the smoke runner, the retained smoke artifacts, and the live planning docs.
+
+**Artifact keys**
+
+- metric rows: `condition`
+- run summaries: `conditions`
+- run manifests: `conditions`
+
+**Next**
+
+Keep future baseline, attention-only LoRA, and all-layer LoRA results on the `condition` field.
