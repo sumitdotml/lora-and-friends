@@ -11,8 +11,8 @@ Machines; so many research ideas to explore! Well, I only knew LoRA conceptually
 have never done any serious finetuning before except for a hackathon, so I think this challenge I
 have set for myself is pretty nice.
 
-Current phase: dataset frozen, experiment contracts mostly frozen, and the next
-execution gate is a thin Tinker smoke pass before paid comparison runs.
+Current phase: dataset frozen, smoke pass cleared, and the next gate is locking
+the LoRA defaults before the small learning-rate selection run.
 
 ## Repository Map
 
@@ -24,7 +24,7 @@ execution gate is a thin Tinker smoke pass before paid comparison runs.
 - `docs/archive/`: historical planning material that is no longer live.
 - `artifacts/`: retained datasets, audit evidence, and lineage diagrams.
 - `scripts/`: dataset building, audit, integrity, and render-check utilities.
-- `tinker/`: Tinker exploration and future smoke-pass training code.
+- `training/`: Tinker smoke-pass runner, training scripts, and backend exploration.
 - `learning/`: standalone LoRA and QLoRA learning notes/scripts.
 
 ## Data And Notices
