@@ -624,7 +624,7 @@ wheels = [
 ]
 
 [[package]]
-name = "finetuning"
+name = "lora-and-friends"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

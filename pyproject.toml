@@ -1,7 +1,7 @@
 [project]
-name = "finetuning"
+name = "lora-and-friends"
 version = "0.1.0"
-description = "Add your description here"
+description = "LoRA and supervised fine-tuning experiments for math reasoning."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
