@@ -87,4 +87,4 @@ When the smoke pass completes:
 2. fill the rationale section
 3. change `Status` to locked
 4. change `Frozen on` to the lock date
-5. add a `LOG.md` entry recording the transition
+5. add a `docs/project/LOG.md` entry recording the transition

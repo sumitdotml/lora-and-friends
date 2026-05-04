@@ -44,7 +44,7 @@ Retained evidence:
 - [x] Keep the `Qwen3-8B` renderer path at `qwen3_disable_thinking`.
 - [x] Run the first render sanity check against the frozen dataset.
 - [x] Keep the system prompt fixed.
-- [x] Reconcile `PROJECT_PLAN.md` with the frozen dataset recipe and the prompt decision.
+- [x] Reconcile `docs/project/PROJECT_PLAN.md` with the frozen dataset recipe and the prompt decision.
 - [x] Converge on the next-phase execution order in `docs/archive/001-2026-04-22-finetuning-execution-debate.md`.
 - [x] Archive the redundant live execution packet as `docs/archive/002-2026-04-22-finetuning-execution-plan.md`.
 
@@ -133,7 +133,7 @@ Done when:
 `artifacts/smoke_pass/001/` contains the smoke-pass manifest, metrics or logs, accepted target modules, renderer evidence, batch and gradient-accumulation behavior, checkpoint naming, how often Tinker reports validation loss during training, token telemetry, and cost telemetry.
 
 If it fails:
-Record the failure in `LOG.md`, adjust only the blocked config fields, and rerun a tiny smoke pass before freezing LoRA defaults or the small LR-selection design.
+Record the failure in `docs/project/LOG.md`, adjust only the blocked config fields, and rerun a tiny smoke pass before freezing LoRA defaults or the small LR-selection design.
 
 - [ ] Run a tiny Tinker job on a tiny slice.
 - [ ] Verify target-module compatibility for `Qwen3-8B`.
@@ -154,7 +154,7 @@ It matters because:
 The write-up needs to show whether LoRA improved the untouched model or only changed it.
 
 Done when:
-`artifacts/results/<baseline-run-id>/summary.json`, `metrics.jsonl`, and `predictions.jsonl` exist, and the baseline score is recorded in `LOG.md`.
+`artifacts/results/<baseline-run-id>/summary.json`, `metrics.jsonl`, and `predictions.jsonl` exist, and the baseline score is recorded in `docs/project/LOG.md`.
 
 If it fails:
 Fix the eval script or config before running small LR-selection or main training, because all later checkpoints must use the same scorer.
@@ -162,7 +162,7 @@ Fix the eval script or config before running small LR-selection or main training
 - [ ] Implement the baseline eval script or config.
 - [ ] Run untouched `Qwen3-8B` on `GSM8K`.
 - [ ] Save baseline predictions or summary artifact.
-- [ ] Record the baseline score in `LOG.md`.
+- [ ] Record the baseline score in `docs/project/LOG.md`.
 
 ### 6. Lock LoRA Defaults
 
@@ -175,7 +175,7 @@ It matters because:
 The study should compare adapter scope, not drifting adapter hyperparameters.
 
 Done when:
-`docs/freeze/lora_defaults.md` has `Status: locked`, a freeze date, final shared values, target modules for both arms, and rationale recorded in `LOG.md`.
+`docs/freeze/lora_defaults.md` has `Status: locked`, a freeze date, final shared values, target modules for both arms, and rationale recorded in `docs/project/LOG.md`.
 
 If it fails:
 Do not run the small LR-selection sweep; rerun or inspect the smoke pass until the blocked defaults are concrete.
@@ -195,7 +195,7 @@ It matters because:
 Both arms need a fair learning-rate choice before the paid main comparison, and that choice should be made without spending the full experiment budget.
 
 Done when:
-`docs/freeze/run_protocol.md` has a frozen small-run section and `LOG.md` records the learning-rate selection protocol before the first small run starts.
+`docs/freeze/run_protocol.md` has a frozen small-run section and `docs/project/LOG.md` records the learning-rate selection protocol before the first small run starts.
 
 If it fails:
 Do not start the small LR-selection runs; unresolved selection design would let results influence the protocol after the fact.
@@ -271,7 +271,7 @@ Done when:
 Small-run results, selected LR records, main-run results, benchmark predictions, summaries, and canonical metrics all exist under `artifacts/results/`.
 
 If it fails:
-Record the failure and cost impact in `LOG.md`, use the `$25` correction reserve only for a clearly scoped correction pass, and avoid changing frozen rules unless the run is invalid.
+Record the failure and cost impact in `docs/project/LOG.md`, use the `$25` correction reserve only for a clearly scoped correction pass, and avoid changing frozen rules unless the run is invalid.
 
 - [ ] Run the small LR-selection sweep.
 - [ ] Select the best LR per arm.

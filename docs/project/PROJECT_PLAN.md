@@ -463,7 +463,7 @@ Desired artifact set:
 - training config or script
 - logged raw dataset recipe
 - benchmark command/config
-- `LOG.md` field notes
+- `docs/project/LOG.md` field notes
 - revised plan and final write-up
 
 ---

@@ -49,7 +49,7 @@ Initialized on 2026-03-24.
   - file:artifacts/audits/openmath_30k_curated_v6_replacement_review/manifest.json:1
   - file:artifacts/audits/openmath_30k_curated_v8_replacement_review_60/manifest.json:1
   - file:artifacts/audits/openmath_original_clean_manual_review_100/manifest.json:1
-  - file:PROJECT_PLAN.md:1
+  - file:docs/project/PROJECT_PLAN.md:1
 
 ### MISTAKE-20260422-001
 
@@ -104,10 +104,11 @@ Initialized on 2026-03-24.
 - prevention_rule: wrap rg patterns containing backticks in single quotes or remove the backtick terms from the shell pattern before running the command
 - validation_check: rerun the search with single-quoted or escaped patterns and confirm it exits with only intended literal matches
 - first_seen: 2026-05-03
-- last_seen: 2026-05-03
-- occurrence_count: 1
+- last_seen: 2026-05-04
+- occurrence_count: 2
 - evidence:
   - command:rg pattern containing legacy artifact-directory labels without shell-safe quoting
+  - command:rg pattern containing backticked LOG.md and PROJECT_PLAN.md terms without shell-safe quoting
 
 ### MISTAKE-20260503-004
 
