@@ -7,7 +7,8 @@ requires-python = ">=3.12"
 dependencies = [
     "marimo>=0.23.1",
     "numpy>=2.4.4",
-    "tinker>=0.18.0",
+    "orjson>=3.11.8",
+    "tinker>=0.18.2",
     "tinker-cookbook>=0.1.0",
     "torch>=2.11.0",
     "transformers>=5.5.3",
