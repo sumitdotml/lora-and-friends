@@ -2,6 +2,10 @@
 
 This directory keeps the retained project outputs that matter for phase one.
 
+The raw and rendered dataset artifacts are derived from third-party datasets.
+See [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) for attribution, upstream URLs, license labels,
+and citation notes.
+
 The structure is pipeline-shaped:
 
 1. `raw_datasets/`
