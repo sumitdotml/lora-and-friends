@@ -813,7 +813,7 @@ There were two separate questions:
 1. Do training examples that came from `gsm8k` duplicate the external `openai/gsm8k` test questions?
 2. Do our own local train and validation splits contain the same questions?
 
-The first question protects the final benchmark. Since the final external benchmark is `GSM8K` test, any matching `gsm8k`-sourced training question would mean the trained model had seen a benchmark question during training.
+The first question protects the final benchmark. There are two branches that can share the `gsm8k` name: `gsm8k`-sourced rows inside `nvidia/OpenMathInstruct-2 train_1M`, and the held-out `openai/gsm8k` test split planned for the final external evaluation. Rows from the NVIDIA branch are allowed to train the model only if their problem text does not duplicate the future benchmark questions. A duplicate would mean the fine-tuned adapter had already seen an evaluation question during supervised training, which would make the final `GSM8K` score less defensible.
 
 The second question protects validation loss. Validation should measure held-out questions. If the same question appears in train and validation, validation loss can look better than it should and can bias learning-rate or checkpoint decisions.
 
@@ -827,6 +827,8 @@ The first pass found no benchmark contamination but did find local train/validat
   }
 }
 ```
+
+The retained report compared `13,145` training rows with `source == "gsm8k"` against `1,319` rows from the `openai/gsm8k` test split.
 
 The failed part was the local split. OpenMath includes multiple accepted solutions for the same problem, and the original builder split rows independently. That allowed repeated problem variants to land in both train and validation.
 
