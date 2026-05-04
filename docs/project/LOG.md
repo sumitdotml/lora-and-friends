@@ -906,3 +906,32 @@ These values remain provisional. They exist so the smoke pass has a concrete sta
 **Next**
 
 Run the thin Tinker smoke pass and use its observed backend behavior to lock `docs/freeze/lora_defaults.md`.
+
+## 2026-05-04: Published the frozen dataset payloads to Hugging Face.
+
+**Dataset inspection**
+
+The full frozen dataset payloads now live at `sumitdotml/lora-and-friends-dataset` on Hugging Face. The GitHub repository keeps the build scripts, manifests, checksums, and retained audit evidence.
+
+**Numbers**
+
+- raw train: `25,348` rows, `25,528,287` bytes
+- raw validation: `2,818` rows, `2,787,397` bytes
+- rendered train: `25,348` rows, `29,989,535` bytes
+- rendered validation: `2,818` rows, `3,283,365` bytes
+- total JSONL payload size: `61,588,584` bytes
+
+**Config**
+
+```json
+{
+  "dataset_repo_id": "sumitdotml/lora-and-friends-dataset",
+  "dataset_repo_url": "https://huggingface.co/datasets/sumitdotml/lora-and-friends-dataset",
+  "github_manifest": "artifacts/huggingface_dataset_manifest.json",
+  "license": "cc-by-4.0"
+}
+```
+
+**Next**
+
+Remove the JSONL payloads from Git tracking while leaving local paths usable for training and validation.

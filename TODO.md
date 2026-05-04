@@ -47,6 +47,7 @@ Retained evidence:
 - [x] Reconcile `docs/project/PROJECT_PLAN.md` with the frozen dataset recipe and the prompt decision.
 - [x] Converge on the next-phase execution order in `docs/archive/001-2026-04-22-finetuning-execution-debate.md`.
 - [x] Archive the redundant live execution packet as `docs/archive/002-2026-04-22-finetuning-execution-plan.md`.
+- [x] Upload the frozen raw and rendered dataset JSONL files to Hugging Face and keep a lightweight GitHub manifest.
 
 ## Execution Order
 

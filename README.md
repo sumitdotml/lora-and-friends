@@ -29,8 +29,12 @@ execution gate is a thin Tinker smoke pass before paid comparison runs.
 
 ## Data And Notices
 
-The retained dataset artifacts under [artifacts/](artifacts/README.md) are derived from third-party
-math datasets. This repository's original code and documentation are licensed
-under the MIT License; third-party datasets, models, and services retain their
-upstream terms. Please see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for upstream attributions and
-license labels.
+The full frozen dataset payloads live on Hugging Face at
+[sumitdotml/lora-and-friends-dataset](https://huggingface.co/datasets/sumitdotml/lora-and-friends-dataset).
+GitHub keeps the recipe, manifests, checksums, audit evidence, and scripts; see
+[artifacts/huggingface_dataset_manifest.json](artifacts/huggingface_dataset_manifest.json) for the exact file map.
+
+The retained dataset artifacts are derived from third-party math datasets. This repository's original
+code and documentation are licensed under the MIT License; third-party datasets, models, and services
+retain their upstream terms. Please see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for upstream
+attributions and license labels.

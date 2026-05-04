@@ -10,3 +10,7 @@ DEBATE.md
 .DS_Store
 
 questions-and-ideas-for-myself.md
+
+# Full dataset payloads live on Hugging Face; keep only manifests in Git.
+artifacts/raw_datasets/openmath_original_clean/*.jsonl
+artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/*.jsonl

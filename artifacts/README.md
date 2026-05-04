@@ -6,6 +6,14 @@ The raw and rendered dataset artifacts are derived from third-party datasets.
 See [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) for attribution, upstream URLs, license labels,
 and citation notes.
 
+The full JSONL payloads are stored on Hugging Face:
+
+- Dataset repo: [sumitdotml/lora-and-friends-dataset](https://huggingface.co/datasets/sumitdotml/lora-and-friends-dataset)
+- GitHub manifest: [`huggingface_dataset_manifest.json`](huggingface_dataset_manifest.json)
+
+Git keeps the manifests, audit evidence, and scripts. Local checkouts can still keep the JSONL files
+under the paths below, but those payload files are ignored so the GitHub repository stays lightweight.
+
 The structure is pipeline-shaped:
 
 1. `raw_datasets/`
@@ -165,11 +173,12 @@ Editable presentation version:
 If only the core artifacts matter, start with:
 
 - `raw_datasets/openmath_original_clean/manifest.json`
-- `raw_datasets/openmath_original_clean/train.jsonl`
-- `raw_datasets/openmath_original_clean/val.jsonl`
 - `rendered_datasets/openmath_original_clean_qwen3_disable_thinking/manifest.json`
-- `rendered_datasets/openmath_original_clean_qwen3_disable_thinking/train.jsonl`
-- `rendered_datasets/openmath_original_clean_qwen3_disable_thinking/val.jsonl`
+- `huggingface_dataset_manifest.json`
+- Hugging Face `raw/openmath_original_clean/train.jsonl`
+- Hugging Face `raw/openmath_original_clean/val.jsonl`
+- Hugging Face `rendered/openmath_original_clean_qwen3_disable_thinking/train.jsonl`
+- Hugging Face `rendered/openmath_original_clean_qwen3_disable_thinking/val.jsonl`
 
 If the goal is to understand why this recipe was trusted, read these files:
 
