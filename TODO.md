@@ -177,7 +177,7 @@ Do not run the small LR-selection sweep; rerun or inspect the smoke pass until t
 
 ### 6. Run The Untouched `Qwen3-8B` Baseline
 
-Status: not started.
+Status: eval harness implemented; remote baseline run not started.
 
 What this means:
 Evaluate the base `Qwen3-8B` model on `GSM8K` under the frozen eval contract before any fine-tuned checkpoints are compared.
@@ -191,7 +191,8 @@ Done when:
 If it fails:
 Fix the eval script or config before running small LR-selection or main training, because all later checkpoints must use the same scorer.
 
-- [ ] Implement the baseline eval script or config.
+- [x] Implement the baseline eval script or config.
+- [x] Run local scorer self-test without Tinker sampling.
 - [ ] Run untouched `Qwen3-8B` on `GSM8K`.
 - [ ] Save baseline predictions or summary artifact.
 - [ ] Record the baseline score in `docs/project/LOG.md`.
