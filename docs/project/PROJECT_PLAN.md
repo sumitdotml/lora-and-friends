@@ -254,16 +254,27 @@ To keep the first comparison attributable, phase one does **not** sweep everythi
 Hold fixed:
 
 - LoRA rank
-- LoRA alpha
-- LoRA dropout
+- Tinker SDK path
+- Tinker backend-owned alpha, scaling, and dropout behavior
 
-Only `target_modules` and the selected LR differ between the conditions.
+Only the Tinker layer-family switches and the selected LR differ between the LoRA conditions.
 
 Current adapter defaults now live in `docs/freeze/lora_defaults.md`.
 
-Those values are provisional until the smoke pass completes. LR selection is not part of the LoRA defaults contract.
+Those values were locked after the smoke pass on `2026-05-05`. `lora_alpha` and `lora_dropout` are not local config fields in the locked contract because the public Tinker SDK path does not expose them. Their exact backend values are unknown, but both LoRA conditions share the same backend behavior.
 
 Rank sweeps are explicitly deferred.
+
+### 6.5 Optional Follow-Up Ablations
+
+These are not part of the phase-one comparison. They are useful follow-ups if the main result is interesting or ambiguous:
+
+- MLP-only LoRA: `train_attn=false`, `train_mlp=true`, `train_unembed=false`
+- MLP plus unembedding LoRA: `train_attn=false`, `train_mlp=true`, `train_unembed=true`
+- attention plus unembedding LoRA: `train_attn=true`, `train_mlp=false`, `train_unembed=true`
+- attention plus MLP plus unembedding LoRA: `train_attn=true`, `train_mlp=true`, `train_unembed=true`
+
+The MLP-only condition is the most useful first ablation because it asks whether the extra effect comes from feed-forward adaptation rather than attention adaptation. Unembedding variants are more optional because they change the interpretation from adapter placement inside the transformer to whether adapting the vocabulary projection helps.
 
 ---
 

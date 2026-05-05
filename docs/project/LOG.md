@@ -999,3 +999,48 @@ The retained result schema now uses `condition` as the comparison label. The old
 **Next**
 
 Keep future baseline, attention-only LoRA, and all-layer LoRA results on the `condition` field.
+
+## 2026-05-05: Locked LoRA defaults from the smoke pass.
+
+**Config**
+
+`docs/freeze/lora_defaults.md` is now locked. Both comparison conditions share `Qwen/Qwen3-8B`, `tinker==0.18.2`, `r=8`, micro-batch size `1`, gradient accumulation `8`, and `train_unembed=false`.
+
+```json
+{
+  "attention_only": {
+    "train_attn": true,
+    "train_mlp": false,
+    "train_unembed": false
+  },
+  "all_layer": {
+    "train_attn": true,
+    "train_mlp": true,
+    "train_unembed": false
+  }
+}
+```
+
+**Notes**
+
+The lock follows the observed Tinker API rather than raw module-name strings. The installed SDK, official docs, and public GitHub source expose `rank`, `seed`, `train_attn`, `train_mlp`, and `train_unembed`, but no `lora_alpha` or `lora_dropout` fields for `create_lora_training_client`.
+
+This means alpha, scaling, and dropout are backend-owned for this Tinker path. Their exact values remain unspecified in the public surfaces checked on `2026-05-05`, so they are recorded as unknown rather than guessed. The caveat matters for reproducing the run outside Tinker, but it should not bias the within-Tinker adapter-scope comparison because both conditions share the same hidden backend behavior.
+
+**Next**
+
+Run the untouched `Qwen3-8B` baseline on `GSM8K` before small LR-selection or main comparison training.
+
+## 2026-05-05: Parked MLP and unembedding ablations as follow-up work.
+
+**Notes**
+
+The phase-one comparison stays attention-only LoRA versus attention-plus-MLP LoRA with unembedding disabled. Optional follow-up ablations were added to `docs/project/PROJECT_PLAN.md`: MLP-only, MLP plus unembedding, attention plus unembedding, and attention plus MLP plus unembedding.
+
+**Risk**
+
+Adding these conditions now would turn the project into a broader ablation study and make the main comparison harder to finish cleanly.
+
+**Next**
+
+Do not add these ablations to the live TODO path unless the main comparison result is interesting or ambiguous.
