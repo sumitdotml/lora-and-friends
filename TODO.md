@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Execution design is converged. Dataset curation is done. The next work is freezing the experiment contract, validating Tinker behavior cheaply, and only then starting paid comparison runs.
+Execution design is converged. Dataset curation is done. Results, eval, and LoRA-default contracts are frozen. The next work is the untouched `Qwen3-8B` baseline before small LR-selection or paid comparison runs.
 
 `TODO.md` is now the only live execution tracker for this phase.
 
@@ -106,19 +106,19 @@ It matters because:
 The smoke pass needs concrete settings before it can reveal whether Tinker accepts the planned setup or forces a change.
 
 Done when:
-`docs/freeze/lora_defaults.md` names provisional `r`, `lora_alpha`, `lora_dropout`, target modules for both conditions, batch-size strategy, and gradient-accumulation assumption.
+`docs/freeze/lora_defaults.md` names provisional `r`, any LoRA fields exposed by Tinker, target modules or layer-family switches for both conditions, batch-size strategy, and gradient-accumulation assumption.
 
 If it fails:
 Keep `lora_defaults` provisional and use the smoke pass to discover the smallest valid backend settings.
 
 - [x] Create `docs/freeze/lora_defaults.md` as a provisional stub.
 - [x] Define provisional `r`.
-- [x] Define provisional `lora_alpha`.
-- [x] Define provisional `lora_dropout`.
+- [x] Check whether `lora_alpha` is locally configurable.
+- [x] Check whether `lora_dropout` is locally configurable.
 - [x] Define provisional batch-size and gradient-accumulation assumptions.
 
-Important boundary:
-Do not treat these values as locked until Step 6 is complete.
+Boundary resolved:
+Step 5 locked the adapter defaults on `2026-05-05`. `lora_alpha` and `lora_dropout` are not local defaults in the locked contract because the public Tinker SDK path does not expose them.
 
 ### 4. Run A Thin Tinker Smoke Pass
 
@@ -154,7 +154,28 @@ Retained smoke-pass artifacts:
 Follow-up resolved:
 The first smoke attempt printed `Your Tinker SDK version is outdated. Please upgrade to the latest version.` The SDK was upgraded to `tinker==0.18.2`, the smoke pass was rerun, and the warning did not reappear.
 
-### 5. Run The Untouched `Qwen3-8B` Baseline
+### 5. Lock LoRA Defaults
+
+Status: done on 2026-05-05.
+
+What this means:
+Turn `docs/freeze/lora_defaults.md` from provisional settings into the adapter contract used by both comparison conditions.
+
+It matters because:
+The study should compare adapter scope, not drifting adapter hyperparameters.
+
+Done when:
+`docs/freeze/lora_defaults.md` has `Status: locked`, a freeze date, final shared values, Tinker switches plus conceptual module scope for both conditions, and rationale recorded in `docs/project/LOG.md`.
+
+If it fails:
+Do not run the small LR-selection sweep; rerun or inspect the smoke pass until the blocked defaults are concrete.
+
+- [x] Upgrade `tinker` after the smoke-pass SDK warning and rerun the smoke pass.
+- [x] Update `docs/freeze/lora_defaults.md` from provisional to locked.
+- [x] Record the rationale for the locked values.
+- [x] Confirm that the locked defaults apply to both conditions.
+
+### 6. Run The Untouched `Qwen3-8B` Baseline
 
 Status: not started.
 
@@ -175,30 +196,9 @@ Fix the eval script or config before running small LR-selection or main training
 - [ ] Save baseline predictions or summary artifact.
 - [ ] Record the baseline score in `docs/project/LOG.md`.
 
-### 6. Lock LoRA Defaults
-
-Status: ready to do next.
-
-What this means:
-Turn `docs/freeze/lora_defaults.md` from provisional settings into the adapter contract used by both comparison conditions.
-
-It matters because:
-The study should compare adapter scope, not drifting adapter hyperparameters.
-
-Done when:
-`docs/freeze/lora_defaults.md` has `Status: locked`, a freeze date, final shared values, target modules for both conditions, and rationale recorded in `docs/project/LOG.md`.
-
-If it fails:
-Do not run the small LR-selection sweep; rerun or inspect the smoke pass until the blocked defaults are concrete.
-
-- [x] Upgrade `tinker` after the smoke-pass SDK warning and rerun the smoke pass.
-- [ ] Update `docs/freeze/lora_defaults.md` from provisional to locked.
-- [ ] Record the rationale for the locked values.
-- [ ] Confirm that the locked defaults apply to both conditions.
-
 ### 7. Freeze The Small LR-Selection Run
 
-Status: partially done; blocked on smoke-pass findings.
+Status: partially done; blocked on baseline eval and remaining protocol choices.
 
 What this means:
 Define the small practice training experiment that chooses learning rates before the real comparison. It is not the final result. It runs both LoRA conditions on a smaller dataset slice, tries a small learning-rate grid, and picks the best learning rate per condition by validation loss. Also define the exact train rows, validation rows, seed, budget estimate, and how often validation loss is measured during the run.
@@ -231,7 +231,7 @@ What this means:
 Create one runnable Tinker config or script for attention-only LoRA and one for all-layer LoRA.
 
 It matters because:
-The final comparison should differ only in `target_modules` and the learning rate selected by the frozen small-run rule.
+The final comparison should differ only in Tinker layer-family switches and the learning rate selected by the frozen small-run rule.
 
 Done when:
 Both configs exist, use the same dataset and shared defaults, and define run names plus local output paths.
@@ -241,7 +241,7 @@ Do not start main runs; config mismatch would make the comparison hard to interp
 
 - [ ] Prepare the Tinker config or script for attention-only LoRA.
 - [ ] Prepare the Tinker config or script for all-layer LoRA.
-- [ ] Keep everything matched except `target_modules` and selected LR.
+- [ ] Keep everything matched except Tinker layer-family switches and selected LR.
 - [ ] Define run naming for checkpoints, logs, and metadata.
 - [ ] Define where run outputs will be saved locally after completion.
 
@@ -306,7 +306,7 @@ Record the failure and cost impact in `docs/project/LOG.md`, use the `$25` corre
 
 - [x] Log the frozen dataset decision.
 - [x] Log the render sanity decision.
-- [ ] Log each freeze date as `lora_defaults` is frozen.
+- [x] Log each freeze date as `lora_defaults` is frozen.
 - [ ] Log the untouched-model `GSM8K` baseline result.
 - [ ] Log the small LR-selection protocol before the first run.
 - [ ] Log any budget change that affects the main run sheet.

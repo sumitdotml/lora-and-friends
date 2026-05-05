@@ -1,109 +1,83 @@
 # LoRA Defaults
 
-**Status**: provisional only  
-**Frozen on**: not yet  
-**Purpose**: define the provisional adapter defaults needed for the smoke pass, then become the locked adapter contract after the smoke pass.
+**Status**: locked
+**Frozen on**: 2026-05-05
+**Purpose**: define the adapter defaults used by both LoRA comparison conditions after the Tinker smoke pass.
 
 ## Freeze Rule
 
-This file should exist before the smoke pass.
+These defaults are locked before the small LR-selection run and the main comparison.
 
-Its contents should only be treated as locked after the smoke pass findings are incorporated and the updated file is committed.
+Do not change these values after result-producing runs start unless a run is invalid. If a change is required, record the reason in `docs/project/LOG.md`, update this file before rerunning, and treat earlier affected results as superseded.
 
-Current interpretation:
+## Locked Shared Defaults
 
-- the pre-smoke defaults are defined, so the smoke pass has concrete settings to try
-- the final LoRA defaults are not locked yet
-- `TODO.md` step 3 being done means only "provisional defaults exist"
-- `TODO.md` step 6 is the later lock step that turns this file into the real adapter contract
+These values apply to both comparison conditions:
 
-## Provisional Defaults
-
-Current provisional values:
-
-- `r = 8`
-- `lora_alpha = 16`
-- `lora_dropout = 0.0`
-
-Provisional batch assumptions for the smoke pass:
-
+- base model: `Qwen/Qwen3-8B`
+- backend: Tinker
+- observed SDK version at lock time: `tinker==0.18.2`
+- rendered dataset: `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/`
+- renderer contract: Hugging Face chat template with `enable_thinking=False`
+- LoRA rank: `r=8`
 - micro-batch size: `1` rendered training example per `forward_backward` call
 - gradient accumulation: `8` `forward_backward` calls before one optimizer step
 - effective batch size: `8` rendered training examples per optimizer step
-- fallback if Tinker rejects this shape: use micro-batch size `1` and gradient accumulation `1` for the smoke pass, then record the backend constraint before locking this file
+- train unembedding: disabled for both conditions with `train_unembed=false`
 
-These are smoke-pass assumptions, not final locked defaults.
+Backend-owned LoRA fields:
 
-Target modules by condition:
+- `lora_alpha`: not exposed by `create_lora_training_client` in `tinker==0.18.2`
+- `lora_dropout`: not exposed by `create_lora_training_client` in `tinker==0.18.2`
 
-- attention-only:
-  - `q_proj`
-  - `k_proj`
-  - `v_proj`
-  - `o_proj`
-- all-layer:
-  - `q_proj`
-  - `k_proj`
-  - `v_proj`
-  - `o_proj`
-  - `gate_proj`
-  - `up_proj`
-  - `down_proj`
+The public Tinker SDK, official docs, and public GitHub source checked on `2026-05-05` do not specify the backend alpha, scaling, or dropout behavior used when LoRA training clients are created. Treat these values as backend-owned and unknown, not as locally frozen values such as `alpha=16` or `dropout=0.0`.
 
-Explicit non-scope:
+Learning rate is not locked here. It is selected by the small LR-selection run and recorded in `docs/freeze/run_protocol.md`.
 
-- LR is not owned by this file. LR is selected by the small LR-selection run and frozen in the run protocol.
+## Locked Conditions
 
-## Still Provisional
+Attention-only LoRA:
 
-These are not locked yet:
+- Tinker switches: `train_attn=true`, `train_mlp=false`, `train_unembed=false`
+- conceptual module scope: attention projections only, corresponding to `q_proj`, `k_proj`, `v_proj`, and `o_proj`
 
-- final batch-size strategy
-- final gradient accumulation
-- any backend-constrained defaults surfaced by Tinker
+All-layer LoRA:
 
-## Smoke-Pass Findings
+- Tinker switches: `train_attn=true`, `train_mlp=true`, `train_unembed=false`
+- conceptual module scope: attention and MLP projections, corresponding to `q_proj`, `k_proj`, `v_proj`, `o_proj`, `gate_proj`, `up_proj`, and `down_proj`
 
-Observed on `2026-05-04` in `artifacts/smoke_pass/001/` with `tinker==0.18.2`:
+## Smoke-Pass Evidence
+
+Observed on `2026-05-04` in `artifacts/smoke_pass/001/`:
 
 - `Qwen/Qwen3-8B` was accepted by Tinker.
-- attention-only LoRA was accepted as `train_attn=true`, `train_mlp=false`, `train_unembed=false`.
-- all-layer LoRA for this project was accepted as `train_attn=true`, `train_mlp=true`, `train_unembed=false`.
-- explicit target-module strings such as `q_proj` and `gate_proj` were not part of the observed Tinker API; the current SDK exposes layer-family switches instead.
 - `r=8` was accepted.
-- `lora_alpha` and `lora_dropout` were not exposed by `create_lora_training_client` in `tinker==0.18.2`.
-- micro-batch size `1` and eight forward/backward calls before one optimizer step ran successfully for the all-layer condition.
-- validation loss was measured by a local forward pass; Tinker did not automatically emit validation cadence.
-- token counts were retained locally from each datum; backend responses did not expose cost telemetry in the observed response shape.
+- attention-only LoRA completed with `1` train example, `1` optimizer step, and validation mean NLL `1.5048651695251465`.
+- all-layer LoRA completed with `8` train examples, `1` optimizer step after `8` forward/backward calls, and validation mean NLL `1.4733978509902954`.
+- validation used `2` rows.
+- all-layer train token count before optimizer step was `2,461`.
+- validation token count per condition was `622`.
+- Tinker checkpoint paths were created with a seven-day TTL.
+- backend responses exposed metric fields such as `loss:sum` and `clock_cycle:unique`.
+- backend responses did not expose cost telemetry in the observed response shape.
+
+Renderer evidence:
+
+- retained sample render: `artifacts/smoke_pass/001/sample_render.txt`
+- the smoke runner builds Tinker datums from `AutoTokenizer.apply_chat_template(..., enable_thinking=False)`
+- loss is masked to assistant answer tokens after the rendered prompt prefix
 
 Resolved setup issue:
 
 - the first smoke attempt printed `Your Tinker SDK version is outdated. Please upgrade to the latest version.`
 - after upgrading to `tinker==0.18.2`, the smoke pass was rerun and the warning did not reappear
 
-## Intended Scope When Locked
+## Rationale
 
-The locked version of this file should define:
+The comparison is meant to test adapter scope, not hidden changes in adapter hyperparameters. The shared defaults therefore stay identical across both conditions wherever Tinker exposes a shared setting.
 
-- final `r`
-- final `lora_alpha`
-- final `lora_dropout`
-- final batch-size and gradient-accumulation assumptions
-- the rationale for why these values are fixed across both conditions
-- the target module lists for both conditions
+Tinker `0.18.2` exposes layer-family switches rather than raw target-module string lists for this path. The locked contract uses those observed switches directly and keeps the conceptual module lists only as explanation.
 
-## Open Items Before Lock
+`lora_alpha` and `lora_dropout` are not assigned local defaults because the observed Tinker API did not expose them. Recording them as unset is safer than pretending the local runner controls values it cannot pass to the backend.
 
-- confirm that the provisional values run cleanly on Tinker
-- confirm whether Tinker behavior forces any adjustment to effective batch assumptions
-- confirm whether any target-module or backend constraint forces a change in the defaults
-
-## Status Transition
-
-When the smoke pass completes:
-
-1. update the values if backend findings require it
-2. fill the rationale section
-3. change `Status` to locked
-4. change `Frozen on` to the lock date
-5. add a `docs/project/LOG.md` entry recording the transition
+This is a reproducibility limitation for anyone trying to recreate the run outside Tinker with a different LoRA implementation. It is not a within-Tinker comparison confound as long as both conditions use the same Tinker SDK path, same rank, same base model, same dataset render, and the only intended difference is `train_mlp=false` versus `train_mlp=true`.
