@@ -467,6 +467,9 @@ Minimum successful outcome:
 - one frozen dataset recipe with retained audit evidence
 - one small LR-selection sweep with matched LR tuning budget
 - one final comparison table across the three checkpoints
+- one benchmark chart showing `GSM8K` accuracy by condition
+- one training diagnostic chart showing validation loss over steps or tokens
+- one cost/efficiency table covering tokens, cost, and checkpoint-size fields when available
 - one write-up explaining what changed, what did not, and what the case study can and cannot claim
 
 Desired artifact set:
@@ -475,7 +478,11 @@ Desired artifact set:
 - logged raw dataset recipe
 - benchmark command/config
 - `docs/project/LOG.md` field notes
+- retained local `metrics.jsonl`, `summary.json`, and `predictions.jsonl` artifacts as the source of truth
+- derived reporting tables and charts generated from retained artifacts
 - revised plan and final write-up
+
+W&B is optional. It can help inspect live curves, but the project should not depend on it for reproducibility or final reporting.
 
 ---
 

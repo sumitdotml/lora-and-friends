@@ -93,6 +93,30 @@ Current intended locations:
 - summary artifact: `artifacts/results/<run_id>/summary.json`
 - prediction artifact for benchmarked eval runs: `artifacts/results/<run_id>/predictions.jsonl`
 
+## Reporting Outputs
+
+The canonical source of truth remains the retained local JSONL and JSON artifacts. W&B may be used later for live training curves or convenience dashboards, but it is not required and must not be the only place where a result exists.
+
+Primary final table:
+
+| condition | GSM8K accuracy | seeds | train tokens | cost | checkpoint rule |
+| --- | --- | --- | --- | --- | --- |
+| base `Qwen3-8B` | `TBD` | `n/a` | `0` | `TBD` | untouched |
+| attention-only LoRA | `TBD` | `3` | `TBD` | `TBD` | lowest validation loss |
+| all-layer LoRA | `TBD` | `3` | `TBD` | `TBD` | lowest validation loss |
+
+Required derived reporting artifacts after the main comparison:
+
+- primary comparison table derived from `summary.json` and `metrics.jsonl`
+- benchmark chart: `GSM8K` accuracy by condition, with min/max range or error bars across seeds for LoRA conditions
+- training diagnostic chart: validation loss over steps or tokens for attention-only LoRA and all-layer LoRA
+- cost/efficiency table with train tokens, eval tokens when available, estimated cost, and checkpoint size when available
+
+Reporting rule:
+
+- tables and charts are derived artifacts, not canonical metrics
+- if a table or chart disagrees with `metrics.jsonl`, `summary.json`, or `predictions.jsonl`, the retained JSONL/JSON artifact wins
+
 ## Minimal Pre-Smoke Run Manifest
 
 Before the first smoke pass, the run manifest should stay minimal.

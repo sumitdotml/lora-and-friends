@@ -291,6 +291,28 @@ Record the failure and cost impact in `docs/project/LOG.md`, use the `$25` corre
 - [ ] Evaluate all checkpoints under the frozen `GSM8K` contract.
 - [ ] Save results in the retained schema.
 
+### 11. Generate Final Tables And Charts
+
+Status: not started.
+
+What this means:
+Create the final reporting table and charts from retained local artifacts after the baseline and LoRA results exist. The source files are `artifacts/results/<run_id>/metrics.jsonl`, `summary.json`, and `predictions.jsonl`.
+
+It matters because:
+The write-up needs clear result presentation, but tables and charts should be derived from retained artifacts rather than hand-copied numbers or a dashboard-only record.
+
+Done when:
+The final write-up has a primary comparison table, a `GSM8K` accuracy chart by condition, a validation-loss diagnostic chart, and a cost/efficiency table. Each table or chart can be traced back to retained local JSONL/JSON artifacts.
+
+If it fails:
+Do not treat the write-up numbers as final. Regenerate the table or chart from the retained artifacts, and if a derived output disagrees with `metrics.jsonl`, `summary.json`, or `predictions.jsonl`, the retained JSONL/JSON artifact wins.
+
+- [ ] Generate the primary comparison table from retained summaries and metrics.
+- [ ] Generate the `GSM8K` accuracy chart by condition.
+- [ ] Generate the validation-loss diagnostic chart over steps or tokens.
+- [ ] Generate the cost/efficiency table from retained token, cost, and checkpoint-size fields when available.
+- [ ] Keep W&B optional and non-canonical if it is used for live curve inspection.
+
 ## Mapping Of The Missing Prerequisites
 
 - [x] `docs/freeze/eval_contract.md` includes answer extraction regex and normalization.
