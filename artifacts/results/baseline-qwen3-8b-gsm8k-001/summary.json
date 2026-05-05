@@ -1,0 +1,55 @@
+{
+  "artifact_paths": {
+    "metrics": "artifacts/results/baseline-qwen3-8b-gsm8k-001/metrics.jsonl",
+    "predictions": "artifacts/results/baseline-qwen3-8b-gsm8k-001/predictions.jsonl",
+    "summary": "artifacts/results/baseline-qwen3-8b-gsm8k-001/summary.json"
+  },
+  "checkpoint": "Qwen/Qwen3-8B",
+  "condition": "base",
+  "contracts": {
+    "eval_contract": "docs/freeze/eval_contract.md",
+    "eval_contract_sha256": "1608a723824cba4d6d6818c5d5b963abb75008312f4595a9a3d62c5b0510fe61",
+    "results_schema": "docs/freeze/results_schema.md",
+    "results_schema_sha256": "f5e29f8a91b262e598d969b869ea86b0cf89c3ffc68038606c6a6f86fe42ccbe"
+  },
+  "created_at": "2026-05-05T08:28:50.449313+00:00",
+  "dataset": {
+    "config": "main",
+    "examples": 1319,
+    "name": "GSM8K",
+    "source": "openai/gsm8k",
+    "split": "test"
+  },
+  "extraction_failures": 31,
+  "generation": {
+    "enable_thinking": false,
+    "max_new_tokens": 512,
+    "stop": null,
+    "temperature": 0,
+    "top_p": null
+  },
+  "git": {
+    "dirty": true,
+    "sha": "6add55643a534affc0e54c6bec10f58b19f2dbdd",
+    "status_short": [
+      "?? artifacts/results/baseline-qwen3-8b-gsm8k-001/"
+    ]
+  },
+  "primary_metric": {
+    "correct": 1115,
+    "name": "gsm8k_accuracy",
+    "total": 1319,
+    "value": 0.8453373768006065
+  },
+  "run_id": "baseline-qwen3-8b-gsm8k-001",
+  "seed": null,
+  "token_count": {
+    "generated": 373388,
+    "prompt": 132306,
+    "total": 505694
+  },
+  "versions": {
+    "tinker": "0.18.2",
+    "tinker_cookbook": "0.1.0"
+  }
+}

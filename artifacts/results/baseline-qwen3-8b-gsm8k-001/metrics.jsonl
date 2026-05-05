@@ -1,0 +1,1 @@
+{"checkpoint": "Qwen/Qwen3-8B", "condition": "base", "cost": null, "eval_metric": {"name": "gsm8k_accuracy", "value": 0.8453373768006065}, "loss": null, "run_id": "baseline-qwen3-8b-gsm8k-001", "seed": null, "split": "gsm8k_test", "step": null, "token_count": 505694}
