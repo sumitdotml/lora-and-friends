@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Execution design is converged. Dataset curation is done. Results, eval, and LoRA-default contracts are frozen. The untouched `Qwen3-8B` baseline is complete. The next work is freezing the small LR-selection protocol before paid comparison runs.
+Execution design is converged. Dataset curation is done. Results, eval, LoRA defaults, and the small LR-selection protocol are frozen. The next work is preparing runnable Tinker configs or scripts for the LR-selection sweep and main comparison.
 
 `TODO.md` is now the only live execution tracker for this phase.
 
@@ -214,7 +214,7 @@ Baseline result:
 
 ### 7. Freeze The Small LR-Selection Run
 
-Status: partially done; baseline dependency cleared; remaining protocol choices still open.
+Status: done on 2026-05-06.
 
 What this means:
 Define the small practice training experiment that chooses learning rates before the real comparison. It is not the final result. It runs both LoRA conditions on a smaller dataset slice, tries a small learning-rate grid, and picks the best learning rate per condition by validation loss. Also define the exact train rows, validation rows, seed, budget estimate, and how often validation loss is measured during the run.
@@ -228,16 +228,28 @@ Done when:
 If it fails:
 Do not start the small LR-selection runs; unresolved selection design would let results influence the protocol after the fact.
 
-- [ ] Create and fill the small LR-selection section in `docs/freeze/run_protocol.md`.
-- [ ] Define the small-run training row slice source and exact row count.
-- [ ] Define the small-run validation split source and exact row count.
-- [ ] Freeze the LR grid once.
+- [x] Create and fill the small LR-selection section in `docs/freeze/run_protocol.md`.
+- [x] Define the small-run training row slice source and exact row count.
+- [x] Define the small-run validation split source and exact row count.
+- [x] Freeze the LR grid once.
 - [x] Define the small-run seed identity: `7`.
 - [x] Ensure the small-run seed is held out from the main-run seed set.
-- [ ] Define how often validation loss is measured using smoke-pass findings.
-- [ ] State the selection rule clearly: best LR per condition by lowest validation loss.
-- [ ] Confirm that the small LR-selection run stays inside the budget envelope.
-- [ ] Log the LR-selection protocol before the first run.
+- [x] Define how often validation loss is measured using smoke-pass findings.
+- [x] State the selection rule clearly: best LR per condition by lowest validation loss.
+- [x] Confirm that the small LR-selection run stays inside the budget envelope.
+- [x] Log the LR-selection protocol before the first run.
+
+Frozen small LR-selection protocol:
+
+- train slice: first `5,000` rows from `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/train.jsonl`
+- validation slice: first `500` rows from `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/val.jsonl`
+- seed: `7`
+- LR grid: `1e-4`, `3e-4`, `1e-3`
+- conditions: `attention_only`, `all_layer`
+- run count: `6`
+- validation cadence: every `125` optimizer steps, including the final step at `625`
+- selection rule: choose the lowest `validation_mean_nll` per condition; exact ties go to the smaller LR
+- budget warning threshold: do not start if the current Tinker estimate for training plus validation is above `$10`
 
 ### 8. Prepare Final Condition-Specific Tinker Configs
 
@@ -337,7 +349,7 @@ Do not treat the write-up numbers as final. Regenerate the table or chart from t
 - [x] `docs/freeze/eval_contract.md` includes the contamination gate and failure consequence.
 - [x] `artifacts/audits/contamination_check/report.json` reports no training `gsm8k` overlap with `GSM8K` test and no train-vs-validation overlap.
 - [x] Small LR-selection protocol includes seed identity.
-- [ ] Small LR-selection protocol says how often validation loss is measured.
+- [x] Small LR-selection protocol says how often validation loss is measured.
 - [x] Main-run protocol includes per-condition reduction rule.
 - [x] `docs/freeze/results_schema.md` includes the minimal run-manifest fields.
 
@@ -347,5 +359,5 @@ Do not treat the write-up numbers as final. Regenerate the table or chart from t
 - [x] Log the render sanity decision.
 - [x] Log each freeze date as `lora_defaults` is frozen.
 - [x] Log the untouched-model `GSM8K` baseline result.
-- [ ] Log the small LR-selection protocol before the first run.
+- [x] Log the small LR-selection protocol before the first run.
 - [ ] Log any budget change that affects the main run sheet.

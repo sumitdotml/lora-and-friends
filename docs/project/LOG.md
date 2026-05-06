@@ -1068,3 +1068,40 @@ The canonical baseline used `--concurrency 4`. Short 32-example backend probes a
 **Notes**
 
 The concurrency probes are operational checks only. They are not comparable benchmark evidence and should not be committed as canonical result directories.
+
+## 2026-05-06: Froze the small LR-selection protocol.
+
+**Config**
+
+`docs/freeze/run_protocol.md` now freezes the small LR-selection run before any LR-selection training starts.
+
+```json
+{
+  "train_rows": "first 5000 rows of rendered train.jsonl",
+  "validation_rows": "first 500 rows of rendered val.jsonl",
+  "seed": 7,
+  "conditions": ["attention_only", "all_layer"],
+  "lr_grid": [0.0001, 0.0003, 0.001],
+  "epoch_count": 1,
+  "micro_batch_size": 1,
+  "gradient_accumulation": 8,
+  "effective_batch_size": 8
+}
+```
+
+**Numbers**
+
+- runs: `2` conditions x `3` LRs x `1` seed = `6`
+- expected optimizer steps per run: `625`
+- validation cadence: steps `125`, `250`, `375`, `500`, and `625`
+- training-only estimate: about `$4.08`
+- validation overhead estimate: about `5.00M` validation tokens across the full sweep
+- budget warning threshold: do not start if current Tinker estimate for training plus validation is above `$10`
+
+**Notes**
+
+The selection rule is per condition: choose the LR with the lowest `validation_mean_nll` on the fixed `500`-row validation slice. `GSM8K` accuracy is not used for LR selection, and exact ties go to the smaller LR.
+
+**Next**
+
+Prepare the runnable Tinker LR-selection script or config, making sure it writes retained `metrics.jsonl`, `summary.json`, and run manifests under `artifacts/results/`.
