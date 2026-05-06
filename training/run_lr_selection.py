@@ -1,69 +1,66 @@
 #!/usr/bin/env python3
-"""Run the frozen small LR-selection sweep on Tinker."""
+"""Run the frozen small LR-selection sweep."""
 
 from __future__ import annotations
 
 import argparse
 import asyncio
-import hashlib
-import importlib.metadata
 import json
 import math
 import os
-import subprocess
 import traceback
 from dataclasses import dataclass
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from common import (
+    DEFAULT_RESULTS_DIR,
+    LORA_DEFAULTS_PATH,
+    RAW_MANIFEST_PATH,
+    RENDERED_MANIFEST_PATH,
+    RESULTS_SCHEMA_PATH,
+    ROOT,
+    RUN_PROTOCOL_PATH,
+    TRAIN_PATH,
+    VAL_PATH,
+    append_jsonl,
+    display_path,
+    git_state,
+    load_dotenv,
+    now_iso,
+    package_version,
+    prepare_output_files,
+    read_jsonl,
+    sha256_file,
+    write_json,
+)
+from lora import (
+    CONDITION_ORDER,
+    LORA_RANK,
+    MODEL_NAME,
+    RENDERER_NAME,
+    SEED,
+    create_training_client,
+    lora_config_summary,
+    require_supported_model,
+    save_checkpoint,
+)
+from sft import (
+    aggregate_metrics,
+    answer_weight_count,
+    build_datums,
+    datum_token_count,
+    mean_nll,
+    render_text,
+)
 
-ROOT = Path(__file__).resolve().parents[1]
-TRAIN_PATH = (
-    ROOT
-    / "artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/train.jsonl"
-)
-VAL_PATH = (
-    ROOT
-    / "artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/val.jsonl"
-)
-RAW_MANIFEST_PATH = ROOT / "artifacts/raw_datasets/openmath_original_clean/manifest.json"
-RENDERED_MANIFEST_PATH = (
-    ROOT
-    / "artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/manifest.json"
-)
-LORA_DEFAULTS_PATH = ROOT / "docs/freeze/lora_defaults.md"
-RUN_PROTOCOL_PATH = ROOT / "docs/freeze/run_protocol.md"
-RESULTS_SCHEMA_PATH = ROOT / "docs/freeze/results_schema.md"
-DEFAULT_OUTPUT_ROOT = ROOT / "artifacts/results"
 
-MODEL_NAME = "Qwen/Qwen3-8B"
-RENDERER_NAME = "qwen3_disable_thinking"
-SEED = 7
-LORA_RANK = 8
 MICRO_BATCH_SIZE = 1
 GRADIENT_ACCUMULATION = 8
 TRAIN_ROWS = 5_000
 VAL_ROWS = 500
 VALIDATION_EVERY = 125
 LEARNING_RATES = (1e-4, 3e-4, 1e-3)
-CONDITION_ORDER = ("attention_only", "all_layer")
-
-
-@dataclass(frozen=True)
-class ConditionConfig:
-    """One LoRA adapter scope locked for the comparison."""
-
-    train_attn: bool
-    train_mlp: bool
-    train_unembed: bool
-
-    def as_json(self) -> dict[str, bool]:
-        return {
-            "train_attn": self.train_attn,
-            "train_mlp": self.train_mlp,
-            "train_unembed": self.train_unembed,
-        }
 
 
 @dataclass(frozen=True)
@@ -79,26 +76,12 @@ class RunSpec:
         return f"{self.run_prefix}-{self.condition}-lr-{lr_label(self.learning_rate)}"
 
 
-CONDITIONS: dict[str, ConditionConfig] = {
-    "attention_only": ConditionConfig(
-        train_attn=True,
-        train_mlp=False,
-        train_unembed=False,
-    ),
-    "all_layer": ConditionConfig(
-        train_attn=True,
-        train_mlp=True,
-        train_unembed=False,
-    ),
-}
-
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run the frozen small LR-selection sweep."
     )
     parser.add_argument("--run-prefix", default="lr-select-001")
-    parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT)
+    parser.add_argument("--output-root", type=Path, default=DEFAULT_RESULTS_DIR)
     parser.add_argument(
         "--conditions",
         nargs="+",
@@ -121,95 +104,8 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def load_dotenv(path: Path) -> None:
-    if not path.exists():
-        return
-    for line in path.read_text().splitlines():
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#") or "=" not in stripped:
-            continue
-        key, value = stripped.split("=", 1)
-        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
-
-
-def read_jsonl(path: Path, limit: int) -> list[dict[str, Any]]:
-    rows = []
-    with path.open() as f:
-        for line in f:
-            rows.append(json.loads(line))
-            if len(rows) == limit:
-                break
-    if len(rows) < limit:
-        raise ValueError(f"{path} only has {len(rows)} rows; needed {limit}")
-    return rows
-
-
-def write_json(path: Path, data: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")
-
-
-def append_jsonl(path: Path, data: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a") as f:
-        f.write(json.dumps(data, sort_keys=True) + "\n")
-
-
-def now_iso() -> str:
-    return datetime.now(UTC).isoformat()
-
-
-def sha256_file(path: Path) -> str:
-    h = hashlib.sha256()
-    with path.open("rb") as f:
-        for chunk in iter(lambda: f.read(1024 * 1024), b""):
-            h.update(chunk)
-    return h.hexdigest()
-
-
-def display_path(path: Path) -> str:
-    try:
-        return str(path.relative_to(ROOT))
-    except ValueError:
-        return str(path)
-
-
-def git_value(args: list[str]) -> str:
-    return subprocess.check_output(["git", *args], cwd=ROOT, text=True).strip()
-
-
-def git_state(run_prefix: str | None = None) -> dict[str, Any]:
-    status_lines = git_value(["status", "--short"]).splitlines()
-    ignored_lines = []
-    if run_prefix is not None:
-        ignored_prefix = f"?? artifacts/results/{run_prefix}"
-        ignored_lines = [
-            line for line in status_lines if line.startswith(ignored_prefix)
-        ]
-        status_lines = [
-            line for line in status_lines if not line.startswith(ignored_prefix)
-        ]
-    return {
-        "sha": git_value(["rev-parse", "HEAD"]),
-        "dirty": bool(status_lines),
-        "status_short": status_lines,
-        "ignored_status_short": ignored_lines,
-    }
-
-
-def package_version(name: str) -> str:
-    return importlib.metadata.version(name)
-
-
 def lr_label(value: float) -> str:
     return f"{value:.0e}".replace("+0", "").replace("-0", "-")
-
-
-def tinker_version_note() -> str:
-    return (
-        f"not exposed by tinker {package_version('tinker')} "
-        "create_lora_training_client"
-    )
 
 
 def required_input_paths() -> list[Path]:
@@ -225,111 +121,51 @@ def required_input_paths() -> list[Path]:
 
 
 def prepare_output_dir(output_dir: Path, overwrite: bool) -> Path:
-    output_dir.mkdir(parents=True, exist_ok=True)
-    metrics_path = output_dir / "metrics.jsonl"
-    existing = [
-        metrics_path,
-        output_dir / "summary.json",
-        output_dir / "manifest.json",
-        output_dir / "failure.json",
-        output_dir / "sample_render.txt",
-    ]
-    present = [path for path in existing if path.exists()]
-    if present and not overwrite:
-        names = ", ".join(str(path) for path in present)
-        raise FileExistsError(f"output files already exist: {names}")
-    if overwrite:
-        for path in present:
-            path.unlink()
-    return metrics_path
-
-
-def render_tokens(row: dict[str, Any], tokenizer: Any) -> list[int]:
-    rendered = tokenizer.apply_chat_template(
-        row["messages"],
-        tokenize=True,
-        add_generation_prompt=False,
-        enable_thinking=False,
-        return_dict=True,
+    prepare_output_files(
+        output_dir,
+        [
+            "metrics.jsonl",
+            "summary.json",
+            "manifest.json",
+            "failure.json",
+            "sample_render.txt",
+        ],
+        overwrite=overwrite,
     )
-    return list(rendered["input_ids"])
+    return output_dir / "metrics.jsonl"
 
 
-def render_prompt_tokens(row: dict[str, Any], tokenizer: Any) -> list[int]:
-    rendered = tokenizer.apply_chat_template(
-        row["messages"][:-1],
-        tokenize=True,
-        add_generation_prompt=True,
-        enable_thinking=False,
-        return_dict=True,
+def protocol_mode(args: argparse.Namespace) -> str:
+    """Label whether this invocation matches the frozen LR-selection protocol."""
+
+    frozen = (
+        args.train_limit == TRAIN_ROWS
+        and args.val_limit == VAL_ROWS
+        and args.validation_every == VALIDATION_EVERY
+        and tuple(args.conditions) == CONDITION_ORDER
+        and tuple(args.learning_rates) == LEARNING_RATES
+        and args.max_optimizer_steps is None
     )
-    return list(rendered["input_ids"])
+    return "frozen_small_lr_selection" if frozen else "override"
 
 
-def render_text(row: dict[str, Any], tokenizer: Any) -> str:
-    return tokenizer.apply_chat_template(
-        row["messages"],
-        tokenize=False,
-        add_generation_prompt=False,
-        enable_thinking=False,
-    )
+def run_specs(args: argparse.Namespace) -> list[RunSpec]:
+    """Expand CLI choices into the condition/LR runs that will execute."""
 
-
-def build_datum(row: dict[str, Any], tokenizer: Any) -> Any:
-    """Build one SFT datum with loss masked to assistant answer tokens."""
-
-    import torch
-    from tinker_cookbook.supervised.common import datum_from_tokens_weights
-
-    tokens = render_tokens(row, tokenizer)
-    prompt_len = len(render_prompt_tokens(row, tokenizer))
-    if prompt_len >= len(tokens):
-        raise ValueError(
-            f"prompt length {prompt_len} leaves no assistant tokens for {row['row_id']}"
+    return [
+        RunSpec(
+            run_prefix=args.run_prefix,
+            condition=condition,
+            learning_rate=learning_rate,
         )
-    weights = torch.zeros(len(tokens), dtype=torch.float32)
-    weights[prompt_len:] = 1.0
-    return datum_from_tokens_weights(torch.tensor(tokens, dtype=torch.int64), weights)
-
-
-def build_datums(rows: list[dict[str, Any]], tokenizer: Any) -> list[Any]:
-    return [build_datum(row, tokenizer) for row in rows]
-
-
-def answer_weight_count(datum: Any) -> float:
-    weights = datum.loss_fn_inputs["weights"]
-    if hasattr(weights, "sum"):
-        return float(weights.sum().item())
-    if hasattr(weights, "data"):
-        return sum(float(value) for value in weights.data)
-    raise TypeError(f"unsupported weight tensor type: {type(weights)!r}")
-
-
-def datum_token_count(datum: Any) -> int:
-    return int(datum.model_input.length)
-
-
-def mean_nll(output: Any, data: list[Any]) -> float:
-    from tinker_cookbook.supervised.common import compute_mean_nll
-
-    logprobs = [x["logprobs"] for x in output.loss_fn_outputs]
-    weights = [datum.loss_fn_inputs["weights"] for datum in data]
-    return float(compute_mean_nll(logprobs, weights))
-
-
-def aggregate_metrics(rows: list[dict[str, float]]) -> dict[str, float]:
-    totals: dict[str, float] = {}
-    for row in rows:
-        for key, value in row.items():
-            totals[key] = totals.get(key, 0.0) + float(value)
-    return totals
+        for condition in args.conditions
+        for learning_rate in args.learning_rates
+    ]
 
 
 def metric_row(
     *,
-    run_id: str,
-    condition: str,
-    learning_rate: float,
+    spec: RunSpec,
     step: int,
     split: str,
     loss: float | None,
@@ -338,41 +174,19 @@ def metric_row(
     eval_metric: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return {
-        "run_id": run_id,
+        "run_id": spec.run_id,
         "checkpoint": None,
-        "condition": condition,
+        "condition": spec.condition,
         "seed": SEED,
         "step": step,
         "split": split,
         "loss": loss,
-        "learning_rate": learning_rate,
+        "learning_rate": spec.learning_rate,
         "eval_metric": eval_metric,
         "token_count": token_count,
         "cost": None,
         "backend_metrics": backend_metrics or {},
     }
-
-
-async def create_training_client(
-    service_client: Any,
-    spec: RunSpec,
-) -> Any:
-    config = CONDITIONS[spec.condition]
-    return await service_client.create_lora_training_client_async(
-        base_model=MODEL_NAME,
-        rank=LORA_RANK,
-        seed=SEED,
-        train_attn=config.train_attn,
-        train_mlp=config.train_mlp,
-        train_unembed=config.train_unembed,
-        user_metadata={
-            "project": "lora-and-friends",
-            "run_id": spec.run_id,
-            "condition": spec.condition,
-            "learning_rate": str(spec.learning_rate),
-            "phase": "small_lr_selection",
-        },
-    )
 
 
 async def run_train_batch(
@@ -383,6 +197,12 @@ async def run_train_batch(
     step: int,
     metrics_path: Path,
 ) -> dict[str, Any]:
+    """Run one gradient-accumulation batch and record its weighted train NLL.
+
+    Each datum is sent as a micro-batch of size 1. The optimizer step happens
+    separately after all datums in this batch have contributed gradients.
+    """
+
     weighted_loss_sum = 0.0
     weight_sum = 0.0
     backend_metrics: list[dict[str, float]] = []
@@ -399,9 +219,7 @@ async def run_train_batch(
         token_count += datum_token_count(datum)
         backend_metrics.append(output.metrics)
     row = metric_row(
-        run_id=spec.run_id,
-        condition=spec.condition,
-        learning_rate=spec.learning_rate,
+        spec=spec,
         step=step,
         split="small_train",
         loss=weighted_loss_sum / weight_sum,
@@ -427,9 +245,7 @@ async def run_optimizer_step(
     )
     output = await future.result_async()
     row = metric_row(
-        run_id=spec.run_id,
-        condition=spec.condition,
-        learning_rate=spec.learning_rate,
+        spec=spec,
         step=step,
         split="small_optim",
         loss=None,
@@ -449,6 +265,13 @@ async def run_validation(
     metrics_path: Path,
     batch_size: int = 16,
 ) -> dict[str, Any]:
+    """Evaluate the fixed validation slice without applying gradients.
+
+    The final validation metric is weighted by answer-token count, so longer
+    answers contribute proportionally more token-level evidence than shorter
+    answers.
+    """
+
     weighted_loss_sum = 0.0
     weight_sum = 0.0
     backend_metrics: list[dict[str, float]] = []
@@ -465,9 +288,7 @@ async def run_validation(
         backend_metrics.append(output.metrics)
     loss = weighted_loss_sum / weight_sum
     row = metric_row(
-        run_id=spec.run_id,
-        condition=spec.condition,
-        learning_rate=spec.learning_rate,
+        spec=spec,
         step=step,
         split="small_val",
         loss=loss,
@@ -479,46 +300,6 @@ async def run_validation(
     return row
 
 
-async def save_checkpoint(
-    training_client: Any,
-    *,
-    spec: RunSpec,
-    ttl_seconds: int,
-) -> dict[str, Any]:
-    checkpoint_name = f"{spec.run_id}-final"
-    future = await training_client.save_state_async(
-        checkpoint_name, ttl_seconds=ttl_seconds
-    )
-    result = await future.result_async()
-    return {
-        "name": checkpoint_name,
-        "path": result.path,
-        "ttl_seconds": ttl_seconds,
-    }
-
-
-def lora_config_summary(condition: str) -> dict[str, Any]:
-    config = CONDITIONS[condition]
-    return {
-        "rank": LORA_RANK,
-        "lora_alpha": tinker_version_note(),
-        "lora_dropout": tinker_version_note(),
-        **config.as_json(),
-    }
-
-
-def protocol_mode(args: argparse.Namespace) -> str:
-    frozen = (
-        args.train_limit == TRAIN_ROWS
-        and args.val_limit == VAL_ROWS
-        and args.validation_every == VALIDATION_EVERY
-        and tuple(args.conditions) == CONDITION_ORDER
-        and tuple(args.learning_rates) == LEARNING_RATES
-        and args.max_optimizer_steps is None
-    )
-    return "frozen_small_lr_selection" if frozen else "override"
-
-
 def build_manifest(
     *,
     spec: RunSpec,
@@ -526,7 +307,8 @@ def build_manifest(
     train_rows: list[dict[str, Any]],
     val_rows: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    total_steps = math.ceil(len(train_rows) / GRADIENT_ACCUMULATION)
+    """Build the reproducibility manifest before the run mutates model state."""
+
     return {
         "run_id": spec.run_id,
         "status": "started",
@@ -565,27 +347,18 @@ def build_manifest(
             "learning_rate": spec.learning_rate,
             "condition": spec.condition,
             "lora_config": lora_config_summary(spec.condition),
+            "rank": LORA_RANK,
             "micro_batch_size": MICRO_BATCH_SIZE,
             "gradient_accumulation": GRADIENT_ACCUMULATION,
             "effective_batch_size": GRADIENT_ACCUMULATION,
             "epoch_count": 1,
-            "expected_optimizer_steps": total_steps,
+            "expected_optimizer_steps": math.ceil(
+                len(train_rows) / GRADIENT_ACCUMULATION
+            ),
             "max_optimizer_steps": args.max_optimizer_steps,
             "validation_every": args.validation_every,
         },
     }
-
-
-def run_specs(args: argparse.Namespace) -> list[RunSpec]:
-    return [
-        RunSpec(
-            run_prefix=args.run_prefix,
-            condition=condition,
-            learning_rate=learning_rate,
-        )
-        for condition in args.conditions
-        for learning_rate in args.learning_rates
-    ]
 
 
 async def run_one_spec(
@@ -595,6 +368,8 @@ async def run_one_spec(
     train_rows: list[dict[str, Any]],
     val_rows: list[dict[str, Any]],
 ) -> dict[str, Any]:
+    """Execute one condition/LR pair and retain summary or failure artifacts."""
+
     output_dir = args.output_root / spec.run_id
     metrics_path = prepare_output_dir(output_dir, args.overwrite)
     manifest = build_manifest(
@@ -617,7 +392,15 @@ async def run_one_spec(
             f"lr={spec.learning_rate}",
             flush=True,
         )
-        training_client = await create_training_client(service_client, spec)
+        training_client = await create_training_client(
+            service_client,
+            condition=spec.condition,
+            run_id=spec.run_id,
+            extra_metadata={
+                "learning_rate": str(spec.learning_rate),
+                "phase": "small_lr_selection",
+            },
+        )
         tokenizer = training_client.get_tokenizer()
         train_datums = build_datums(train_rows, tokenizer)
         val_datums = build_datums(val_rows, tokenizer)
@@ -669,13 +452,14 @@ async def run_one_spec(
 
         checkpoint = await save_checkpoint(
             training_client,
-            spec=spec,
+            checkpoint_name=f"{spec.run_id}-final",
             ttl_seconds=args.ttl_seconds,
         )
         best_validation = min(
             validation_rows,
             key=lambda row: row["eval_metric"]["value"],
         )
+        validation_token_count = sum(row["token_count"] for row in validation_rows)
         summary = {
             "run_id": spec.run_id,
             "status": "pass",
@@ -689,9 +473,8 @@ async def run_one_spec(
             "token_count": {
                 "train": train_token_count,
                 "optimizer": optim_token_count,
-                "validation": sum(row["token_count"] for row in validation_rows),
-                "total": train_token_count
-                + sum(row["token_count"] for row in validation_rows),
+                "validation": validation_token_count,
+                "total": train_token_count + validation_token_count,
             },
             "artifact_paths": {
                 "manifest": display_path(output_dir / "manifest.json"),
@@ -722,16 +505,14 @@ async def run_one_spec(
 
 
 async def run(args: argparse.Namespace) -> int:
-    load_dotenv(ROOT / ".env")
+    load_dotenv()
     for path in required_input_paths():
         if not path.exists():
             raise FileNotFoundError(path)
 
     specs = run_specs(args)
-    max_train_rows = args.train_limit
-    max_val_rows = args.val_limit
-    train_rows = read_jsonl(TRAIN_PATH, max_train_rows)
-    val_rows = read_jsonl(VAL_PATH, max_val_rows)
+    train_rows = read_jsonl(TRAIN_PATH, args.train_limit)
+    val_rows = read_jsonl(VAL_PATH, args.val_limit)
 
     if args.dry_run:
         service_client = None
@@ -741,25 +522,17 @@ async def run(args: argparse.Namespace) -> int:
         import tinker
 
         service_client = tinker.ServiceClient()
-        capabilities = await service_client.get_server_capabilities_async()
-        supported_models = [model.model_name for model in capabilities.supported_models]
-        if MODEL_NAME not in supported_models:
-            raise RuntimeError(
-                f"{MODEL_NAME} not in Tinker supported models: {supported_models}"
-            )
+        await require_supported_model(service_client)
 
-    results = []
     for spec in specs:
-        results.append(
-            await run_one_spec(
-                service_client,
-                spec,
-                args,
-                train_rows,
-                val_rows,
-            )
+        result = await run_one_spec(
+            service_client,
+            spec,
+            args,
+            train_rows,
+            val_rows,
         )
-        print(json.dumps(results[-1], indent=2, sort_keys=True), flush=True)
+        print(json.dumps(result, indent=2, sort_keys=True), flush=True)
     return 0
 
 
