@@ -1,0 +1,29 @@
+{
+  "artifact_paths": {
+    "manifest": "artifacts/results/throughput-probe-batch256-confirm-001/manifest.json",
+    "metrics": "artifacts/results/throughput-probe-batch256-confirm-001/metrics.jsonl",
+    "sample_render": "artifacts/results/throughput-probe-batch256-confirm-001/sample_render.txt",
+    "summary": "artifacts/results/throughput-probe-batch256-confirm-001/summary.json"
+  },
+  "condition": "attention_only",
+  "effective_batch_size": 256,
+  "finished_at": "2026-05-06T17:54:52.433998+00:00",
+  "learning_rate": 0.0003,
+  "optimizer_steps_per_shape": 8,
+  "recommended_request_shape": "batched_datums",
+  "request_shapes": [
+    {
+      "optimizer_steps": 8,
+      "request_shape": "batched_datums",
+      "seconds_per_optimizer_step": 18.249812401016243,
+      "status": "pass",
+      "total_seconds": 145.99849920812994,
+      "train_call_count": 8,
+      "train_calls_per_optimizer_step": 1.0,
+      "train_tokens": 689302
+    }
+  ],
+  "run_id": "throughput-probe-batch256-confirm-001",
+  "seed": 7,
+  "status": "pass"
+}
