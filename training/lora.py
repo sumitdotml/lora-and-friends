@@ -70,6 +70,7 @@ async def create_training_client(
     *,
     condition: str,
     run_id: str,
+    seed: int = SEED,
     extra_metadata: dict[str, str] | None = None,
 ) -> Any:
     """Create a Tinker LoRA training client for one locked condition.
@@ -84,13 +85,14 @@ async def create_training_client(
         "project": "lora-and-friends",
         "run_id": run_id,
         "condition": condition,
+        "seed": str(seed),
     }
     if extra_metadata is not None:
         metadata.update(extra_metadata)
     return await service_client.create_lora_training_client_async(
         base_model=MODEL_NAME,
         rank=LORA_RANK,
-        seed=SEED,
+        seed=seed,
         train_attn=config.train_attn,
         train_mlp=config.train_mlp,
         train_unembed=config.train_unembed,
