@@ -113,7 +113,7 @@ Run metadata note:
 
 ## Main Run
 
-**Status**: training loop mostly frozen; validation/checkpoint cadence and interpretation rules not fully frozen
+**Status**: optimizer defaults, initial LR schedule shape, and checkpoint-selection rule are frozen. Effective batch size, final LR selection, validation/checkpoint cadence, interpretation rules, and final budget check are not fully frozen.
 **Training loop frozen on**: 2026-05-07
 
 ### Goal
@@ -161,10 +161,10 @@ Run metadata note:
 - with peak LR `3e-4`, the minimum LR is `3e-5`
 - if total optimizer steps change, recompute warmup steps as `round(total_optimizer_steps * 0.03)` and recompute minimum LR as `peak_lr * 0.10`
 
-For the frozen main-run shape:
+For the earlier effective-batch-`8` main-run draft:
 
-- micro-batch size: `1`
-- gradient accumulation: `8`
+- training request shape: `batched_datums`
+- each optimizer step sends one `forward_backward_async(batch_of_8_datums)` request, then one `optim_step_async(...)` request
 - effective batch size: `8`
 - epochs: `2`
 - optimizer steps per epoch: `ceil(25,348 / 8) = 3,169`
@@ -175,26 +175,38 @@ For the frozen main-run shape:
 - step `191` starts cosine decay
 - step `6,338` ends at `3e-5`
 
+### Training Request Shape
+
+- `batched_datums` is the preferred request shape because it passed at effective batch size `8` and was much faster than sending one datum at a time
+- evidence: `artifacts/results/throughput-probe-001/summary.json`
+- `single_datum_calls` at effective batch size `8`: `20.22187466151081` seconds per optimizer step
+- `batched_datums` at effective batch size `8`: `5.201307859155349` seconds per optimizer step
+- larger effective-batch probes also passed at `16`, `32`, `64`, `128`, and `256`
+- the effective batch size is not frozen yet because changing it changes optimizer step count, warmup step count, and the validity of the existing LR-selection result
+- if the main run moves above effective batch size `8`, rerun a small LR-selection check at the chosen batch size before starting the main comparison
+
 ### Validation and Checkpoint Selection
 
 - select the checkpoint with the lowest `validation_mean_nll`
 - if validation values tie exactly, choose the later checkpoint
 - do not use `GSM8K` benchmark accuracy to choose a training checkpoint
 - validation/checkpoint cadence is not frozen yet
-- candidate sparse cadence: validate and checkpoint at epoch ends only, steps `3,169` and `6,338`
-- candidate step cadence: validate and checkpoint every `1,000` optimizer steps, plus epoch ends, giving steps `1,000`, `2,000`, `3,169`, `4,000`, `5,000`, `6,000`, and `6,338`
-- freeze one cadence before writing or running the main training script
+- the cadence must be recomputed after the effective batch size is chosen because total optimizer steps change with batch size
+- candidate sparse cadence for effective batch size `8`: validate and checkpoint at epoch ends only, steps `3,169` and `6,338`
+- candidate step cadence for effective batch size `8`: validate and checkpoint every `1,000` optimizer steps, plus epoch ends, giving steps `1,000`, `2,000`, `3,169`, `4,000`, `5,000`, `6,000`, and `6,338`
 
 ### Retained Output Shape
 
 - one result directory per condition/seed run under `artifacts/results/`
 - each run writes `manifest.json`, `metrics.jsonl`, `summary.json`, and `sample_render.txt`
 - `metrics.jsonl` must record the current learning rate for each optimizer step
-- `manifest.json` must record scheduler settings, selected peak LR, minimum LR, warmup steps, optimizer defaults, validation/checkpoint cadence, validation steps, and checkpoint-selection rule
+- `manifest.json` must record scheduler settings, selected peak LR, minimum LR, warmup steps, optimizer defaults, training request shape, validation/checkpoint cadence, validation steps, and checkpoint-selection rule
 
 ### Still Open
 
 - null-result interpretation rule
+- effective batch size for the main run
+- whether to rerun LR selection at a higher effective batch size
 - validation/checkpoint cadence
 - final budget check before starting paid main runs
 - exact run names and local output paths for the main runner
