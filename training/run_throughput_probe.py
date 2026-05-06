@@ -56,7 +56,7 @@ DEFAULT_RUN_ID = "throughput-probe-001"
 DEFAULT_OPTIMIZER_STEPS = 16
 DEFAULT_EFFECTIVE_BATCH_SIZE = 8
 DEFAULT_LEARNING_RATE = 3e-4
-REQUEST_SHAPES = ("single_datum_calls", "batched_datums")
+REQUEST_SHAPES = ("single_datum_calls", "batched_datums", "batched_datums_pipelined")
 
 
 @dataclass(frozen=True)
@@ -261,6 +261,26 @@ async def optimizer_step(training_client: Any, learning_rate: float) -> dict[str
     return output.metrics
 
 
+async def forward_backward_and_optimizer_pipelined(
+    training_client: Any,
+    batch: list[Any],
+    learning_rate: float,
+) -> tuple[float, dict[str, float], dict[str, float]]:
+    """Submit train and optimizer requests together for one Tinker clock cycle."""
+
+    import tinker
+
+    train_future = await training_client.forward_backward_async(
+        batch, loss_fn="cross_entropy"
+    )
+    optim_future = await training_client.optim_step_async(
+        tinker.AdamParams(learning_rate=learning_rate)
+    )
+    train_output = await train_future.result_async()
+    optim_output = await optim_future.result_async()
+    return mean_nll(train_output, batch), train_output.metrics, optim_output.metrics
+
+
 async def run_probe_shape(
     service_client: Any,
     *,
@@ -296,16 +316,30 @@ async def run_probe_shape(
                 training_client, batch
             )
             train_call_count = len(batch)
-        else:
+            train_seconds = time.perf_counter() - train_started
+            optim_started = time.perf_counter()
+            optim_metrics = await optimizer_step(training_client, args.learning_rate)
+            optimizer_seconds = time.perf_counter() - optim_started
+        elif request_shape.name == "batched_datums":
             loss, train_metrics = await forward_backward_batched_datums(
                 training_client, batch
             )
             train_call_count = 1
-        train_seconds = time.perf_counter() - train_started
-
-        optim_started = time.perf_counter()
-        optim_metrics = await optimizer_step(training_client, args.learning_rate)
-        optimizer_seconds = time.perf_counter() - optim_started
+            train_seconds = time.perf_counter() - train_started
+            optim_started = time.perf_counter()
+            optim_metrics = await optimizer_step(training_client, args.learning_rate)
+            optimizer_seconds = time.perf_counter() - optim_started
+        else:
+            loss, train_metrics, optim_metrics = (
+                await forward_backward_and_optimizer_pipelined(
+                    training_client,
+                    batch,
+                    args.learning_rate,
+                )
+            )
+            train_call_count = 1
+            train_seconds = time.perf_counter() - train_started
+            optimizer_seconds = 0.0
 
         row = metric_row(
             run_id=args.run_id,
