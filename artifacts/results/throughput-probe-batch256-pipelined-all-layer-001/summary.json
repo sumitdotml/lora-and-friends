@@ -1,0 +1,29 @@
+{
+  "artifact_paths": {
+    "manifest": "artifacts/results/throughput-probe-batch256-pipelined-all-layer-001/manifest.json",
+    "metrics": "artifacts/results/throughput-probe-batch256-pipelined-all-layer-001/metrics.jsonl",
+    "sample_render": "artifacts/results/throughput-probe-batch256-pipelined-all-layer-001/sample_render.txt",
+    "summary": "artifacts/results/throughput-probe-batch256-pipelined-all-layer-001/summary.json"
+  },
+  "condition": "all_layer",
+  "effective_batch_size": 256,
+  "finished_at": "2026-05-06T18:04:07.006491+00:00",
+  "learning_rate": 0.0003,
+  "optimizer_steps_per_shape": 8,
+  "recommended_request_shape": "batched_datums_pipelined",
+  "request_shapes": [
+    {
+      "optimizer_steps": 8,
+      "request_shape": "batched_datums_pipelined",
+      "seconds_per_optimizer_step": 21.31959100998938,
+      "status": "pass",
+      "total_seconds": 170.55672807991505,
+      "train_call_count": 8,
+      "train_calls_per_optimizer_step": 1.0,
+      "train_tokens": 689302
+    }
+  ],
+  "run_id": "throughput-probe-batch256-pipelined-all-layer-001",
+  "seed": 7,
+  "status": "pass"
+}
