@@ -1272,3 +1272,34 @@ Only the dry-run path has been checked so far. No live Tinker throughput probe h
 **Next**
 
 Run `uv run training/run_throughput_probe.py --run-id throughput-probe-001` manually, then freeze the main-run training request shape from `summary.json`.
+
+## 2026-05-07: Found faster Tinker batch shapes and reopened LR selection.
+
+**Config**
+
+Throughput probes now cover `batched_datums_pipelined`, which submits `forward_backward_async(...)` and `optim_step_async(...)` before waiting for either result. This matches the Tinker clock-cycle guidance and is the retained request shape for future fast-batch checks.
+
+**Numbers**
+
+| run | condition | effective batch | seconds / step | train tokens / second |
+| --- | --- | ---: | ---: | ---: |
+| `throughput-probe-001` single-datum | `attention_only` | `8` | `20.22187466151081` | `127.55679397566229` |
+| `throughput-probe-001` batched | `attention_only` | `8` | `5.201307859155349` | `495.92094331806766` |
+| `throughput-probe-batch1024-pipelined-001` | `attention_only` | `1024` | `9.37854452105239` | `36748.87923454948` |
+| `throughput-probe-batch1024-pipelined-all-layer-001` | `all_layer` | `1024` | `17.003058375325054` | `20269.941582989548` |
+
+**Notes**
+
+Official Tinker docs describe naive forward/backward then optimizer-step code as using more clock cycles than necessary, and show the faster pattern where both requests are submitted before waiting. Tinker LoRA documentation also warns that large batch size can affect LoRA loss, and a 2026 LoRA batch-size paper treats batch size as a first-order design parameter. That means larger batches should be selected by validation loss, not only by speed.
+
+Sources:
+
+- Tinker clock cycles and pipelining: `https://tinker-docs.thinkingmachines.ai/tinker/under-the-hood/`
+- Tinker quickstart concurrent training example: `https://tinker-docs.thinkingmachines.ai/tinker/quickstart/`
+- Tinker SL hyperparameters tutorial: `https://tinker-docs.thinkingmachines.ai/tutorials/advanced/sl-hyperparams/`
+- Tinker LoRA primer: `https://tinker-docs.thinkingmachines.ai/lora-primer`
+- `Beware of the Batch Size: Hyperparameter Bias in Evaluating LoRA`: `https://arxiv.org/abs/2602.09492`
+
+**Next**
+
+Run a fast-batch LR-selection pilot for effective batch sizes `512` and `1024`, both LoRA conditions, and LR grid `1e-4`, `3e-4`, `1e-3`. Use the selected batch/LR pair before building the main training script.

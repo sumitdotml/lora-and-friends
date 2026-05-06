@@ -67,3 +67,25 @@ uv run training/run_throughput_probe.py --run-id throughput-probe-001
 ```
 
 The probe writes `artifacts/results/throughput-probe-001/summary.json`. Use its `recommended_request_shape` only as a speed decision for the main training loop; it is not a model-quality result.
+
+To run the fast-batch LR-selection pilots after the throughput probes:
+
+```bash
+uv run training/run_lr_selection.py \
+  --run-prefix lr-select-fast-batch512-001 \
+  --request-shape batched_datums_pipelined \
+  --effective-batch-size 512 \
+  --train-limit 8192 \
+  --val-limit 256 \
+  --validation-every 8
+
+uv run training/run_lr_selection.py \
+  --run-prefix lr-select-fast-batch1024-001 \
+  --request-shape batched_datums_pipelined \
+  --effective-batch-size 1024 \
+  --train-limit 8192 \
+  --val-limit 256 \
+  --validation-every 4
+```
+
+These pilots replace the original batch-`8` LR choice only if their retained validation losses support doing so. Do not start the main comparison until the selected fast-batch LR is recorded in `docs/freeze/run_protocol.md`.

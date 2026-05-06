@@ -185,6 +185,31 @@ For the earlier effective-batch-`8` main-run draft:
 - the effective batch size is not frozen yet because changing it changes optimizer step count, warmup step count, and the validity of the existing LR-selection result
 - if the main run moves above effective batch size `8`, rerun a small LR-selection check at the chosen batch size before starting the main comparison
 
+### Fast-Batch LR-Selection Pilot
+
+**Status**: frozen before run
+**Frozen on**: 2026-05-07
+
+The throughput probes showed that larger pipelined batches can make training much faster, but Tinker and LoRA references both make batch size a real hyperparameter rather than a harmless implementation detail.
+
+Run this pilot before the main comparison:
+
+- request shape: `batched_datums_pipelined`
+- candidate effective batch sizes: `512`, `1024`
+- train slice: first `8,192` rows from `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/train.jsonl`
+- validation slice: first `256` rows from `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/val.jsonl`
+- seed: `7`
+- conditions: `attention_only`, `all_layer`
+- LR grid: `1e-4`, `3e-4`, `1e-3`
+- expected run count: `12`
+- expected optimizer steps at batch `512`: `16` per run
+- expected optimizer steps at batch `1024`: `8` per run
+- validation cadence at batch `512`: every `8` optimizer steps, including final step `16`
+- validation cadence at batch `1024`: every `4` optimizer steps, including final step `8`
+- selection rule: choose one effective batch size and LR per condition by lowest `validation_mean_nll`; exact ties go to the smaller effective batch size, then the smaller LR
+
+If both larger batch sizes are unstable or produce worse validation loss than the retained batch-`8` LR-selection result, keep effective batch size `8` for the main run and use only the pipelined request-shape improvement.
+
 ### Validation and Checkpoint Selection
 
 - select the checkpoint with the lowest `validation_mean_nll`
