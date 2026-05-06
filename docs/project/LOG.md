@@ -1110,7 +1110,7 @@ Prepare the runnable Tinker LR-selection script or config, making sure it writes
 
 **Config**
 
-`training/run_tinker_lr_selection.py` now implements the frozen small LR-selection shape. The runner writes one result directory per condition/LR run with `manifest.json`, `metrics.jsonl`, `summary.json`, and `sample_render.txt`.
+`training/run_lr_selection.py` now implements the frozen small LR-selection shape. The runner writes one result directory per condition/LR run with `manifest.json`, `metrics.jsonl`, `summary.json`, and `sample_render.txt`.
 
 **Numbers**
 
@@ -1126,4 +1126,38 @@ The first live probe caught a runner bug: Tinker cookbook datum weights are `Ten
 
 **Next**
 
-Commit the runner, then start the full six-run LR-selection sweep with the frozen defaults.
+Refactor the runner into smaller modules before starting the full six-run LR-selection sweep.
+
+## 2026-05-06: Refactored the training runners into smaller modules.
+
+**Config**
+
+The duplicated training helper code now lives in three plain modules:
+
+- `training/common.py`
+- `training/sft.py`
+- `training/lora.py`
+
+The runnable scripts are now `training/run_smoke_pass.py` and `training/run_lr_selection.py`. The short directory guide is `training/README.md`.
+
+**Numbers**
+
+- `training/run_lr_selection.py`: `540` lines after refactor and docstring pass
+- `training/run_smoke_pass.py`: `413` lines after refactor and docstring pass
+- shared helper modules: `399` lines total after refactor and docstring pass
+- `training/README.md`: `49` lines
+
+**Notes**
+
+The refactor keeps the smoke pass and LR-selection sweep as separate orchestration scripts while sharing path handling, artifact writing, git/hash metadata, Qwen3 SFT rendering, answer-token masking, mean-NLL calculation, locked LoRA switches, and checkpoint saving.
+
+**Verification**
+
+- compile check: `training/common.py`, `training/sft.py`, `training/lora.py`, `training/run_smoke_pass.py`, `training/run_lr_selection.py`
+- smoke dry run: passed against `/tmp/lora-and-friends-smoke-refactor-dry-run`
+- LR-selection dry run: passed with `16` train rows and `4` validation rows
+- LR-selection live probe: passed with `8` train rows, `2` validation rows, `1` optimizer step, and `validation_mean_nll = 1.5006235837936401`
+
+**Next**
+
+Run the real LR-selection sweep manually later from a clean result prefix.

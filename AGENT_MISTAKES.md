@@ -154,5 +154,5 @@ Initialized on 2026-03-24.
 - last_seen: 2026-05-06
 - occurrence_count: 1
 - evidence:
-  - file:training/run_tinker_lr_selection.py:289
+  - file:training/sft.py:60
   - command:live LR-selection probe failed with `AttributeError: 'TensorData' object has no attribute 'sum'`

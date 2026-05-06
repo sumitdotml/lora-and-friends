@@ -277,11 +277,13 @@ Do not start main runs; config mismatch would make the comparison hard to interp
 
 LR-selection runner evidence:
 
-- script: `training/run_tinker_lr_selection.py`
+- script: `training/run_lr_selection.py`
+- shared helpers: `training/common.py`, `training/sft.py`, `training/lora.py`
+- training directory guide: `training/README.md`
 - dry-run check: passed with one condition, one LR, `16` train rows, and `4` validation rows
 - live probe: passed with one condition, one LR, `8` train rows, `2` validation rows, and `1` optimizer step
 - probe validation result: `validation_mean_nll = 1.5006235837936401`
-- probe checkpoint: `tinker://5a503a41-7c73-5e06-8ffb-79ddf5b48b7a:train:0/weights/lr-select-live-probe-attention_only-lr-1e-4-final`
+- probe checkpoint: `tinker://8dace930-4d07-5346-8f53-c3ac1540d7af:train:0/weights/lr-select-refactor-live-probe-attention_only-lr-1e-4-final`
 
 ### 9. Freeze Main-Run Protocol
 
