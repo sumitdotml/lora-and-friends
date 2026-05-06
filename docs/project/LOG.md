@@ -1183,8 +1183,72 @@ The original `5,000 / 500` slice projected to about `20` hours for the full six-
 **Notes**
 
 - Completed runs already on disk at the time of the amendment all report `best_validation_step: 64`, which matches the amended cadence (validations at steps `32` and `64`).
-- Existing runner manifests under `artifacts/results/lr-select-001-*/manifest.json` carry `protocol_mode: "override"`. With the freeze amended, those manifests now match the canonical protocol rather than diverging from it.
+- Existing runner manifests under `artifacts/results/lr-select-001-*/manifest.json` carry `protocol_mode: "override"` and the old `run_protocol_sha256`. That is expected: the manifests preserve what the runner saw at start time, while the protocol doc was updated later to accept the same `512 / 128` run shape.
 
 **Next**
 
 Wait for `lr-select-001-all_layer-lr-3e-4` to finish, kick off `lr-select-001-all_layer-lr-1e-3`, then apply the per-condition selection rule once all six `summary.json` files exist.
+
+## 2026-05-07: Clarified why LR-selection manifests still say override.
+
+**Config**
+
+`docs/freeze/run_protocol.md` now states that retained `lr-select-001-*` manifests can keep `protocol_mode: "override"` and the old `run_protocol_sha256`. The manifests should not be rewritten to match the later document because they record the protocol file and hash visible when each run directory was created.
+
+**Numbers**
+
+- retained `lr-select-001-*` manifest `run_protocol_sha256`: `2b8f80b50bee6d276c4f489dac5075270863336905a967ad42717cf79ee0c5a4`
+- retained manifest `protocol_mode`: `override`
+
+**Notes**
+
+The run shape is still usable for LR selection because the current protocol now accepts the same `512` train rows, `128` validation rows, and `validation_every = 32` cadence. The retained hash should be read as the protocol hash visible to the runner when it created the artifact, not as the current hash of this documentation file.
+
+## 2026-05-07: Finished LR selection and froze the main training loop.
+
+**Config**
+
+`docs/freeze/run_protocol.md` now freezes the main training loop: all `25,348` rendered train rows, all `2,818` rendered validation rows, seeds `0`, `1`, `2`, two epochs, effective batch size `8`, and selected peak LR `3e-4` for both LoRA conditions.
+
+**Numbers**
+
+| condition | LR | best validation NLL |
+| --- | ---: | ---: |
+| `attention_only` | `1e-4` | `0.3786645046540731` |
+| `attention_only` | `3e-4` | `0.3632619345728878` |
+| `attention_only` | `1e-3` | `0.3644437038722405` |
+| `all_layer` | `1e-4` | `0.3648794147648033` |
+| `all_layer` | `3e-4` | `0.3559855057286731` |
+| `all_layer` | `1e-3` | `0.37397296784836664` |
+
+- selected peak LR for `attention_only`: `3e-4`
+- selected peak LR for `all_layer`: `3e-4`
+- optimizer steps per epoch: `ceil(25,348 / 8) = 3,169`
+- total optimizer steps for two epochs: `6,338`
+- warmup steps: `190`
+- minimum LR at final step: `3e-5`
+
+**Notes**
+
+The main-run LR schedule is linear warmup for the first `3%` of optimizer steps, then cosine decay down to `10%` of the selected peak LR. Tinker `0.18.2` `AdamParams` defaults are frozen for beta1, beta2, eps, weight decay, and grad clipping; these values were not tuned in this project.
+
+**Next**
+
+Commit the retained `lr-select-001-*` result directories separately from the protocol/log updates, then implement the main training runner.
+
+## 2026-05-07: Kept checkpoint cadence open after estimating 1000-step timing.
+
+**Config**
+
+`docs/freeze/run_protocol.md` now keeps the checkpoint-selection rule separate from the checkpoint cadence. The selection rule is frozen to lowest `validation_mean_nll`, but the cadence is still open between sparse epoch-end checkpoints and a denser step-based cadence.
+
+**Numbers**
+
+- observed LR-selection wall time: about `130` minutes for `384` optimizer steps, including small validation and checkpoint saves
+- observed average pace: about `20` seconds per optimizer step
+- estimated time to reach `1,000` optimizer steps: about `5.5` hours before any full-validation overhead
+- candidate `1,000`-step cadence for the `6,338`-step main run: `1,000`, `2,000`, `3,169`, `4,000`, `5,000`, `6,000`, `6,338`
+
+**Notes**
+
+Saving a checkpoint every `1,000` optimizer steps is not the expensive part. Running validation on all `2,818` validation rows at each checkpoint is the bigger unknown. The main runner should not bake in a checkpoint cadence until this tradeoff is decided.

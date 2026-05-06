@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Execution design is converged. Dataset curation is done. Results, eval, LoRA defaults, and the small LR-selection protocol are frozen. The next work is preparing runnable Tinker configs or scripts for the LR-selection sweep and main comparison.
+Execution design is converged. Dataset curation is done. Results, eval, LoRA defaults, and the small LR-selection protocol are frozen. The next work is finding the fastest safe Tinker training batch shape before writing the long-running main comparison runner.
 
 `TODO.md` is now the only live execution tracker for this phase.
 
@@ -252,16 +252,40 @@ Frozen small LR-selection protocol (amended `2026-05-06`):
 - selection rule: choose the lowest `validation_mean_nll` per condition; exact ties go to the smaller LR
 - budget warning threshold: do not start if the current Tinker estimate for training plus validation is above `$10`
 - amendment reason and full diff: `docs/freeze/run_protocol.md` "Amendment 2026-05-06" subsection and the `2026-05-06: Rescaled the small LR-selection slice from 5000/500 to 512/128` entry in `docs/project/LOG.md`
+- run metadata note: retained `lr-select-001-*` manifests may still say `protocol_mode: "override"` and carry the old `run_protocol_sha256`; that is expected because the manifests record what the runner saw before this smaller run shape was accepted in the docs
 
-### 8. Prepare Final Condition-Specific Tinker Configs
+### 8. Find The Fastest Safe Tinker Training Batch Shape
 
-Status: partially done; LR-selection runner is implemented and live-probed, final main-run configs are not started.
+Status: not started.
+
+What this means:
+Run a tiny speed probe that compares the current training request shape against a batched request shape. The current LR-selection runner builds one optimizer step from `8` separate `forward_backward_async([datum])` calls. The probe should test whether Tinker can instead accept one `forward_backward_async(batch_of_8_datums)` call before the optimizer step.
+
+It matters because:
+The LR-selection run averaged about `20` seconds per optimizer step. If the main runner keeps the current micro-batch request shape, reaching `1,000` optimizer steps could take about `5.5` hours before full-validation overhead. If batched training requests work correctly, the main run may be much faster without changing the effective batch size.
+
+Done when:
+A retained probe result records wall-clock seconds per optimizer step for both request shapes, confirms whether batched `forward_backward_async` works for `8` datums, and states which request shape the main runner will use.
+
+If it fails:
+Keep the current micro-batch request shape, document the measured pace, and freeze a conservative checkpoint/validation cadence before starting main training.
+
+- [ ] Write a tiny throughput probe that reuses the frozen rendered train slice and shared Tinker helper modules.
+- [ ] Compare current mode: `8` single-datum `forward_backward_async([datum])` calls plus one optimizer step.
+- [ ] Compare batched mode: one `forward_backward_async(batch_of_8_datums)` call plus one optimizer step.
+- [ ] Keep the probe small enough to avoid becoming a training run, such as `16` or `32` optimizer steps per mode.
+- [ ] Record Tinker SDK version, base model, condition, LoRA rank, train rows used, optimizer steps, total wall time, seconds per optimizer step, and any backend errors.
+- [ ] Decide and record the main-run training request shape before implementing the full main runner.
+
+### 9. Prepare Final Condition-Specific Tinker Configs
+
+Status: blocked on the training-throughput probe.
 
 What this means:
 Create one runnable Tinker config or script for attention-only LoRA and one for all-layer LoRA.
 
 It matters because:
-The final comparison should differ only in Tinker layer-family switches and the learning rate selected by the frozen small-run rule.
+The final comparison should differ only in Tinker layer-family switches and seed. The selected peak LR, LR schedule, optimizer settings, data, and validation/checkpoint rule should stay matched.
 
 Done when:
 Both configs exist, use the same dataset and shared defaults, and define run names plus local output paths.
@@ -273,9 +297,11 @@ Do not start main runs; config mismatch would make the comparison hard to interp
 - [x] Prepare a Tinker LR-selection script that can run all-layer LoRA.
 - [ ] Prepare the final main-run Tinker config or script for attention-only LoRA.
 - [ ] Prepare the final main-run Tinker config or script for all-layer LoRA.
-- [ ] Keep everything matched except Tinker layer-family switches and selected LR.
+- [ ] Keep everything matched except Tinker layer-family switches and seed.
 - [ ] Define run naming for checkpoints, logs, and metadata.
 - [ ] Define where run outputs will be saved locally after completion.
+- [ ] Implement linear warmup plus cosine LR decay in the main-run script.
+- [ ] Record `current_lr`, peak LR, minimum LR, warmup steps, weight decay, and grad clip norm in retained outputs.
 
 LR-selection runner evidence:
 
@@ -286,34 +312,42 @@ LR-selection runner evidence:
 - live probe: passed with one condition, one LR, `8` train rows, `2` validation rows, and `1` optimizer step
 - probe validation result: `validation_mean_nll = 1.5006235837936401`
 - probe checkpoint: `tinker://8dace930-4d07-5346-8f53-c3ac1540d7af:train:0/weights/lr-select-refactor-live-probe-attention_only-lr-1e-4-final`
+- LR-selection sweep result: completed all `6` runs under `artifacts/results/lr-select-001-*`
+- selected peak LR for `attention_only`: `3e-4`
+- selected peak LR for `all_layer`: `3e-4`
 
-### 9. Freeze Main-Run Protocol
+### 10. Freeze Main-Run Protocol
 
-Status: partially done.
+Status: partially done; training loop, optimizer defaults, LR schedule, and checkpoint-selection rule are frozen. Training request shape, validation/checkpoint cadence, null-result interpretation, and final budget check remain open.
 
 What this means:
-Define the final comparison before paid runs: conditions, seeds, epochs, checkpoint-selection rule, null-result interpretation rule, and budget check.
+Define the final comparison before paid runs: conditions, seeds, epochs, optimizer defaults, LR schedule, validation/checkpoint cadence, checkpoint-selection rule, null-result interpretation rule, and budget check.
 
 It matters because:
 The main result should be judged against rules written before the numbers are known.
 
 Done when:
-`docs/freeze/run_protocol.md` has a frozen main-run section covering `2` conditions, `3` seeds each, `2` epochs, checkpoint selection, reduction across seeds, null-result rule, and budget.
+`docs/freeze/run_protocol.md` has a frozen main-run section covering `2` conditions, `3` seeds each, `2` epochs, optimizer defaults, LR schedule, validation/checkpoint cadence, checkpoint selection, reduction across seeds, null-result rule, and budget.
 
 If it fails:
 Do not start main comparison runs; missing rules would make the study vulnerable to post-result interpretation drift.
 
-- [ ] Create and fill the main-run section in `docs/freeze/run_protocol.md`.
-- [ ] Freeze the checkpoint-selection rule to lowest validation loss.
-- [ ] Freeze the main-run protocol: `2` conditions, `3` seeds each, `2` epochs.
+- [x] Create and fill the main-run training-loop section in `docs/freeze/run_protocol.md`.
+- [x] Freeze the checkpoint-selection rule to lowest validation loss.
+- [x] Freeze the main-run protocol shape: `2` conditions, `3` seeds each, `2` epochs.
+- [x] Freeze the main-run LR schedule: `3%` linear warmup, cosine decay to `10%` of peak LR.
+- [x] Freeze optimizer regularization settings: `weight_decay = 0.0`, `grad_clip_norm = 0.0`.
+- [x] State that Adam beta1, beta2, and eps are inherited Tinker defaults, not tuned values.
+- [ ] Freeze the training request shape from the throughput probe.
+- [ ] Freeze the validation/checkpoint cadence.
 - [x] Freeze the per-condition reduction rule across seeds: mean across `3` seeds, report min/max range.
 - [ ] Freeze the null-result interpretation rule.
 - [ ] Recheck that the `1 + 3` seed policy still fits under the `$150` cap.
 - [x] Add an explicit `$25` correction-pass reserve to the budget sheet.
 
-### 10. Run Small LR-Selection, Then Main Comparison
+### 11. Run Small LR-Selection, Then Main Comparison
 
-Status: not started.
+Status: LR selection complete; main comparison blocked on the training-throughput probe and final main-run protocol freeze.
 
 What this means:
 Execute the frozen small LR-selection runs, select the best learning rate per condition by the frozen rule, run the full attention-only and all-layer LoRA comparison, then evaluate every retained checkpoint under the frozen `GSM8K` contract.
@@ -327,14 +361,14 @@ Small-run results, selected LR records, main-run results, benchmark predictions,
 If it fails:
 Record the failure and cost impact in `docs/project/LOG.md`, use the `$25` correction reserve only for a clearly scoped correction pass, and avoid changing frozen rules unless the run is invalid.
 
-- [ ] Run the small LR-selection sweep.
-- [ ] Select the best LR per condition.
+- [x] Run the small LR-selection sweep.
+- [x] Select the best LR per condition: `3e-4` for `attention_only`, `3e-4` for `all_layer`.
 - [ ] Run the main comparison.
 - [ ] Evaluate all checkpoints under the frozen `GSM8K` contract.
 - [ ] Use `--concurrency 16` for benchmark evals, or record a fallback to `--concurrency 4` if Tinker requires it.
 - [ ] Save results in the retained schema.
 
-### 11. Generate Final Tables And Charts
+### 12. Generate Final Tables And Charts
 
 Status: not started.
 

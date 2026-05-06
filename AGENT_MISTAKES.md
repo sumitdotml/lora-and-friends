@@ -156,3 +156,18 @@ Initialized on 2026-03-24.
 - evidence:
   - file:training/sft.py:60
   - command:live LR-selection probe failed with `AttributeError: 'TensorData' object has no attribute 'sum'`
+
+### MISTAKE-20260507-001
+
+- status: active
+- severity: low
+- scope_tags: [docs, planning]
+- pattern: documentation implied retained manifests matched a later protocol update without explaining the original hash and override label
+- prevention_rule: when a protocol is changed after artifacts are created, document both the current rule and the original run metadata instead of implying retained artifacts were rewritten
+- validation_check: protocol/log/TODO notes for changed runs must mention retained `protocol_mode` and saved protocol hash when those differ from the current protocol file
+- first_seen: 2026-05-07
+- last_seen: 2026-05-07
+- occurrence_count: 1
+- evidence:
+  - file:docs/project/LOG.md:1185
+  - file:docs/freeze/run_protocol.md:31

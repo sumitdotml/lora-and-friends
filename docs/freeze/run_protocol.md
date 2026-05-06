@@ -27,7 +27,14 @@ What did not change:
 - model, rendered dataset, seed `7`, conditions, LoRA rank, micro-batch size, gradient accumulation, effective batch size, epoch count, LR grid, run count, selection rule, retained output shape, failure rule, and `$10` budget warning threshold all remain as originally frozen
 - both slices are still taken from the start of the rendered files in file order, so row identities are deterministic given the rendered dataset hash
 
-Authoritative numbers in this section reflect the amended slice. Per-run retained run manifests record the actual train and validation row IDs used.
+The numbers in this section use the smaller slice. Each run manifest still records the exact train and validation row IDs used.
+
+Run metadata note:
+
+- `lr-select-001-*` manifests created during the May 6 run may still record `protocol_mode: "override"` and the old `run_protocol_sha256`
+- this is expected because those manifests were written before `docs/freeze/run_protocol.md` was amended from `5,000 / 500` to `512 / 128`
+- do not rewrite retained manifests to make their hashes match later documentation; the manifest records what the runner saw at start time
+- the current protocol now accepts the same `512 / 128` run shape, while the saved manifest still honestly shows that the run started before this doc was updated
 
 ### Goal
 
@@ -106,17 +113,91 @@ Authoritative numbers in this section reflect the amended slice. Per-run retaine
 
 ## Main Run
 
-**Frozen on**: not yet
+**Status**: training loop mostly frozen; validation/checkpoint cadence and interpretation rules not fully frozen
+**Training loop frozen on**: 2026-05-07
 
-Already fixed:
+### Goal
+
+- run the final supervised fine-tuning comparison after LR selection
+- compare attention-only LoRA against all-layer LoRA under the same data, seeds, batch shape, optimizer settings, and evaluation rules
+
+### Conditions
+
+- `attention_only`: train attention adapters only
+- `all_layer`: train attention and MLP adapters, with `train_unembed=False`
+
+### Dataset
+
+- train file: `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/train.jsonl`
+- validation file: `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/val.jsonl`
+- train rows: all `25,348` rows
+- validation rows: all `2,818` rows
+
+### Seeds
 
 - main seeds: `0`, `1`, `2`
+- seed `7` is reserved for LR selection and must not be reused in the main comparison
 
-Still open:
+### LoRA and Optimizer
 
-- checkpoint-selection rule
-- final run shape confirmation
+- base model: `Qwen/Qwen3-8B`
+- LoRA rank: `8`
+- selected peak LR for `attention_only`: `3e-4`
+- selected peak LR for `all_layer`: `3e-4`
+- optimizer: Tinker `AdamParams`
+- Adam beta1: `0.9`, inherited from the Tinker `0.18.2` `AdamParams` default
+- Adam beta2: `0.95`, inherited from the Tinker `0.18.2` `AdamParams` default
+- Adam eps: `1e-12`, inherited from the Tinker `0.18.2` `AdamParams` default
+- weight decay: `0.0`, inherited from the Tinker `0.18.2` `AdamParams` default and kept at zero to avoid adding a separate regularization variable
+- grad clip norm: `0.0`, inherited from the Tinker `0.18.2` `AdamParams` default
+- these optimizer internals are not tuned in this project; they are frozen as backend defaults for reproducibility
+
+### Learning-Rate Schedule
+
+- use the selected LR as the peak LR
+- warmup: linear warmup for the first `3%` of optimizer steps
+- decay: cosine decay after warmup
+- minimum LR: `10%` of peak LR
+- with peak LR `3e-4`, the minimum LR is `3e-5`
+- if total optimizer steps change, recompute warmup steps as `round(total_optimizer_steps * 0.03)` and recompute minimum LR as `peak_lr * 0.10`
+
+For the frozen main-run shape:
+
+- micro-batch size: `1`
+- gradient accumulation: `8`
+- effective batch size: `8`
+- epochs: `2`
+- optimizer steps per epoch: `ceil(25,348 / 8) = 3,169`
+- total optimizer steps: `6,338`
+- warmup steps: `190`
+- step `1` starts near zero LR
+- step `190` reaches peak LR
+- step `191` starts cosine decay
+- step `6,338` ends at `3e-5`
+
+### Validation and Checkpoint Selection
+
+- select the checkpoint with the lowest `validation_mean_nll`
+- if validation values tie exactly, choose the later checkpoint
+- do not use `GSM8K` benchmark accuracy to choose a training checkpoint
+- validation/checkpoint cadence is not frozen yet
+- candidate sparse cadence: validate and checkpoint at epoch ends only, steps `3,169` and `6,338`
+- candidate step cadence: validate and checkpoint every `1,000` optimizer steps, plus epoch ends, giving steps `1,000`, `2,000`, `3,169`, `4,000`, `5,000`, `6,000`, and `6,338`
+- freeze one cadence before writing or running the main training script
+
+### Retained Output Shape
+
+- one result directory per condition/seed run under `artifacts/results/`
+- each run writes `manifest.json`, `metrics.jsonl`, `summary.json`, and `sample_render.txt`
+- `metrics.jsonl` must record the current learning rate for each optimizer step
+- `manifest.json` must record scheduler settings, selected peak LR, minimum LR, warmup steps, optimizer defaults, validation/checkpoint cadence, validation steps, and checkpoint-selection rule
+
+### Still Open
+
 - null-result interpretation rule
+- validation/checkpoint cadence
+- final budget check before starting paid main runs
+- exact run names and local output paths for the main runner
 
 ## Per-Condition Reduction
 
