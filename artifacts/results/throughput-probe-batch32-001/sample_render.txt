@@ -1,0 +1,22 @@
+<|im_start|>system
+You are a careful math solver. Solve the problem step by step. Put the final answer in \boxed{}.<|im_end|>
+<|im_start|>user
+Bill is sent to a donut shop to purchase exactly six donuts. If the shop has four kinds of donuts and Bill is to get at least one of each kind, how many combinations will satisfy Bill's order requirements?<|im_end|>
+<|im_start|>assistant
+<think>
+
+</think>
+
+Bill must buy exactly six donuts and he must get at least one of each kind. There are four kinds of donuts, so let's first satisfy the condition that he must get at least one of each kind.
+
+This means Bill will first buy one of each kind, leaving him with two donuts to purchase with no restrictions.
+
+To find the number of combinations for buying the remaining two donuts, we can think of it as placing two identical objects (the remaining two donuts) into four distinct bins (the four kinds of donuts), allowing for empty bins.
+
+This can be solved using the formula for combinations with repetition, which is
+\[ \binom{n + k - 1}{k} \]
+where $n$ is the number of bins (4 kinds of donuts in this case) and $k$ is the number of objects to distribute (2 remaining donuts in this case).
+
+Applying the formula, we have
+\[ \binom{4 + 2 - 1}{2} = \binom{5}{2} = \frac{5!}{2! \cdot (5 - 2)!} = \frac{5 \cdot 4}{2} = \boxed{10} \]<|im_end|>
+
