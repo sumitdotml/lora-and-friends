@@ -6,25 +6,47 @@
 ## Small LR-Selection Run
 
 **Frozen on**: 2026-05-06
+**Amended on**: 2026-05-06
 
-Goal:
+### Amendment 2026-05-06: rescaled the small slice from `5,000 / 500` to `512 / 128`
+
+What changed:
+
+- train slice reduced from `5,000` rows to `512` rows
+- validation slice reduced from `500` rows to `128` rows
+- expected optimizer steps per run reduced from `625` to `64`
+- validation cadence rewritten as `validation_every = 32` optimizer steps, so validations land at steps `32` and `64`
+
+Why:
+
+- the original `5,000 / 500` slice projected to about `20` hours for the full six-run sweep on Tinker, which was infeasible inside this project's wall-clock and budget envelope
+- a `512 / 128` slice still produces well-separated `validation_mean_nll` values across the `1e-4`, `3e-4`, `1e-3` LR grid, which is enough to apply the per-condition selection rule
+
+What did not change:
+
+- model, rendered dataset, seed `7`, conditions, LoRA rank, micro-batch size, gradient accumulation, effective batch size, epoch count, LR grid, run count, selection rule, retained output shape, failure rule, and `$10` budget warning threshold all remain as originally frozen
+- both slices are still taken from the start of the rendered files in file order, so row identities are deterministic given the rendered dataset hash
+
+Authoritative numbers in this section reflect the amended slice. Per-run retained run manifests record the actual train and validation row IDs used.
+
+### Goal
 
 - run a small practice training experiment before the main comparison
 - try a small learning-rate grid for both LoRA conditions
 - select LR fairly for both conditions after the smoke pass
 
-Meaning:
+### Meaning
 
 - this is not the final result
 - this exists to choose learning rates without spending the full experiment budget
 - "how often validation loss is measured" means how often Tinker reports validation loss during training
 
-Frozen inputs:
+### Frozen inputs
 
 - model: `Qwen/Qwen3-8B`
 - rendered dataset: `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/`
-- train rows: first `5,000` rows from `train.jsonl`, by file order
-- validation rows: first `500` rows from `val.jsonl`, by file order
+- train rows: first `512` rows from `train.jsonl`, by file order
+- validation rows: first `128` rows from `val.jsonl`, by file order
 - seed: `7`
 - seed rule: `7` is reserved for small LR-selection and must not be reused as one of the main comparison seeds
 - conditions: `attention_only` and `all_layer`, as locked in `docs/freeze/lora_defaults.md`
@@ -34,48 +56,49 @@ Frozen inputs:
 - effective batch size: `8` rendered training examples per optimizer step
 - epoch count: `1`
 
-Frozen LR grid:
+### Frozen LR grid
 
 - `1e-4`
 - `3e-4`
 - `1e-3`
 
-Run count:
+### Run count
 
 - `2` conditions x `3` learning rates x `1` seed = `6` training runs
 
-Expected step shape:
+### Expected step shape
 
-- `5,000` train rows / effective batch size `8` = `625` optimizer steps per run
+- `512` train rows / effective batch size `8` = `64` optimizer steps per run
 
-Validation-loss measurement:
+### Validation-loss measurement
 
-- run validation on the fixed `500`-row small validation slice every `125` optimizer steps
-- this gives validation checkpoints at optimizer steps `125`, `250`, `375`, `500`, and `625`
-- if a future implementation changes the small-run row count or effective batch size, always include the final optimizer step even if it does not land on a `125`-step boundary
+- run validation on the fixed `128`-row small validation slice every `32` optimizer steps
+- this gives validation checkpoints at optimizer steps `32` and `64`
+- if a future implementation changes the small-run row count or effective batch size, always include the final optimizer step even if it does not land on a `32`-step boundary
 
-Selection rule:
+### Selection rule
 
 - select one learning rate per condition
-- for each condition, choose the LR with the lowest `validation_mean_nll` observed on the fixed `500`-row small validation slice
+- for each condition, choose the LR with the lowest `validation_mean_nll` observed on the fixed `128`-row small validation slice
 - do not use `GSM8K` benchmark accuracy to choose the LR
 - do not compare the two conditions using small-run validation loss; the small run only chooses each condition's LR
 - if two LRs tie exactly on the retained numeric value, choose the smaller LR
 - if a run fails or does not produce the required validation rows, that LR is ineligible until rerun successfully under the same frozen protocol
 
-Retained output shape:
+### Retained output shape
 
 - one result directory per condition/LR run under `artifacts/results/`
 - each run writes `metrics.jsonl`, `summary.json`, and a run manifest
 - each run manifest records the selected train row indices, validation row indices, seed, LR, condition, LoRA switches, package versions, git SHA, and frozen contract hashes
 
-Budget envelope:
+### Budget envelope
 
-- training-only estimate from `docs/project/PROJECT_PLAN.md`: about `$4.08` for the full six-run small LR-selection sweep
-- validation overhead estimate: `500` validation rows x about `333.36` tokens x `5` validations x `6` runs = about `5.00M` validation tokens
+- per-run retained token counts on the amended slice are about `167,324` train tokens plus `87,080` validation tokens for a per-run total of about `254,404` tokens, evidenced in the retained `summary.json` files for completed `lr-select-001-*` runs
+- full six-run sweep token total at this slice size is therefore about `1.53M` tokens
+- the amended slice is far below the original `5,000 / 500` envelope, so it stays well under the `$10` budget warning threshold
 - budget warning threshold: do not start the small LR-selection sweep if the current Tinker estimate for training plus validation is above `$10`
 
-Failure rule:
+### Failure rule
 
 - if the LR grid is clearly too low or too high for both conditions, record the failed sweep in `docs/project/LOG.md` before changing the grid
 - one correction pass is allowed only if the failed grid cannot produce a defensible LR choice

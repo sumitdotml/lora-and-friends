@@ -239,17 +239,19 @@ Do not start the small LR-selection runs; unresolved selection design would let 
 - [x] Confirm that the small LR-selection run stays inside the budget envelope.
 - [x] Log the LR-selection protocol before the first run.
 
-Frozen small LR-selection protocol:
+Frozen small LR-selection protocol (amended `2026-05-06`):
 
-- train slice: first `5,000` rows from `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/train.jsonl`
-- validation slice: first `500` rows from `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/val.jsonl`
+- train slice: first `512` rows from `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/train.jsonl`
+- validation slice: first `128` rows from `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/val.jsonl`
 - seed: `7`
 - LR grid: `1e-4`, `3e-4`, `1e-3`
 - conditions: `attention_only`, `all_layer`
 - run count: `6`
-- validation cadence: every `125` optimizer steps, including the final step at `625`
+- expected optimizer steps per run: `64` (`512 / 8`)
+- validation cadence: every `32` optimizer steps, including the final step at `64`
 - selection rule: choose the lowest `validation_mean_nll` per condition; exact ties go to the smaller LR
 - budget warning threshold: do not start if the current Tinker estimate for training plus validation is above `$10`
+- amendment reason and full diff: `docs/freeze/run_protocol.md` "Amendment 2026-05-06" subsection and the `2026-05-06: Rescaled the small LR-selection slice from 5000/500 to 512/128` entry in `docs/project/LOG.md`
 
 ### 8. Prepare Final Condition-Specific Tinker Configs
 

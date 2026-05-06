@@ -1161,3 +1161,30 @@ The refactor keeps the smoke pass and LR-selection sweep as separate orchestrati
 **Next**
 
 Run the real LR-selection sweep manually later from a clean result prefix.
+
+## 2026-05-06: Rescaled the small LR-selection slice from 5000/500 to 512/128.
+
+**Config**
+
+`docs/freeze/run_protocol.md` now records an amendment dated `2026-05-06` that supersedes the original slice numbers. The amended slice is `512` train rows and `128` validation rows from the same rendered dataset, with seed, conditions, LR grid, batch shape, epoch count, selection rule, and `$10` budget warning threshold all unchanged.
+
+**Numbers**
+
+- train slice: first `512` rows of `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/train.jsonl`
+- validation slice: first `128` rows of `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/val.jsonl`
+- expected optimizer steps per run: `64` (`512 / 8`)
+- validation cadence: every `32` optimizer steps, so validations at steps `32` and `64`
+- per-run token counts, evidenced in retained `summary.json`: about `167,324` train tokens plus `87,080` validation tokens, total about `254,404` tokens per run, about `1.53M` tokens across the six-run sweep
+
+**Why**
+
+The original `5,000 / 500` slice projected to about `20` hours for the full six-run sweep on Tinker, which was infeasible inside the project's wall-clock and budget envelope. The amended `512 / 128` slice still produces well-separated `validation_mean_nll` values across the `1e-4`, `3e-4`, `1e-3` LR grid in the runs already on disk, which is enough to apply the per-condition selection rule.
+
+**Notes**
+
+- Completed runs already on disk at the time of the amendment all report `best_validation_step: 64`, which matches the amended cadence (validations at steps `32` and `64`).
+- Existing runner manifests under `artifacts/results/lr-select-001-*/manifest.json` carry `protocol_mode: "override"`. With the freeze amended, those manifests now match the canonical protocol rather than diverging from it.
+
+**Next**
+
+Wait for `lr-select-001-all_layer-lr-3e-4` to finish, kick off `lr-select-001-all_layer-lr-1e-3`, then apply the per-condition selection rule once all six `summary.json` files exist.
