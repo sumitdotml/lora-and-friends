@@ -1,0 +1,30 @@
+{
+  "artifact_paths": {
+    "manifest": "artifacts/results/lr-select-fast-batch-live-probe-attention_only-lr-3e-4/manifest.json",
+    "metrics": "artifacts/results/lr-select-fast-batch-live-probe-attention_only-lr-3e-4/metrics.jsonl",
+    "sample_render": "artifacts/results/lr-select-fast-batch-live-probe-attention_only-lr-3e-4/sample_render.txt",
+    "summary": "artifacts/results/lr-select-fast-batch-live-probe-attention_only-lr-3e-4/summary.json"
+  },
+  "best_validation_step": 1,
+  "checkpoint": {
+    "name": "lr-select-fast-batch-live-probe-attention_only-lr-3e-4-final",
+    "path": "tinker://6f392a0d-5624-597f-8fd5-5a4e6ba247d6:train:0/weights/lr-select-fast-batch-live-probe-attention_only-lr-3e-4-final",
+    "ttl_seconds": 604800
+  },
+  "condition": "attention_only",
+  "finished_at": "2026-05-06T18:09:47.762459+00:00",
+  "learning_rate": 0.0003,
+  "primary_metric": {
+    "name": "validation_mean_nll",
+    "value": 1.0018959045410156
+  },
+  "run_id": "lr-select-fast-batch-live-probe-attention_only-lr-3e-4",
+  "seed": 7,
+  "status": "pass",
+  "token_count": {
+    "optimizer": 347865,
+    "total": 353437,
+    "train": 347865,
+    "validation": 5572
+  }
+}
