@@ -1252,3 +1252,23 @@ Commit the retained `lr-select-001-*` result directories separately from the pro
 **Notes**
 
 Saving a checkpoint every `1,000` optimizer steps is not the expensive part. Running validation on all `2,818` validation rows at each checkpoint is the bigger unknown. The main runner should not bake in a checkpoint cadence until this tradeoff is decided.
+
+## 2026-05-07: Added a throughput probe before the main runner.
+
+**Config**
+
+`training/run_throughput_probe.py` now compares two Tinker training request shapes before the main comparison runner is written. The default probe uses `attention_only`, LoRA rank `8`, seed `7`, peak LR `3e-4`, `16` optimizer steps per request shape, and effective batch size `8`.
+
+**Numbers**
+
+- `single_datum_calls`: `8` separate `forward_backward_async([datum])` calls before one optimizer step
+- `batched_datums`: one `forward_backward_async(batch_of_8_datums)` call before one optimizer step
+- retained output path when run: `artifacts/results/throughput-probe-001/`
+
+**Notes**
+
+Only the dry-run path has been checked so far. No live Tinker throughput probe has been started from this implementation pass.
+
+**Next**
+
+Run `uv run training/run_throughput_probe.py --run-id throughput-probe-001` manually, then freeze the main-run training request shape from `summary.json`.

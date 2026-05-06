@@ -5,7 +5,8 @@ This directory keeps runnable training entrypoints thin and moves repeated mecha
 ## Entrypoints
 
 - `run_smoke_pass.py`: tiny backend check used to prove the renderer, LoRA switches, gradient accumulation, validation loss, and checkpoint saving path work.
-- `run_lr_selection.py`: frozen small LR-selection sweep. This is the next script to run manually when ready.
+- `run_lr_selection.py`: frozen small LR-selection sweep.
+- `run_throughput_probe.py`: tiny timing probe that compares the current one-datum training request shape against a batched training request shape before the main run.
 
 ## Shared Modules
 
@@ -47,3 +48,22 @@ uv run training/run_lr_selection.py --run-prefix lr-select-001
 ```
 
 Should not use `GSM8K` accuracy to pick the LR. The frozen rule is lowest `validation_mean_nll` per condition on the fixed small validation slice.
+
+To dry-run the throughput probe artifact path without Tinker calls:
+
+```bash
+uv run training/run_throughput_probe.py \
+  --dry-run \
+  --run-id throughput-probe-dry-run \
+  --output-root /tmp/lora-and-friends-throughput-dry-run \
+  --optimizer-steps 2 \
+  --overwrite
+```
+
+To run the real throughput probe when ready:
+
+```bash
+uv run training/run_throughput_probe.py --run-id throughput-probe-001
+```
+
+The probe writes `artifacts/results/throughput-probe-001/summary.json`. Use its `recommended_request_shape` only as a speed decision for the main training loop; it is not a model-quality result.

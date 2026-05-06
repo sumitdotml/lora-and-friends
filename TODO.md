@@ -256,7 +256,7 @@ Frozen small LR-selection protocol (amended `2026-05-06`):
 
 ### 8. Find The Fastest Safe Tinker Training Batch Shape
 
-Status: not started.
+Status: probe script written; live Tinker probe not run yet.
 
 What this means:
 Run a tiny speed probe that compares the current training request shape against a batched request shape. The current LR-selection runner builds one optimizer step from `8` separate `forward_backward_async([datum])` calls. The probe should test whether Tinker can instead accept one `forward_backward_async(batch_of_8_datums)` call before the optimizer step.
@@ -270,12 +270,22 @@ A retained probe result records wall-clock seconds per optimizer step for both r
 If it fails:
 Keep the current micro-batch request shape, document the measured pace, and freeze a conservative checkpoint/validation cadence before starting main training.
 
-- [ ] Write a tiny throughput probe that reuses the frozen rendered train slice and shared Tinker helper modules.
+- [x] Write a tiny throughput probe that reuses the frozen rendered train slice and shared Tinker helper modules.
 - [ ] Compare current mode: `8` single-datum `forward_backward_async([datum])` calls plus one optimizer step.
 - [ ] Compare batched mode: one `forward_backward_async(batch_of_8_datums)` call plus one optimizer step.
 - [ ] Keep the probe small enough to avoid becoming a training run, such as `16` or `32` optimizer steps per mode.
 - [ ] Record Tinker SDK version, base model, condition, LoRA rank, train rows used, optimizer steps, total wall time, seconds per optimizer step, and any backend errors.
 - [ ] Decide and record the main-run training request shape before implementing the full main runner.
+
+Probe runner evidence:
+
+- script: `training/run_throughput_probe.py`
+- default run id: `throughput-probe-001`
+- default condition: `attention_only`
+- default optimizer steps per request shape: `16`
+- default effective batch size: `8`
+- default request shapes: `single_datum_calls`, `batched_datums`
+- retained output path when run: `artifacts/results/throughput-probe-001/`
 
 ### 9. Prepare Final Condition-Specific Tinker Configs
 
