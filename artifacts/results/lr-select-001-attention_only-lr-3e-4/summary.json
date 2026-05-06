@@ -1,0 +1,30 @@
+{
+  "artifact_paths": {
+    "manifest": "artifacts/results/lr-select-001-attention_only-lr-3e-4/manifest.json",
+    "metrics": "artifacts/results/lr-select-001-attention_only-lr-3e-4/metrics.jsonl",
+    "sample_render": "artifacts/results/lr-select-001-attention_only-lr-3e-4/sample_render.txt",
+    "summary": "artifacts/results/lr-select-001-attention_only-lr-3e-4/summary.json"
+  },
+  "best_validation_step": 64,
+  "checkpoint": {
+    "name": "lr-select-001-attention_only-lr-3e-4-final",
+    "path": "tinker://ffcd47cf-2b66-5eb3-bfe1-89839663764b:train:1/weights/lr-select-001-attention_only-lr-3e-4-final",
+    "ttl_seconds": 604800
+  },
+  "condition": "attention_only",
+  "finished_at": "2026-05-06T13:24:43.863566+00:00",
+  "learning_rate": 0.0003,
+  "primary_metric": {
+    "name": "validation_mean_nll",
+    "value": 0.3632619345728878
+  },
+  "run_id": "lr-select-001-attention_only-lr-3e-4",
+  "seed": 7,
+  "status": "pass",
+  "token_count": {
+    "optimizer": 167324,
+    "total": 254404,
+    "train": 167324,
+    "validation": 87080
+  }
+}

@@ -19,6 +19,7 @@ Current baseline runs:
 
 - `baseline-qwen3-8b-gsm8k-001/`: full `GSM8K` test evaluation for untouched `Qwen/Qwen3-8B`
 - `baseline-qwen3-8b-gsm8k-20260505-074245-limit-1/`: one-example remote probe used to validate the eval path
+- `lr-select-001-*/`: small LR-selection runs used to choose the main-run peak LR for each LoRA condition
 
 ## File Roles
 
@@ -43,6 +44,21 @@ Current baseline runs:
 - total tokens: `505,694`
 
 The summary recorded `git.dirty: true` because the run directory itself was untracked while the script wrote the result. The recorded `status_short` only listed `?? artifacts/results/baseline-qwen3-8b-gsm8k-001/`, so the code and frozen contracts were clean for the result-producing run.
+
+## LR Selection Result
+
+`lr-select-001-*` used the amended small-run slice: first `512` rendered train rows, first `128` rendered validation rows, seed `7`, and validation at optimizer steps `32` and `64`.
+
+| Condition | LR | Best validation NLL | Selected |
+| --- | ---: | ---: | --- |
+| `attention_only` | `1e-4` | `0.3786645046540731` | no |
+| `attention_only` | `3e-4` | `0.3632619345728878` | yes |
+| `attention_only` | `1e-3` | `0.3644437038722405` | no |
+| `all_layer` | `1e-4` | `0.3648794147648033` | no |
+| `all_layer` | `3e-4` | `0.3559855057286731` | yes |
+| `all_layer` | `1e-3` | `0.37397296784836664` | no |
+
+The selected main-run peak LR is `3e-4` for both LoRA conditions. The small-run validation losses are only for LR selection; they are not the final condition comparison.
 
 ## Concurrency
 
