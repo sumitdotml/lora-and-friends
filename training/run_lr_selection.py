@@ -55,11 +55,12 @@ from sft import (
 )
 
 
-MICRO_BATCH_SIZE = 1
-GRADIENT_ACCUMULATION = 8
-TRAIN_ROWS = 5_000
-VAL_ROWS = 500
-VALIDATION_EVERY = 125
+DEFAULT_REQUEST_SHAPE = "single_datum_calls"
+REQUEST_SHAPES = ("single_datum_calls", "batched_datums_pipelined")
+DEFAULT_EFFECTIVE_BATCH_SIZE = 8
+TRAIN_ROWS = 512
+VAL_ROWS = 128
+VALIDATION_EVERY = 32
 LEARNING_RATES = (1e-4, 3e-4, 1e-3)
 
 
@@ -97,6 +98,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--train-limit", type=int, default=TRAIN_ROWS)
     parser.add_argument("--val-limit", type=int, default=VAL_ROWS)
     parser.add_argument("--validation-every", type=int, default=VALIDATION_EVERY)
+    parser.add_argument(
+        "--request-shape",
+        choices=REQUEST_SHAPES,
+        default=DEFAULT_REQUEST_SHAPE,
+    )
+    parser.add_argument(
+        "--effective-batch-size",
+        type=int,
+        default=DEFAULT_EFFECTIVE_BATCH_SIZE,
+    )
     parser.add_argument("--max-optimizer-steps", type=int)
     parser.add_argument("--ttl-seconds", type=int, default=7 * 24 * 60 * 60)
     parser.add_argument("--dry-run", action="store_true")
@@ -142,6 +153,8 @@ def protocol_mode(args: argparse.Namespace) -> str:
         args.train_limit == TRAIN_ROWS
         and args.val_limit == VAL_ROWS
         and args.validation_every == VALIDATION_EVERY
+        and args.request_shape == DEFAULT_REQUEST_SHAPE
+        and args.effective_batch_size == DEFAULT_EFFECTIVE_BATCH_SIZE
         and tuple(args.conditions) == CONDITION_ORDER
         and tuple(args.learning_rates) == LEARNING_RATES
         and args.max_optimizer_steps is None
@@ -256,6 +269,48 @@ async def run_optimizer_step(
     return row
 
 
+async def run_pipelined_train_step(
+    training_client: Any,
+    batch: list[Any],
+    *,
+    spec: RunSpec,
+    step: int,
+    metrics_path: Path,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Run one batched train/update step using Tinker's pipelined pattern."""
+
+    import tinker
+
+    train_future = await training_client.forward_backward_async(
+        batch, loss_fn="cross_entropy"
+    )
+    optim_future = await training_client.optim_step_async(
+        tinker.AdamParams(learning_rate=spec.learning_rate)
+    )
+    train_output = await train_future.result_async()
+    optim_output = await optim_future.result_async()
+    token_count = sum(datum_token_count(datum) for datum in batch)
+    train_row = metric_row(
+        spec=spec,
+        step=step,
+        split="small_train",
+        loss=mean_nll(train_output, batch),
+        token_count=token_count,
+        backend_metrics=train_output.metrics,
+    )
+    optim_row = metric_row(
+        spec=spec,
+        step=step,
+        split="small_optim",
+        loss=None,
+        token_count=token_count,
+        backend_metrics=optim_output.metrics,
+    )
+    append_jsonl(metrics_path, train_row)
+    append_jsonl(metrics_path, optim_row)
+    return train_row, optim_row
+
+
 async def run_validation(
     training_client: Any,
     val_datums: list[Any],
@@ -348,12 +403,21 @@ def build_manifest(
             "condition": spec.condition,
             "lora_config": lora_config_summary(spec.condition),
             "rank": LORA_RANK,
-            "micro_batch_size": MICRO_BATCH_SIZE,
-            "gradient_accumulation": GRADIENT_ACCUMULATION,
-            "effective_batch_size": GRADIENT_ACCUMULATION,
+            "request_shape": args.request_shape,
+            "datums_per_forward_backward": (
+                1
+                if args.request_shape == "single_datum_calls"
+                else args.effective_batch_size
+            ),
+            "forward_backward_calls_per_optimizer_step": (
+                args.effective_batch_size
+                if args.request_shape == "single_datum_calls"
+                else 1
+            ),
+            "effective_batch_size": args.effective_batch_size,
             "epoch_count": 1,
             "expected_optimizer_steps": math.ceil(
-                len(train_rows) / GRADIENT_ACCUMULATION
+                len(train_rows) / args.effective_batch_size
             ),
             "max_optimizer_steps": args.max_optimizer_steps,
             "validation_every": args.validation_every,
@@ -411,28 +475,37 @@ async def run_one_spec(
         validation_rows = []
         train_token_count = 0
         optim_token_count = 0
-        total_steps = math.ceil(len(train_datums) / GRADIENT_ACCUMULATION)
+        total_steps = math.ceil(len(train_datums) / args.effective_batch_size)
         if args.max_optimizer_steps is not None:
             total_steps = min(total_steps, args.max_optimizer_steps)
 
         for step in range(1, total_steps + 1):
-            start = (step - 1) * GRADIENT_ACCUMULATION
-            batch = train_datums[start : start + GRADIENT_ACCUMULATION]
-            train_row = await run_train_batch(
-                training_client,
-                batch,
-                spec=spec,
-                step=step,
-                metrics_path=metrics_path,
-            )
+            start = (step - 1) * args.effective_batch_size
+            batch = train_datums[start : start + args.effective_batch_size]
+            if args.request_shape == "batched_datums_pipelined":
+                train_row, optim_row = await run_pipelined_train_step(
+                    training_client,
+                    batch,
+                    spec=spec,
+                    step=step,
+                    metrics_path=metrics_path,
+                )
+            else:
+                train_row = await run_train_batch(
+                    training_client,
+                    batch,
+                    spec=spec,
+                    step=step,
+                    metrics_path=metrics_path,
+                )
+                optim_row = await run_optimizer_step(
+                    training_client,
+                    spec=spec,
+                    step=step,
+                    token_count=train_row["token_count"],
+                    metrics_path=metrics_path,
+                )
             train_token_count += train_row["token_count"]
-            optim_row = await run_optimizer_step(
-                training_client,
-                spec=spec,
-                step=step,
-                token_count=train_row["token_count"],
-                metrics_path=metrics_path,
-            )
             optim_token_count += optim_row["token_count"]
             should_validate = step % args.validation_every == 0 or step == total_steps
             if should_validate:
