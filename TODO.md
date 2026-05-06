@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Execution design is converged. Dataset curation is done. Results, eval, and LoRA-default contracts are frozen. The next work is the untouched `Qwen3-8B` baseline before small LR-selection or paid comparison runs.
+Execution design is converged. Dataset curation is done. Results, eval, and LoRA-default contracts are frozen. The untouched `Qwen3-8B` baseline is complete. The next work is freezing the small LR-selection protocol before paid comparison runs.
 
 `TODO.md` is now the only live execution tracker for this phase.
 
@@ -13,6 +13,7 @@ Execution design is converged. Dataset curation is done. Results, eval, and LoRA
 - Model: `Qwen3-8B`
 - Backend: Tinker
 - Benchmark anchor: `GSM8K`
+- Eval concurrency policy: use `--concurrency 16` for future benchmark evals, with `--concurrency 4` as the fallback if Tinker shows rate limits, request errors, or unstable backend behavior
 - Frozen raw dataset: `artifacts/raw_datasets/openmath_original_clean/`
 - Training-ready rendered dataset: `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/`
 - Prompt contract: fixed system prompt kept after render sanity review
@@ -177,7 +178,7 @@ Do not run the small LR-selection sweep; rerun or inspect the smoke pass until t
 
 ### 6. Run The Untouched `Qwen3-8B` Baseline
 
-Status: eval harness implemented; remote baseline run not started.
+Status: done on 2026-05-05.
 
 What this means:
 Evaluate the base `Qwen3-8B` model on `GSM8K` under the frozen eval contract before any fine-tuned checkpoints are compared.
@@ -193,13 +194,27 @@ Fix the eval script or config before running small LR-selection or main training
 
 - [x] Implement the baseline eval script or config.
 - [x] Run local scorer self-test without Tinker sampling.
-- [ ] Run untouched `Qwen3-8B` on `GSM8K`.
-- [ ] Save baseline predictions or summary artifact.
-- [ ] Record the baseline score in `docs/project/LOG.md`.
+- [x] Run untouched `Qwen3-8B` on `GSM8K`.
+- [x] Save baseline predictions and summary artifacts.
+- [x] Record the baseline score in `docs/project/LOG.md`.
+
+Retained baseline artifacts:
+
+- `artifacts/results/baseline-qwen3-8b-gsm8k-001/summary.json`
+- `artifacts/results/baseline-qwen3-8b-gsm8k-001/metrics.jsonl`
+- `artifacts/results/baseline-qwen3-8b-gsm8k-001/predictions.jsonl`
+
+Baseline result:
+
+- `1,115 / 1,319` correct
+- `0.8453373768006065` `GSM8K` accuracy
+- `31` answer-extraction failures
+- `505,694` total eval tokens
+- canonical run used `--concurrency 4`
 
 ### 7. Freeze The Small LR-Selection Run
 
-Status: partially done; blocked on baseline eval and remaining protocol choices.
+Status: partially done; baseline dependency cleared; remaining protocol choices still open.
 
 What this means:
 Define the small practice training experiment that chooses learning rates before the real comparison. It is not the final result. It runs both LoRA conditions on a smaller dataset slice, tries a small learning-rate grid, and picks the best learning rate per condition by validation loss. Also define the exact train rows, validation rows, seed, budget estimate, and how often validation loss is measured during the run.
@@ -290,6 +305,7 @@ Record the failure and cost impact in `docs/project/LOG.md`, use the `$25` corre
 - [ ] Select the best LR per condition.
 - [ ] Run the main comparison.
 - [ ] Evaluate all checkpoints under the frozen `GSM8K` contract.
+- [ ] Use `--concurrency 16` for benchmark evals, or record a fallback to `--concurrency 4` if Tinker requires it.
 - [ ] Save results in the retained schema.
 
 ### 11. Generate Final Tables And Charts
@@ -330,6 +346,6 @@ Do not treat the write-up numbers as final. Regenerate the table or chart from t
 - [x] Log the frozen dataset decision.
 - [x] Log the render sanity decision.
 - [x] Log each freeze date as `lora_defaults` is frozen.
-- [ ] Log the untouched-model `GSM8K` baseline result.
+- [x] Log the untouched-model `GSM8K` baseline result.
 - [ ] Log the small LR-selection protocol before the first run.
 - [ ] Log any budget change that affects the main run sheet.

@@ -50,7 +50,11 @@ Eval concurrency is an operational setting and not part of the scoring rule.
 
 For `GSM8K`, `--concurrency 4` means four sampling requests are in flight at a time. It changes wall-clock time and backend load, but it should not change the intended score when the prompt, checkpoint, dataset split, `enable_thinking=False`, `temperature=0`, `max_new_tokens=512`, and scoring code stay fixed.
 
-For cleanliness, use the same concurrency for comparable benchmark runs unless there is a practical reason to change it. If concurrency changes, record it in `summary.json` or the project log so speed/debug context is not lost.
+The full untouched baseline in `baseline-qwen3-8b-gsm8k-001/` used `--concurrency 4`. After 32-example operational probes at `8`, `16`, and `32`, future benchmark evals should use `--concurrency 16` by default. Fall back to `--concurrency 4` if Tinker shows rate limits, request errors, or unstable backend behavior.
+
+Concurrency probes are not canonical benchmark evidence. They are short backend-concurrency checks and should not be listed as comparable results beside the full baseline or final LoRA evaluations.
+
+If the fallback is used, record it in the project log and retained run context so speed/debug context is not lost.
 
 ## Derived Outputs
 

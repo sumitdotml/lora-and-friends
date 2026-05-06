@@ -1044,3 +1044,27 @@ Adding these conditions now would turn the project into a broader ablation study
 **Next**
 
 Do not add these ablations to the live TODO path unless the main comparison result is interesting or ambiguous.
+
+## 2026-05-05: Ran the untouched Qwen3 baseline on GSM8K.
+
+**Benchmark**
+
+The retained baseline run is `artifacts/results/baseline-qwen3-8b-gsm8k-001/`. It evaluates untouched `Qwen/Qwen3-8B` on `openai/gsm8k`, config `main`, split `test`, with `enable_thinking=false`, `temperature=0`, and `max_new_tokens=512`.
+
+**Numbers**
+
+- examples: `1,319`
+- correct: `1,115`
+- `GSM8K` accuracy: `0.8453373768006065`
+- answer-extraction failures: `31`
+- prompt tokens: `132,306`
+- generated tokens: `373,388`
+- total eval tokens: `505,694`
+
+**Config**
+
+The canonical baseline used `--concurrency 4`. Short 32-example backend probes at `--concurrency 8`, `--concurrency 16`, and `--concurrency 32` completed afterward; future benchmark evals should use `--concurrency 16` by default and fall back to `--concurrency 4` if Tinker shows rate limits, request errors, or unstable backend behavior.
+
+**Notes**
+
+The concurrency probes are operational checks only. They are not comparable benchmark evidence and should not be committed as canonical result directories.
