@@ -253,7 +253,7 @@ Frozen small LR-selection protocol:
 
 ### 8. Prepare Final Condition-Specific Tinker Configs
 
-Status: not started.
+Status: partially done; LR-selection runner is implemented and live-probed, final main-run configs are not started.
 
 What this means:
 Create one runnable Tinker config or script for attention-only LoRA and one for all-layer LoRA.
@@ -267,11 +267,21 @@ Both configs exist, use the same dataset and shared defaults, and define run nam
 If it fails:
 Do not start main runs; config mismatch would make the comparison hard to interpret.
 
-- [ ] Prepare the Tinker config or script for attention-only LoRA.
-- [ ] Prepare the Tinker config or script for all-layer LoRA.
+- [x] Prepare a Tinker LR-selection script that can run attention-only LoRA.
+- [x] Prepare a Tinker LR-selection script that can run all-layer LoRA.
+- [ ] Prepare the final main-run Tinker config or script for attention-only LoRA.
+- [ ] Prepare the final main-run Tinker config or script for all-layer LoRA.
 - [ ] Keep everything matched except Tinker layer-family switches and selected LR.
 - [ ] Define run naming for checkpoints, logs, and metadata.
 - [ ] Define where run outputs will be saved locally after completion.
+
+LR-selection runner evidence:
+
+- script: `training/run_tinker_lr_selection.py`
+- dry-run check: passed with one condition, one LR, `16` train rows, and `4` validation rows
+- live probe: passed with one condition, one LR, `8` train rows, `2` validation rows, and `1` optimizer step
+- probe validation result: `validation_mean_nll = 1.5006235837936401`
+- probe checkpoint: `tinker://5a503a41-7c73-5e06-8ffb-79ddf5b48b7a:train:0/weights/lr-select-live-probe-attention_only-lr-1e-4-final`
 
 ### 9. Freeze Main-Run Protocol
 

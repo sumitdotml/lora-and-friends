@@ -1105,3 +1105,25 @@ The selection rule is per condition: choose the LR with the lowest `validation_m
 **Next**
 
 Prepare the runnable Tinker LR-selection script or config, making sure it writes retained `metrics.jsonl`, `summary.json`, and run manifests under `artifacts/results/`.
+
+## 2026-05-06: Live-probed the LR-selection runner.
+
+**Config**
+
+`training/run_tinker_lr_selection.py` now implements the frozen small LR-selection shape. The runner writes one result directory per condition/LR run with `manifest.json`, `metrics.jsonl`, `summary.json`, and `sample_render.txt`.
+
+**Numbers**
+
+- dry run: `attention_only`, LR `1e-4`, `16` train rows, `4` validation rows, no Tinker calls
+- live probe: `attention_only`, LR `1e-4`, `8` train rows, `2` validation rows, `1` optimizer step
+- live-probe train tokens: `2,461`
+- live-probe validation tokens: `622`
+- live-probe `validation_mean_nll`: `1.5006235837936401`
+
+**Notes**
+
+The first live probe caught a runner bug: Tinker cookbook datum weights are `TensorData`, not raw torch tensors. The runner now handles both raw tensor-like weights and `TensorData.data`, and the mistake is recorded in `AGENT_MISTAKES.md`.
+
+**Next**
+
+Commit the runner, then start the full six-run LR-selection sweep with the frozen defaults.

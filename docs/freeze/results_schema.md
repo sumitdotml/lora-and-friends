@@ -140,7 +140,7 @@ Field requirement rule:
 - before smoke, they may be `null` when the backend does not expose them yet
 - after smoke, if Tinker telemetry is available in a stable shape, those fields should be populated instead of left `null`
 
-## Open Items After Smoke Pass
+## Post-Smoke Notes
 
 Post-smoke note from `artifacts/smoke_pass/001/`:
 
@@ -148,6 +148,14 @@ Post-smoke note from `artifacts/smoke_pass/001/`:
 - The smoke pass did not observe backend cost telemetry in the response shape.
 - Keep `cost` nullable until a later Tinker response or dashboard export gives a stable cost field.
 
-Still open:
+Before the small LR-selection run, the runner manifest shape was made concrete. Each run manifest records:
 
-- Lock any additional manifest fields needed for reproducibility before the small LR-selection runs.
+- selected train row indices and row IDs
+- selected validation row indices and row IDs
+- seed
+- learning rate
+- condition
+- LoRA switches
+- package versions
+- git SHA and dirty state
+- frozen contract hashes

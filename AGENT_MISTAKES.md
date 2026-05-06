@@ -141,3 +141,18 @@ Initialized on 2026-03-24.
 - occurrence_count: 1
 - evidence:
   - command:first smoke attempt sample render showed `<think>` without the empty closing `</think>` block before correction
+
+### MISTAKE-20260506-001
+
+- status: active
+- severity: medium
+- scope_tags: [code]
+- pattern: assumed tinker cookbook datum weights were raw torch tensors during runner implementation
+- prevention_rule: inspect external SDK data structures or use adapter helpers before calling tensor-specific methods on values returned by Tinker or tinker-cookbook
+- validation_check: run at least one live one-step Tinker probe for new runner code that touches Tinker datum internals before starting a full sweep
+- first_seen: 2026-05-06
+- last_seen: 2026-05-06
+- occurrence_count: 1
+- evidence:
+  - file:training/run_tinker_lr_selection.py:289
+  - command:live LR-selection probe failed with `AttributeError: 'TensorData' object has no attribute 'sum'`
