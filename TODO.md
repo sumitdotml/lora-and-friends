@@ -292,7 +292,7 @@ Probe runner evidence:
 
 ### 9. Run Fast-Batch LR Selection
 
-Status: not started.
+Status: done on 2026-05-07; larger batches rejected by validation NLL.
 
 What this means:
 Rerun a small LR-selection pilot with the faster pipelined batch shape before writing the main training script. This tests effective batch sizes `512` and `1024`, both LoRA conditions, and the same LR grid `1e-4`, `3e-4`, `1e-3`.
@@ -306,14 +306,23 @@ Retained result directories exist for both fast-batch LR-selection sweeps, the b
 If it fails:
 Keep effective batch size `8` for the main run and use only the pipelined request-shape improvement.
 
-- [ ] Run `lr-select-fast-batch512-001` with `--request-shape batched_datums_pipelined`, `--effective-batch-size 512`, `--train-limit 8192`, `--val-limit 256`, and `--validation-every 8`.
-- [ ] Run `lr-select-fast-batch1024-001` with `--request-shape batched_datums_pipelined`, `--effective-batch-size 1024`, `--train-limit 8192`, `--val-limit 256`, and `--validation-every 4`.
-- [ ] Select the best effective batch size and LR per condition by lowest validation NLL.
-- [ ] Record the selected fast-batch protocol in `docs/project/LOG.md` and `docs/freeze/run_protocol.md`.
+- [x] Run `lr-select-fast-batch512-001` with `--request-shape batched_datums_pipelined`, `--effective-batch-size 512`, `--train-limit 8192`, `--val-limit 256`, and `--validation-every 8`.
+- [x] Run `lr-select-fast-batch1024-001` with `--request-shape batched_datums_pipelined`, `--effective-batch-size 1024`, `--train-limit 8192`, `--val-limit 256`, and `--validation-every 4`.
+- [x] Select the best effective batch size and LR per condition by lowest validation NLL.
+- [x] Record the selected fast-batch protocol in `docs/project/LOG.md` and `docs/freeze/run_protocol.md`.
+
+Fast-batch result:
+
+- selected effective batch size for `attention_only`: `8`
+- selected effective batch size for `all_layer`: `8`
+- selected peak LR for both conditions: `3e-4`
+- retained batch-512 outputs: `artifacts/results/lr-select-fast-batch512-001-*`
+- retained batch-1024 outputs: `artifacts/results/lr-select-fast-batch1024-001-*`
+- retained batch-8 pipelined throughput check: `artifacts/results/throughput-probe-batch8-pipelined-001/summary.json`
 
 ### 10. Prepare Final Condition-Specific Tinker Configs
 
-Status: blocked on fast-batch LR selection.
+Status: done; final main runner is ready but has not been launched.
 
 What this means:
 Create one runnable Tinker config or script for attention-only LoRA and one for all-layer LoRA.
@@ -329,13 +338,21 @@ Do not start main runs; config mismatch would make the comparison hard to interp
 
 - [x] Prepare a Tinker LR-selection script that can run attention-only LoRA.
 - [x] Prepare a Tinker LR-selection script that can run all-layer LoRA.
-- [ ] Prepare the final main-run Tinker config or script for attention-only LoRA.
-- [ ] Prepare the final main-run Tinker config or script for all-layer LoRA.
-- [ ] Keep everything matched except Tinker layer-family switches and seed.
-- [ ] Define run naming for checkpoints, logs, and metadata.
-- [ ] Define where run outputs will be saved locally after completion.
-- [ ] Implement linear warmup plus cosine LR decay in the main-run script.
-- [ ] Record `current_lr`, peak LR, minimum LR, warmup steps, weight decay, and grad clip norm in retained outputs.
+- [x] Prepare the final main-run Tinker config or script for attention-only LoRA.
+- [x] Prepare the final main-run Tinker config or script for all-layer LoRA.
+- [x] Keep everything matched except Tinker layer-family switches and seed.
+- [x] Define run naming for checkpoints, logs, and metadata.
+- [x] Define where run outputs will be saved locally after completion.
+- [x] Implement linear warmup plus cosine LR decay in the main-run script.
+- [x] Record `current_lr`, peak LR, minimum LR, warmup steps, weight decay, and grad clip norm in retained outputs.
+
+Main-run runner evidence:
+
+- script: `training/run_main_training.py`
+- default command: `uv run training/run_main_training.py --run-prefix main-001`
+- default output paths: `artifacts/results/main-001-<condition>-seed-<seed>/`
+- checkpoint names: `<run_id>-step-<step>`
+- dry-run check: passed with one condition, seed `0`, `16` train rows, `4` validation rows, and `2` optimizer steps into `/tmp/lora-and-friends-main-dry-run`
 
 LR-selection runner evidence:
 
@@ -352,7 +369,7 @@ LR-selection runner evidence:
 
 ### 11. Freeze Main-Run Protocol
 
-Status: partially done; training loop, optimizer defaults, LR schedule, and checkpoint-selection rule are frozen. Training request shape, validation/checkpoint cadence, null-result interpretation, and final budget check remain open.
+Status: done for launch.
 
 What this means:
 Define the final comparison before paid runs: conditions, seeds, epochs, optimizer defaults, LR schedule, validation/checkpoint cadence, checkpoint-selection rule, null-result interpretation rule, and budget check.
@@ -372,16 +389,16 @@ Do not start main comparison runs; missing rules would make the study vulnerable
 - [x] Freeze the main-run LR schedule: `3%` linear warmup, cosine decay to `10%` of peak LR.
 - [x] Freeze optimizer regularization settings: `weight_decay = 0.0`, `grad_clip_norm = 0.0`.
 - [x] State that Adam beta1, beta2, and eps are inherited Tinker defaults, not tuned values.
-- [ ] Freeze the training request shape and effective batch size from the fast-batch LR-selection result.
-- [ ] Freeze the validation/checkpoint cadence.
+- [x] Freeze the training request shape and effective batch size from the fast-batch LR-selection result.
+- [x] Freeze the validation/checkpoint cadence.
 - [x] Freeze the per-condition reduction rule across seeds: mean across `3` seeds, report min/max range.
-- [ ] Freeze the null-result interpretation rule.
-- [ ] Recheck that the `1 + 3` seed policy still fits under the `$150` cap.
+- [x] Freeze the null-result interpretation rule.
+- [x] Recheck that the `1 + 3` seed policy still fits under the `$150` cap.
 - [x] Add an explicit `$25` correction-pass reserve to the budget sheet.
 
 ### 12. Run Small LR-Selection, Then Main Comparison
 
-Status: original batch-8 LR selection complete; main comparison blocked on fast-batch LR selection and final main-run protocol freeze.
+Status: ready to start main comparison manually.
 
 What this means:
 Execute the frozen small LR-selection runs, select the best learning rate per condition by the frozen rule, run the full attention-only and all-layer LoRA comparison, then evaluate every retained checkpoint under the frozen `GSM8K` contract.
@@ -397,7 +414,7 @@ Record the failure and cost impact in `docs/project/LOG.md`, use the `$25` corre
 
 - [x] Run the small LR-selection sweep.
 - [x] Select the best LR per condition: `3e-4` for `attention_only`, `3e-4` for `all_layer`.
-- [ ] Run the fast-batch LR-selection pilot.
+- [x] Run the fast-batch LR-selection pilot.
 - [ ] Run the main comparison.
 - [ ] Evaluate all checkpoints under the frozen `GSM8K` contract.
 - [ ] Use `--concurrency 16` for benchmark evals, or record a fallback to `--concurrency 4` if Tinker requires it.

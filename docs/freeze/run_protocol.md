@@ -113,7 +113,7 @@ Run metadata note:
 
 ## Main Run
 
-**Status**: optimizer defaults, initial LR schedule shape, and checkpoint-selection rule are frozen. Effective batch size, final LR selection, validation/checkpoint cadence, interpretation rules, and final budget check are not fully frozen.
+**Status**: frozen for main training start. Main runs must not start until this section and the retained fast-batch LR-selection artifacts are reviewed as the launch packet.
 **Training loop frozen on**: 2026-05-07
 
 ### Goal
@@ -161,11 +161,12 @@ Run metadata note:
 - with peak LR `3e-4`, the minimum LR is `3e-5`
 - if total optimizer steps change, recompute warmup steps as `round(total_optimizer_steps * 0.03)` and recompute minimum LR as `peak_lr * 0.10`
 
-For the earlier effective-batch-`8` main-run draft:
+For the frozen effective-batch-`8` main run:
 
-- training request shape: `batched_datums`
-- each optimizer step sends one `forward_backward_async(batch_of_8_datums)` request, then one `optim_step_async(...)` request
-- effective batch size: `8`
+- training request shape: `batched_datums_pipelined`
+- each optimizer step submits one `forward_backward_async(batch_of_up_to_8_datums)` request and one `optim_step_async(...)` request before waiting for either result
+- nominal effective batch size: `8`
+- final batch in each epoch contains the remaining `4` rows because `25,348` is not divisible by `8`
 - epochs: `2`
 - optimizer steps per epoch: `ceil(25,348 / 8) = 3,169`
 - total optimizer steps: `6,338`
@@ -177,22 +178,23 @@ For the earlier effective-batch-`8` main-run draft:
 
 ### Training Request Shape
 
-- `batched_datums` is the preferred request shape because it passed at effective batch size `8` and was much faster than sending one datum at a time
-- evidence: `artifacts/results/throughput-probe-001/summary.json`
+- `batched_datums_pipelined` is the frozen request shape because it passed at effective batch size `8` and was faster than the earlier batch-`8` retained alternatives
+- evidence for the frozen batch-`8` request shape: `artifacts/results/throughput-probe-batch8-pipelined-001/summary.json`
 - `single_datum_calls` at effective batch size `8`: `20.22187466151081` seconds per optimizer step
 - `batched_datums` at effective batch size `8`: `5.201307859155349` seconds per optimizer step
-- larger effective-batch probes also passed at `16`, `32`, `64`, `128`, and `256`
-- the effective batch size is not frozen yet because changing it changes optimizer step count, warmup step count, and the validity of the existing LR-selection result
-- if the main run moves above effective batch size `8`, rerun a small LR-selection check at the chosen batch size before starting the main comparison
+- `batched_datums_pipelined` at effective batch size `8`: `2.4104866901249693` seconds per optimizer step
+- larger effective-batch probes passed through effective batch size `1024`, but the fast-batch LR-selection pilot did not beat the retained batch-`8` validation loss for either condition
+- nominal effective batch size for the main run: `8`
+- do not wrap or duplicate rows to fill the final partial batch in each epoch
 
 ### Fast-Batch LR-Selection Pilot
 
-**Status**: frozen before run
+**Status**: completed; larger batches rejected for the main run by validation NLL
 **Frozen on**: 2026-05-07
 
 The throughput probes showed that larger pipelined batches can make training much faster, but Tinker and LoRA references both make batch size a real hyperparameter rather than a harmless implementation detail.
 
-Run this pilot before the main comparison:
+Pilot shape:
 
 - request shape: `batched_datums_pipelined`
 - candidate effective batch sizes: `512`, `1024`
@@ -208,17 +210,45 @@ Run this pilot before the main comparison:
 - validation cadence at batch `1024`: every `4` optimizer steps, including final step `8`
 - selection rule: choose one effective batch size and LR per condition by lowest `validation_mean_nll`; exact ties go to the smaller effective batch size, then the smaller LR
 
-If both larger batch sizes are unstable or produce worse validation loss than the retained batch-`8` LR-selection result, keep effective batch size `8` for the main run and use only the pipelined request-shape improvement.
+Retained result directories:
+
+- `artifacts/results/lr-select-fast-batch512-001-*`
+- `artifacts/results/lr-select-fast-batch1024-001-*`
+
+Selection result:
+
+| condition | selected effective batch | selected peak LR | retained validation NLL |
+| --- | ---: | ---: | ---: |
+| `attention_only` | `8` | `3e-4` | `0.3632619345728878` |
+| `all_layer` | `8` | `3e-4` | `0.3559855057286731` |
+
+The best larger-batch alternatives were worse:
+
+| condition | larger-batch candidate | LR | validation NLL |
+| --- | ---: | ---: | ---: |
+| `attention_only` | `512` | `1e-3` | `0.37616809419132946` |
+| `all_layer` | `512` | `1e-3` | `0.3569802998485914` |
+
+Batch `1024` was also worse for both conditions. The main run therefore keeps effective batch size `8` and uses only the pipelined request-shape improvement.
 
 ### Validation and Checkpoint Selection
 
 - select the checkpoint with the lowest `validation_mean_nll`
 - if validation values tie exactly, choose the later checkpoint
 - do not use `GSM8K` benchmark accuracy to choose a training checkpoint
-- validation/checkpoint cadence is not frozen yet
-- the cadence must be recomputed after the effective batch size is chosen because total optimizer steps change with batch size
-- candidate sparse cadence for effective batch size `8`: validate and checkpoint at epoch ends only, steps `3,169` and `6,338`
-- candidate step cadence for effective batch size `8`: validate and checkpoint every `1,000` optimizer steps, plus epoch ends, giving steps `1,000`, `2,000`, `3,169`, `4,000`, `5,000`, `6,000`, and `6,338`
+- validation/checkpoint cadence for effective batch size `8`: validate and save a checkpoint at steps `1,000`, `2,000`, `3,169`, `4,000`, `5,000`, `6,000`, and `6,338`
+- step `3,000` is intentionally skipped because it is only `169` optimizer steps before the epoch-1 checkpoint at step `3,169`
+- this gives two epoch-end checkpoints and five additional within-epoch checkpoints per condition/seed run
+
+### Null-Result Interpretation
+
+**Frozen on**: 2026-05-07
+
+- primary comparison uses mean `GSM8K` accuracy across the `3` seeds per condition
+- if the absolute difference between condition means is below `0.01` accuracy, report the main result as inconclusive rather than a winner
+- if the all-layer mean exceeds the attention-only mean by at least `0.01`, report all-layer LoRA as better under this setup
+- if the attention-only mean exceeds the all-layer mean by at least `0.01`, report attention-only LoRA as better under this setup
+- always report the min/max seed range next to the mean so the reader can see whether the per-seed ranges overlap
 
 ### Retained Output Shape
 
@@ -227,14 +257,23 @@ If both larger batch sizes are unstable or produce worse validation loss than th
 - `metrics.jsonl` must record the current learning rate for each optimizer step
 - `manifest.json` must record scheduler settings, selected peak LR, minimum LR, warmup steps, optimizer defaults, training request shape, validation/checkpoint cadence, validation steps, and checkpoint-selection rule
 
-### Still Open
+### Main Runner
 
-- null-result interpretation rule
-- effective batch size for the main run
-- whether to rerun LR selection at a higher effective batch size
-- validation/checkpoint cadence
-- final budget check before starting paid main runs
-- exact run names and local output paths for the main runner
+- script: `training/run_main_training.py`
+- default run prefix: `main-001`
+- default local output directories: `artifacts/results/main-001-attention_only-seed-{0,1,2}/` and `artifacts/results/main-001-all_layer-seed-{0,1,2}/`
+- checkpoint names: `<run_id>-step-<step>`
+- launch command after reviewing this protocol and retained setup artifacts: `uv run training/run_main_training.py --run-prefix main-001`
+
+### Budget Check
+
+The main training start stays inside the `$150` cap with the `$25` correction-pass reserve.
+
+- estimated train tokens per condition/seed run: about `17.28M`
+- estimated validation tokens per condition/seed run at the frozen seven-checkpoint cadence: about `6.63M`
+- estimated train plus validation tokens across `6` main runs: about `143.45M`
+- at `$0.40 / M` training/validation tokens, estimated main-run training plus validation cost: about `$57.38`
+- with the frozen `$25` correction reserve: about `$82.38`
 
 ## Per-Condition Reduction
 

@@ -1303,3 +1303,32 @@ Sources:
 **Next**
 
 Run a fast-batch LR-selection pilot for effective batch sizes `512` and `1024`, both LoRA conditions, and LR grid `1e-4`, `3e-4`, `1e-3`. Use the selected batch/LR pair before building the main training script.
+
+## 2026-05-07: Rejected larger batches and prepared the main Tinker runner.
+
+**Config**
+
+The fast-batch LR-selection pilot completed for effective batch sizes `512` and `1024` with `batched_datums_pipelined`, `8,192` train rows, `256` validation rows, seed `7`, both LoRA conditions, and LR grid `1e-4`, `3e-4`, `1e-3`. The main protocol now keeps effective batch size `8`, uses `batched_datums_pipelined`, and keeps peak LR `3e-4` for both conditions.
+
+**Numbers**
+
+| condition | batch | LR | validation NLL |
+| --- | ---: | ---: | ---: |
+| `attention_only` selected | `8` | `3e-4` | `0.3632619345728878` |
+| `attention_only` best larger batch | `512` | `1e-3` | `0.37616809419132946` |
+| `all_layer` selected | `8` | `3e-4` | `0.3559855057286731` |
+| `all_layer` best larger batch | `512` | `1e-3` | `0.3569802998485914` |
+
+Batch `1024` was worse for both conditions. The retained batch-`8` pipelined throughput probe passed at `2.4104866901249693` seconds per optimizer step in `artifacts/results/throughput-probe-batch8-pipelined-001/summary.json`.
+
+**Notes**
+
+`training/run_main_training.py` is the launch script for the main comparison. It defaults to seeds `0`, `1`, `2`, two epochs, nominal effective batch size `8`, `batched_datums_pipelined`, linear warmup for `3%` of optimizer steps, cosine decay to `10%` of peak LR, and validation checkpoints at steps `1000`, `2000`, `3169`, `4000`, `5000`, `6000`, and `6338`. The final batch in each epoch has `4` rows because `25,348` train rows is not divisible by `8`.
+
+**Risk**
+
+The script has only been compile-checked and dry-run locally. No final main comparison run has been started.
+
+**Next**
+
+After reviewing the launch packet, start the main training with `uv run training/run_main_training.py --run-prefix main-001`.

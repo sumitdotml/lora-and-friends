@@ -20,9 +20,8 @@ These values apply to both comparison conditions:
 - rendered dataset: `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/`
 - renderer contract: Hugging Face chat template with `enable_thinking=False`
 - LoRA rank: `r=8`
-- micro-batch size: `1` rendered training example per `forward_backward` call
-- gradient accumulation: `8` `forward_backward` calls before one optimizer step
-- effective batch size: `8` rendered training examples per optimizer step
+- original smoke/LR-selection request shape at lock time: `1` rendered training example per `forward_backward` call, with `8` calls before one optimizer step
+- main-run request-shape amendment: `docs/freeze/run_protocol.md` now freezes `batched_datums_pipelined` with a nominal effective batch size of `8`; this changes how the same batch is submitted to Tinker, not the adapter scope
 - train unembedding: disabled for both conditions with `train_unembed=false`
 
 Backend-owned LoRA fields:
