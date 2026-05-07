@@ -171,3 +171,17 @@ Initialized on 2026-03-24.
 - evidence:
   - file:docs/project/LOG.md:1185
   - file:docs/freeze/run_protocol.md:31
+
+### MISTAKE-20260507-002
+
+- status: active
+- severity: medium
+- scope_tags: [code, data]
+- pattern: main training runner wrapped a final partial epoch batch to the start of the dataset instead of preserving one pass over each row
+- prevention_rule: when a dataset row count is not divisible by the nominal effective batch size, keep the final partial batch or explicitly document any intentional sampling with replacement
+- validation_check: for `25,348` train rows and nominal batch size `8`, the main runner manifest must record final epoch batch size `4` and the code must not append rows from the start of the dataset to fill that batch
+- first_seen: 2026-05-07
+- last_seen: 2026-05-07
+- occurrence_count: 1
+- evidence:
+  - file:training/run_main_training.py:475

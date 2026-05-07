@@ -7,6 +7,7 @@ This directory keeps runnable training entrypoints thin and moves repeated mecha
 - `run_smoke_pass.py`: tiny backend check used to prove the renderer, LoRA switches, gradient accumulation, validation loss, and checkpoint saving path work.
 - `run_lr_selection.py`: frozen small LR-selection sweep.
 - `run_throughput_probe.py`: tiny timing probe that compares the current one-datum training request shape against a batched training request shape before the main run.
+- `run_main_training.py`: frozen main comparison runner for the two LoRA conditions and three main seeds.
 
 ## Shared Modules
 
@@ -89,3 +90,26 @@ uv run training/run_lr_selection.py \
 ```
 
 These pilots replace the original batch-`8` LR choice only if their retained validation losses support doing so. Do not start the main comparison until the selected fast-batch LR is recorded in `docs/freeze/run_protocol.md`.
+
+To dry-run the main comparison artifact path without Tinker calls:
+
+```bash
+uv run training/run_main_training.py \
+  --dry-run \
+  --run-prefix main-dry-run \
+  --output-root /tmp/lora-and-friends-main-dry-run \
+  --conditions attention_only \
+  --seeds 0 \
+  --train-limit 16 \
+  --val-limit 4 \
+  --max-optimizer-steps 2 \
+  --overwrite
+```
+
+To start the main comparison after reviewing the launch packet:
+
+```bash
+uv run training/run_main_training.py --run-prefix main-001
+```
+
+The main runner defaults to `2` epochs, seeds `0`, `1`, and `2`, nominal effective batch size `8`, `batched_datums_pipelined`, peak LR `3e-4` for both LoRA conditions, and validation checkpoints at steps `1000`, `2000`, `3169`, `4000`, `5000`, `6000`, and `6338`.
