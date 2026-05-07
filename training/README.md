@@ -21,6 +21,7 @@ This directory keeps runnable training entrypoints thin and moves repeated mecha
 - Loss mask: the per-token weights used for SFT. Prompt tokens get weight `0`; assistant answer tokens get weight `1`.
 - NLL: negative log-likelihood, the token-level loss used for LR selection. Lower validation NLL is better.
 - Frozen mode: a run whose CLI arguments match the retained protocol exactly. Any CLI override is recorded as `override`.
+- `batched_datums_pipelined`: local runner label, not a Tinker SDK symbol. It means the runner sends `list[Datum]` to `TrainingClient.forward_backward_async(...)`, immediately submits `TrainingClient.optim_step_async(...)`, then awaits both returned futures.
 
 ## Manual Commands
 
@@ -113,3 +114,20 @@ uv run training/run_main_training.py --run-prefix main-001
 ```
 
 The main runner defaults to `2` epochs, seeds `0`, `1`, and `2`, nominal effective batch size `8`, `batched_datums_pipelined`, peak LR `3e-4` for both LoRA conditions, and validation checkpoints at steps `1000`, `2000`, `3169`, `4000`, `5000`, `6000`, and `6338`.
+
+What the default launch creates:
+
+- `main-001` is only the shared experiment prefix; the runner appends condition and seed to create separate run IDs.
+- default conditions are `attention_only` and `all_layer`; default seeds are `0`, `1`, and `2`.
+- the command above creates six sequential Tinker training runs: `main-001-attention_only-seed-{0,1,2}` and `main-001-all_layer-seed-{0,1,2}`.
+- each condition/seed run validates and saves checkpoints at seven optimizer steps, then writes `summary.json` with the single checkpoint that had the lowest `validation_mean_nll` within that run.
+- after training, evaluate the six selected checkpoints on `GSM8K`; compare conditions by the mean accuracy across their three seeds, with min/max reported next to the mean.
+- the untouched baseline is separate: `artifacts/results/baseline-qwen3-8b-gsm8k-001/` is one retained `Qwen/Qwen3-8B` eval used as the reference accuracy.
+
+To run only one seed per condition as a cheaper override:
+
+```bash
+uv run training/run_main_training.py --run-prefix main-001 --seeds 0
+```
+
+That override creates only `main-001-attention_only-seed-0` and `main-001-all_layer-seed-0`; it is useful as a smaller launch but is not the frozen three-seed comparison.

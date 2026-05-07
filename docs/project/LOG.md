@@ -1332,3 +1332,32 @@ The script has only been compile-checked and dry-run locally. No final main comp
 **Next**
 
 After reviewing the launch packet, start the main training with `uv run training/run_main_training.py --run-prefix main-001`.
+
+## 2026-05-08: Clarified the pipelined datum-batch runner mode.
+
+**Config**
+
+The Tinker SDK symbols used by the training runners are now imported directly as `TrainingClient`, `ServiceClient`, `Datum`, and `AdamParams`. The `batched_datums_pipelined` name remains a local runner label: one `TrainingClient.forward_backward_async(batch)` request is submitted, then one `TrainingClient.optim_step_async(...)` request is submitted before either returned future is awaited.
+
+**Numbers**
+
+- `single_datum_calls` at effective batch size `8`: `20.22187466151081` seconds per optimizer step
+- `batched_datums` at effective batch size `8`: `5.201307859155349` seconds per optimizer step
+- `batched_datums_pipelined` at effective batch size `8`: `2.4104866901249693` seconds per optimizer step
+
+**Notes**
+
+The speed difference at batch size `8` comes from request shape, not a larger nominal batch: `single_datum_calls` sends eight one-datum train requests before the optimizer step, while `batched_datums_pipelined` sends one batched train request and queues the optimizer request immediately after it.
+
+## 2026-05-08: Expanded the main-run comparison explanation.
+
+**Config**
+
+The main training docs now spell out the default launch expansion: `main-001` creates six sequential condition/seed runs, not one run and not two runs. Each run writes seven validation checkpoints and selects one checkpoint by lowest validation NLL.
+
+**Numbers**
+
+- `attention_only`: `3` selected checkpoints after training, one per seed
+- `all_layer`: `3` selected checkpoints after training, one per seed
+- final comparison: mean `GSM8K` accuracy across `3` seeds per condition, with min/max range
+- baseline reference: one retained untouched `Qwen/Qwen3-8B` eval at `artifacts/results/baseline-qwen3-8b-gsm8k-001/`

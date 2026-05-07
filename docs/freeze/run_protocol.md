@@ -164,7 +164,8 @@ Run metadata note:
 For the frozen effective-batch-`8` main run:
 
 - training request shape: `batched_datums_pipelined`
-- each optimizer step submits one `forward_backward_async(batch_of_up_to_8_datums)` request and one `optim_step_async(...)` request before waiting for either result
+- `batched_datums_pipelined` is a local runner label, not a Tinker SDK symbol
+- each optimizer step submits one `TrainingClient.forward_backward_async(batch_of_up_to_8_datums)` request and one `TrainingClient.optim_step_async(...)` request before waiting for either result
 - nominal effective batch size: `8`
 - final batch in each epoch contains the remaining `4` rows because `25,348` is not divisible by `8`
 - epochs: `2`
@@ -179,6 +180,8 @@ For the frozen effective-batch-`8` main run:
 ### Training Request Shape
 
 - `batched_datums_pipelined` is the frozen request shape because it passed at effective batch size `8` and was faster than the earlier batch-`8` retained alternatives
+- compared with `single_datum_calls`, this keeps the same nominal effective batch size but replaces eight one-datum train requests with one batched-datum train request
+- compared with `batched_datums`, this queues the optimizer request before awaiting the train result, reducing idle request/response time between training and optimizer update
 - evidence for the frozen batch-`8` request shape: `artifacts/results/throughput-probe-batch8-pipelined-001/summary.json`
 - `single_datum_calls` at effective batch size `8`: `20.22187466151081` seconds per optimizer step
 - `batched_datums` at effective batch size `8`: `5.201307859155349` seconds per optimizer step
@@ -264,6 +267,17 @@ Batch `1024` was also worse for both conditions. The main run therefore keeps ef
 - default local output directories: `artifacts/results/main-001-attention_only-seed-{0,1,2}/` and `artifacts/results/main-001-all_layer-seed-{0,1,2}/`
 - checkpoint names: `<run_id>-step-<step>`
 - launch command after reviewing this protocol and retained setup artifacts: `uv run training/run_main_training.py --run-prefix main-001`
+
+### Default Launch Expansion
+
+- `main-001` is the shared experiment prefix, not a complete run ID by itself
+- the runner expands the default conditions `attention_only` and `all_layer` across main seeds `0`, `1`, and `2`
+- the default launch creates six sequential training runs: `main-001-attention_only-seed-0`, `main-001-attention_only-seed-1`, `main-001-attention_only-seed-2`, `main-001-all_layer-seed-0`, `main-001-all_layer-seed-1`, and `main-001-all_layer-seed-2`
+- each condition/seed run saves up to seven validation checkpoints named `<run_id>-step-<step>`
+- each condition/seed run chooses one checkpoint by lowest `validation_mean_nll`; this produces three selected checkpoints for `attention_only` and three selected checkpoints for `all_layer`
+- the final condition comparison evaluates those six selected checkpoints on `GSM8K` and compares the mean accuracy across the three seeds for each condition
+- do not choose the best seed by `GSM8K` accuracy; the seed mean is the condition score
+- the untouched baseline remains the single retained `Qwen/Qwen3-8B` eval at `artifacts/results/baseline-qwen3-8b-gsm8k-001/`
 
 ### Budget Check
 
