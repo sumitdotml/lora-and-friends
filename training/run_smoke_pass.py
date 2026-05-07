@@ -9,6 +9,8 @@ import traceback
 from pathlib import Path
 from typing import Any
 
+from tinker import AdamParams, Datum, ServiceClient, TrainingClient
+
 from common import (
     RAW_MANIFEST_PATH,
     RENDERED_MANIFEST_PATH,
@@ -123,8 +125,8 @@ def metric_row(
 
 
 async def run_validation(
-    training_client: Any,
-    val_datums: list[Any],
+    training_client: TrainingClient,
+    val_datums: list[Datum],
     *,
     condition: str,
     step: int,
@@ -151,8 +153,8 @@ async def run_validation(
 
 
 async def run_training_steps(
-    training_client: Any,
-    train_datums: list[Any],
+    training_client: TrainingClient,
+    train_datums: list[Datum],
     *,
     condition: str,
     run_id: str,
@@ -182,7 +184,7 @@ async def run_training_steps(
 
 
 async def run_optimizer_step(
-    training_client: Any,
+    training_client: TrainingClient,
     train_metrics: list[dict[str, Any]],
     *,
     condition: str,
@@ -190,10 +192,8 @@ async def run_optimizer_step(
     step: int,
     metrics_path: Path,
 ) -> dict[str, Any]:
-    import tinker
-
     future = await training_client.optim_step_async(
-        tinker.AdamParams(learning_rate=LEARNING_RATE)
+        AdamParams(learning_rate=LEARNING_RATE)
     )
     output = await future.result_async()
     row = metric_row(
@@ -210,7 +210,7 @@ async def run_optimizer_step(
 
 
 async def run_condition(
-    service_client: Any,
+    service_client: ServiceClient,
     train_rows: list[dict[str, Any]],
     val_rows: list[dict[str, Any]],
     *,
@@ -347,9 +347,7 @@ async def run(args: argparse.Namespace) -> int:
         return 0
 
     try:
-        import tinker
-
-        service_client = tinker.ServiceClient()
+        service_client = ServiceClient()
         supported_models = await require_supported_model(service_client)
 
         condition_summaries = []

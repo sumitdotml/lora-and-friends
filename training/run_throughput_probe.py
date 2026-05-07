@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from tinker import AdamParams, Datum, ServiceClient, TrainingClient
+
 from common import (
     DEFAULT_RESULTS_DIR,
     LORA_DEFAULTS_PATH,
@@ -56,12 +58,13 @@ DEFAULT_RUN_ID = "throughput-probe-001"
 DEFAULT_OPTIMIZER_STEPS = 16
 DEFAULT_EFFECTIVE_BATCH_SIZE = 8
 DEFAULT_LEARNING_RATE = 3e-4
+# naming local probe modes, not SDK symbols
 REQUEST_SHAPES = ("single_datum_calls", "batched_datums", "batched_datums_pipelined")
 
 
 @dataclass(frozen=True)
 class RequestShape:
-    """One Tinker request shape tested by the throughput probe."""
+    """One local runner request shape tested by the throughput probe."""
 
     name: str
 
@@ -218,8 +221,8 @@ def metric_row(
 
 
 async def forward_backward_single_datum_calls(
-    training_client: Any,
-    batch: list[Any],
+    training_client: TrainingClient,
+    batch: list[Datum],
 ) -> tuple[float, dict[str, float]]:
     """Send one datum per forward/backward call, matching LR selection."""
 
@@ -239,8 +242,8 @@ async def forward_backward_single_datum_calls(
 
 
 async def forward_backward_batched_datums(
-    training_client: Any,
-    batch: list[Any],
+    training_client: TrainingClient,
+    batch: list[Datum],
 ) -> tuple[float, dict[str, float]]:
     """Send the whole effective batch in one forward/backward call."""
 
@@ -251,30 +254,28 @@ async def forward_backward_batched_datums(
     return mean_nll(output, batch), output.metrics
 
 
-async def optimizer_step(training_client: Any, learning_rate: float) -> dict[str, float]:
-    import tinker
-
+async def optimizer_step(
+    training_client: TrainingClient, learning_rate: float
+) -> dict[str, float]:
     future = await training_client.optim_step_async(
-        tinker.AdamParams(learning_rate=learning_rate)
+        AdamParams(learning_rate=learning_rate)
     )
     output = await future.result_async()
     return output.metrics
 
 
 async def forward_backward_and_optimizer_pipelined(
-    training_client: Any,
-    batch: list[Any],
+    training_client: TrainingClient,
+    batch: list[Datum],
     learning_rate: float,
 ) -> tuple[float, dict[str, float], dict[str, float]]:
-    """Submit train and optimizer requests together for one Tinker clock cycle."""
-
-    import tinker
+    """Submit one batched train request and one optimizer request before waiting."""
 
     train_future = await training_client.forward_backward_async(
         batch, loss_fn="cross_entropy"
     )
     optim_future = await training_client.optim_step_async(
-        tinker.AdamParams(learning_rate=learning_rate)
+        AdamParams(learning_rate=learning_rate)
     )
     train_output = await train_future.result_async()
     optim_output = await optim_future.result_async()
@@ -282,7 +283,7 @@ async def forward_backward_and_optimizer_pipelined(
 
 
 async def run_probe_shape(
-    service_client: Any,
+    service_client: ServiceClient,
     *,
     args: argparse.Namespace,
     request_shape: RequestShape,
@@ -381,7 +382,7 @@ async def run_probe_shape(
 
 
 async def try_probe_shape(
-    service_client: Any,
+    service_client: ServiceClient,
     *,
     args: argparse.Namespace,
     request_shape: RequestShape,
@@ -443,9 +444,7 @@ async def run(args: argparse.Namespace) -> int:
     if not os.environ.get("TINKER_API_KEY"):
         raise RuntimeError("TINKER_API_KEY is not set in the environment or .env")
 
-    import tinker
-
-    service_client = tinker.ServiceClient()
+    service_client = ServiceClient()
     await require_supported_model(service_client)
 
     results = []

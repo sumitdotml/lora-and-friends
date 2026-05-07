@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+
+from tinker import ServiceClient, TrainingClient
 
 from common import package_version
 
@@ -54,7 +55,7 @@ def tinker_version_note() -> str:
     )
 
 
-def lora_config_summary(condition: str) -> dict[str, Any]:
+def lora_config_summary(condition: str) -> dict[str, bool | int | str]:
     """Return the retained LoRA config block written into run artifacts."""
 
     return {
@@ -66,13 +67,13 @@ def lora_config_summary(condition: str) -> dict[str, Any]:
 
 
 async def create_training_client(
-    service_client: Any,
+    service_client: ServiceClient,
     *,
     condition: str,
     run_id: str,
     seed: int = SEED,
     extra_metadata: dict[str, str] | None = None,
-) -> Any:
+) -> TrainingClient:
     """Create a Tinker LoRA training client for one locked condition.
 
     The project intentionally varies only the adapter scope: attention-only
@@ -100,7 +101,7 @@ async def create_training_client(
     )
 
 
-async def require_supported_model(service_client: Any) -> list[str]:
+async def require_supported_model(service_client: ServiceClient) -> list[str]:
     """Fail before training if Tinker no longer advertises the locked model."""
 
     capabilities = await service_client.get_server_capabilities_async()
@@ -113,11 +114,11 @@ async def require_supported_model(service_client: Any) -> list[str]:
 
 
 async def save_checkpoint(
-    training_client: Any,
+    training_client: TrainingClient,
     *,
     checkpoint_name: str,
     ttl_seconds: int,
-) -> dict[str, Any]:
+) -> dict[str, int | str]:
     """Save a Tinker checkpoint and normalize the retained checkpoint metadata."""
 
     save_future = await training_client.save_state_async(

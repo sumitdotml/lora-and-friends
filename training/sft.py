@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from typing import Any
 
+from tinker import Datum, ForwardBackwardOutput
+from transformers import PreTrainedTokenizerBase
 
-def render_tokens(row: dict[str, Any], tokenizer: Any) -> list[int]:
+
+def render_tokens(row: dict[str, Any], tokenizer: PreTrainedTokenizerBase) -> list[int]:
     """Render one frozen SFT row exactly as the model sees it during training.
 
     The rendered dataset stores chat messages, not pre-tokenized IDs. This
@@ -23,7 +26,9 @@ def render_tokens(row: dict[str, Any], tokenizer: Any) -> list[int]:
     return list(rendered["input_ids"])
 
 
-def render_prompt_tokens(row: dict[str, Any], tokenizer: Any) -> list[int]:
+def render_prompt_tokens(
+    row: dict[str, Any], tokenizer: PreTrainedTokenizerBase
+) -> list[int]:
     """Render only the prompt side of a row, including the assistant prefix.
 
     The length returned here is the loss-mask boundary. Tokens before this
@@ -41,7 +46,7 @@ def render_prompt_tokens(row: dict[str, Any], tokenizer: Any) -> list[int]:
     return list(rendered["input_ids"])
 
 
-def render_text(row: dict[str, Any], tokenizer: Any) -> str:
+def render_text(row: dict[str, Any], tokenizer: PreTrainedTokenizerBase) -> str:
     """Return the human-inspectable chat-template render for audit artifacts."""
 
     return tokenizer.apply_chat_template(
@@ -52,7 +57,7 @@ def render_text(row: dict[str, Any], tokenizer: Any) -> str:
     )
 
 
-def build_datum(row: dict[str, Any], tokenizer: Any) -> Any:
+def build_datum(row: dict[str, Any], tokenizer: PreTrainedTokenizerBase) -> Datum:
     """Build one Tinker datum for supervised fine-tuning.
 
     A Tinker datum is the backend's training example object: model-input tokens
@@ -76,20 +81,22 @@ def build_datum(row: dict[str, Any], tokenizer: Any) -> Any:
     return datum_from_tokens_weights(torch.tensor(tokens, dtype=torch.int64), weights)
 
 
-def build_datums(rows: list[dict[str, Any]], tokenizer: Any) -> list[Any]:
+def build_datums(
+    rows: list[dict[str, Any]], tokenizer: PreTrainedTokenizerBase
+) -> list[Datum]:
     """Convert rendered JSONL rows into Tinker datums."""
 
     return [build_datum(row, tokenizer) for row in rows]
 
 
-def answer_weight_count(datum: Any) -> float:
+def answer_weight_count(datum: Datum) -> float:
     """Count answer tokens that contribute to SFT loss for one datum.
 
     Tinker cookbook versions may expose weights as a torch-like tensor or as
     backend `TensorData`. This helper keeps that SDK detail out of the runners.
     """
 
-    weights = datum.loss_fn_inputs["weights"]
+    weights: object = datum.loss_fn_inputs["weights"]
     if hasattr(weights, "sum"):
         return float(weights.sum().item())
     if hasattr(weights, "data"):
@@ -97,13 +104,13 @@ def answer_weight_count(datum: Any) -> float:
     raise TypeError(f"unsupported weight tensor type: {type(weights)!r}")
 
 
-def datum_token_count(datum: Any) -> int:
+def datum_token_count(datum: Datum) -> int:
     """Return total model-input tokens, including prompt and answer tokens."""
 
     return int(datum.model_input.length)
 
 
-def mean_nll(output: Any, data: list[Any]) -> float:
+def mean_nll(output: ForwardBackwardOutput, data: list[Datum]) -> float:
     """Compute weighted mean negative log-likelihood for SFT examples.
 
     NLL is the cross-entropy-style training loss over the tokens whose weights

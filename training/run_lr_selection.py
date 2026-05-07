@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from tinker import AdamParams, Datum, ServiceClient, TrainingClient
+
 from common import (
     DEFAULT_RESULTS_DIR,
     LORA_DEFAULTS_PATH,
@@ -56,6 +58,7 @@ from sft import (
 
 
 DEFAULT_REQUEST_SHAPE = "single_datum_calls"
+# naming local runner modes, not SDK symbols
 REQUEST_SHAPES = ("single_datum_calls", "batched_datums_pipelined")
 DEFAULT_EFFECTIVE_BATCH_SIZE = 8
 TRAIN_ROWS = 512
@@ -203,8 +206,8 @@ def metric_row(
 
 
 async def run_train_batch(
-    training_client: Any,
-    batch: list[Any],
+    training_client: TrainingClient,
+    batch: list[Datum],
     *,
     spec: RunSpec,
     step: int,
@@ -244,17 +247,15 @@ async def run_train_batch(
 
 
 async def run_optimizer_step(
-    training_client: Any,
+    training_client: TrainingClient,
     *,
     spec: RunSpec,
     step: int,
     token_count: int,
     metrics_path: Path,
 ) -> dict[str, Any]:
-    import tinker
-
     future = await training_client.optim_step_async(
-        tinker.AdamParams(learning_rate=spec.learning_rate)
+        AdamParams(learning_rate=spec.learning_rate)
     )
     output = await future.result_async()
     row = metric_row(
@@ -270,22 +271,24 @@ async def run_optimizer_step(
 
 
 async def run_pipelined_train_step(
-    training_client: Any,
-    batch: list[Any],
+    training_client: TrainingClient,
+    batch: list[Datum],
     *,
     spec: RunSpec,
     step: int,
     metrics_path: Path,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Run one batched train/update step using Tinker's pipelined pattern."""
+    """Run one local `batched_datums_pipelined` train/update step.
 
-    import tinker
+    This sends `batch` as one list of Tinker Datum objects, queues the optimizer
+    request immediately after the train request, then awaits both futures.
+    """
 
     train_future = await training_client.forward_backward_async(
         batch, loss_fn="cross_entropy"
     )
     optim_future = await training_client.optim_step_async(
-        tinker.AdamParams(learning_rate=spec.learning_rate)
+        AdamParams(learning_rate=spec.learning_rate)
     )
     train_output = await train_future.result_async()
     optim_output = await optim_future.result_async()
@@ -312,8 +315,8 @@ async def run_pipelined_train_step(
 
 
 async def run_validation(
-    training_client: Any,
-    val_datums: list[Any],
+    training_client: TrainingClient,
+    val_datums: list[Datum],
     *,
     spec: RunSpec,
     step: int,
@@ -426,7 +429,7 @@ def build_manifest(
 
 
 async def run_one_spec(
-    service_client: Any,
+    service_client: ServiceClient | None,
     spec: RunSpec,
     args: argparse.Namespace,
     train_rows: list[dict[str, Any]],
@@ -456,6 +459,7 @@ async def run_one_spec(
             f"lr={spec.learning_rate}",
             flush=True,
         )
+        assert service_client is not None
         training_client = await create_training_client(
             service_client,
             condition=spec.condition,
@@ -592,9 +596,7 @@ async def run(args: argparse.Namespace) -> int:
     else:
         if not os.environ.get("TINKER_API_KEY"):
             raise RuntimeError("TINKER_API_KEY is not set in the environment or .env")
-        import tinker
-
-        service_client = tinker.ServiceClient()
+        service_client = ServiceClient()
         await require_supported_model(service_client)
 
     for spec in specs:

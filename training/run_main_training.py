@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from tinker import AdamParams, Datum, ServiceClient, TrainingClient
+
 from common import (
     DEFAULT_RESULTS_DIR,
     LORA_DEFAULTS_PATH,
@@ -68,6 +70,7 @@ WARMUP_FRACTION = 0.03
 MIN_LR_RATIO = 0.10
 WEIGHT_DECAY = 0.0
 GRAD_CLIP_NORM = 0.0
+# naming the local runner mode, not an SDK symbol
 REQUEST_SHAPE = "batched_datums_pipelined"
 
 
@@ -227,23 +230,26 @@ def metric_row(
 
 
 async def run_train_step(
-    training_client: Any,
-    batch: list[Any],
+    training_client: TrainingClient,
+    batch: list[Datum],
     *,
     spec: MainRunSpec,
     step: int,
     current_lr: float,
     metrics_path: Path,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Run one pipelined train/update step and retain train plus optimizer rows."""
+    """Run one local `batched_datums_pipelined` train/update step.
 
-    import tinker
+    The runner sends the whole datum batch in one forward/backward request,
+    submits the optimizer request before awaiting either future, then records
+    both result rows.
+    """
 
     train_future = await training_client.forward_backward_async(
         batch, loss_fn="cross_entropy"
     )
     optim_future = await training_client.optim_step_async(
-        tinker.AdamParams(
+        AdamParams(
             learning_rate=current_lr,
             weight_decay=WEIGHT_DECAY,
             grad_clip_norm=GRAD_CLIP_NORM,
@@ -278,8 +284,8 @@ async def run_train_step(
 
 
 async def evaluate_validation(
-    training_client: Any,
-    val_datums: list[Any],
+    training_client: TrainingClient,
+    val_datums: list[Datum],
     *,
     spec: MainRunSpec,
     step: int,
@@ -405,7 +411,7 @@ def build_manifest(
 
 
 async def run_one_spec(
-    service_client: Any,
+    service_client: ServiceClient | None,
     spec: MainRunSpec,
     args: argparse.Namespace,
     train_rows: list[dict[str, Any]],
@@ -447,6 +453,7 @@ async def run_one_spec(
             f"starting {spec.run_id}: condition={spec.condition} seed={spec.seed}",
             flush=True,
         )
+        assert service_client is not None
         training_client = await create_training_client(
             service_client,
             condition=spec.condition,
@@ -587,9 +594,7 @@ async def run(args: argparse.Namespace) -> int:
     else:
         if not os.environ.get("TINKER_API_KEY"):
             raise RuntimeError("TINKER_API_KEY is not set in the environment or .env")
-        import tinker
-
-        service_client = tinker.ServiceClient()
+        service_client = ServiceClient()
         await require_supported_model(service_client)
 
     for spec in specs:
