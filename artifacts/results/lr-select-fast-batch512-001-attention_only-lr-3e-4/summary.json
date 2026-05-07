@@ -1,0 +1,30 @@
+{
+  "artifact_paths": {
+    "manifest": "artifacts/results/lr-select-fast-batch512-001-attention_only-lr-3e-4/manifest.json",
+    "metrics": "artifacts/results/lr-select-fast-batch512-001-attention_only-lr-3e-4/metrics.jsonl",
+    "sample_render": "artifacts/results/lr-select-fast-batch512-001-attention_only-lr-3e-4/sample_render.txt",
+    "summary": "artifacts/results/lr-select-fast-batch512-001-attention_only-lr-3e-4/summary.json"
+  },
+  "best_validation_step": 16,
+  "checkpoint": {
+    "name": "lr-select-fast-batch512-001-attention_only-lr-3e-4-final",
+    "path": "tinker://c77a2b7b-28c8-5f07-803a-f06a7400d4a4:train:1/weights/lr-select-fast-batch512-001-attention_only-lr-3e-4-final",
+    "ttl_seconds": 604800
+  },
+  "condition": "attention_only",
+  "finished_at": "2026-05-06T18:20:32.317462+00:00",
+  "learning_rate": 0.0003,
+  "primary_metric": {
+    "name": "validation_mean_nll",
+    "value": 0.4054860172973297
+  },
+  "run_id": "lr-select-fast-batch512-001-attention_only-lr-3e-4",
+  "seed": 7,
+  "status": "pass",
+  "token_count": {
+    "optimizer": 2788054,
+    "total": 2960164,
+    "train": 2788054,
+    "validation": 172110
+  }
+}

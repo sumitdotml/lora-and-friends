@@ -1,0 +1,30 @@
+{
+  "artifact_paths": {
+    "manifest": "artifacts/results/lr-select-fast-batch512-001-all_layer-lr-1e-3/manifest.json",
+    "metrics": "artifacts/results/lr-select-fast-batch512-001-all_layer-lr-1e-3/metrics.jsonl",
+    "sample_render": "artifacts/results/lr-select-fast-batch512-001-all_layer-lr-1e-3/sample_render.txt",
+    "summary": "artifacts/results/lr-select-fast-batch512-001-all_layer-lr-1e-3/summary.json"
+  },
+  "best_validation_step": 16,
+  "checkpoint": {
+    "name": "lr-select-fast-batch512-001-all_layer-lr-1e-3-final",
+    "path": "tinker://db1c6d17-2622-548b-a489-2ac3bc1cb48c:train:1/weights/lr-select-fast-batch512-001-all_layer-lr-1e-3-final",
+    "ttl_seconds": 604800
+  },
+  "condition": "all_layer",
+  "finished_at": "2026-05-06T23:51:52.902778+00:00",
+  "learning_rate": 0.001,
+  "primary_metric": {
+    "name": "validation_mean_nll",
+    "value": 0.3569802998485914
+  },
+  "run_id": "lr-select-fast-batch512-001-all_layer-lr-1e-3",
+  "seed": 7,
+  "status": "pass",
+  "token_count": {
+    "optimizer": 2788054,
+    "total": 2960164,
+    "train": 2788054,
+    "validation": 172110
+  }
+}
