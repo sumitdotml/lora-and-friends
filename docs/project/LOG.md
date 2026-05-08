@@ -2349,3 +2349,27 @@ Continue 15-minute cadence monitoring on all-layer seed 2 and watch for mileston
 **Next**
 
 Continue 15-minute cadence monitoring on all-layer seed 2 and watch for milestones at steps `4000`, `5000`, `6000`, and `6338`.
+
+## 2026-05-09: All-layer seed 2 hit the fourth validation/checkpoint milestone at step 4000.
+
+**Run and milestone evidence**
+
+- active run: `main-001-all_layer-seed-2`
+- retained validation row at step `4000` in `artifacts/results/main-001-all_layer-seed-2/metrics.jsonl`
+- printed runner line in `tmux` window `#4`: `main-001-all_layer-seed-2: validation step=4000 nll=0.346158`
+
+**Numbers**
+
+- validation metric: `validation_mean_nll = 0.3461580484910246`
+- checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:5/weights/main-001-all_layer-seed-2-step-4000`
+- validation token count on this milestone row: `936583`
+
+**Within-seed behavior**
+
+- step `3169 → 4000` NLL: `0.33634 → 0.34616` (delta `+0.00982`)
+- matches the pattern seen in the other two all_layer seeds (deltas `+0.00955` and `+0.00894`); all three all_layer seeds show a `~0.009`–`0.010` bounce-up at step `4000`, vs `~0.0018`–`0.0029` for attention_only at the same checkpoint
+- step `3169` remains the current best for all_layer seed 2 by the same wide margin
+
+**Next**
+
+Continue 15-minute cadence monitoring on all-layer seed 2 and watch for milestones at steps `5000`, `6000`, and `6338`.
