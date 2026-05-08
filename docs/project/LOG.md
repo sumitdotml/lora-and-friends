@@ -2267,3 +2267,30 @@ Resume 15-minute cadence monitoring on all-layer seed 1 and watch for the final 
 **Next**
 
 Continue 15-minute cadence monitoring on `main-001-all_layer-seed-2` and log milestones at steps `1000`, `2000`, `3169`, `4000`, `5000`, `6000`, and `6338`. Once seed 2 completes, all six main-001 runs are done and the next workstream is the GSM8K evaluation comparison.
+
+## 2026-05-09: All-layer seed 2 hit the first validation/checkpoint milestone at step 1000.
+
+**Run and milestone evidence**
+
+- active run: `main-001-all_layer-seed-2`
+- retained validation row at step `1000` in `artifacts/results/main-001-all_layer-seed-2/metrics.jsonl`
+- printed runner line in `tmux` window `#4`: `main-001-all_layer-seed-2: validation step=1000 nll=0.346093`
+
+**Numbers**
+
+- validation metric: `validation_mean_nll = 0.34609265838650455`
+- checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:5/weights/main-001-all_layer-seed-2-step-1000`
+- validation token count on this milestone row: `936583`
+
+**Cross-condition reference at step 1000 (all six runs)**
+
+- `attention_only-seed-0`: `0.3468661579136847`
+- `attention_only-seed-1`: `0.3467035731733388`
+- `attention_only-seed-2`: `0.34653612333243416`
+- `all_layer-seed-0`: `0.3459276755590434`
+- `all_layer-seed-1`: `0.34568629786299837`
+- `all_layer-seed-2`: `0.34609265838650455` — all three all_layer seeds spread `0.34569–0.34609`, every all_layer seed is at or below every attention_only seed at step 1000
+
+**Next**
+
+Continue 15-minute cadence monitoring on all-layer seed 2 and watch for milestones at steps `2000`, `3169`, `4000`, `5000`, `6000`, and `6338`.
