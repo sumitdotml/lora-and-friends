@@ -2294,3 +2294,30 @@ Continue 15-minute cadence monitoring on `main-001-all_layer-seed-2` and log mil
 **Next**
 
 Continue 15-minute cadence monitoring on all-layer seed 2 and watch for milestones at steps `2000`, `3169`, `4000`, `5000`, `6000`, and `6338`.
+
+## 2026-05-09: All-layer seed 2 hit the second validation/checkpoint milestone at step 2000.
+
+**Run and milestone evidence**
+
+- active run: `main-001-all_layer-seed-2`
+- retained validation row at step `2000` in `artifacts/results/main-001-all_layer-seed-2/metrics.jsonl`
+- printed runner line in `tmux` window `#4`: `main-001-all_layer-seed-2: validation step=2000 nll=0.341902`
+
+**Numbers**
+
+- validation metric: `validation_mean_nll = 0.3419021125773252`
+- checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:5/weights/main-001-all_layer-seed-2-step-2000`
+- validation token count on this milestone row: `936583`
+
+**Cross-condition reference at step 2000 (all six runs)**
+
+- `attention_only-seed-0`: `0.3410821743602446`
+- `attention_only-seed-1`: `0.3410341652366035`
+- `attention_only-seed-2`: `0.34149399717505874`
+- `all_layer-seed-0`: `0.342182684437154`
+- `all_layer-seed-1`: `0.3417758140564665`
+- `all_layer-seed-2`: `0.3419021125773252` — at step 2000 the attention_only band (`~0.34120`) sits below the all_layer band (`~0.34195`), the reverse of the step-1000 ordering
+
+**Next**
+
+Continue 15-minute cadence monitoring on all-layer seed 2 and watch for milestones at steps `3169`, `4000`, `5000`, `6000`, and `6338`.
