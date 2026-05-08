@@ -2077,3 +2077,29 @@ Resume 15-minute cadence monitoring on all-layer seed 0 and watch for the final 
 **Next**
 
 Continue 15-minute cadence monitoring on `main-001-all_layer-seed-1` and log milestones at steps `1000`, `2000`, `3169`, `4000`, `5000`, `6000`, and `6338`.
+
+## 2026-05-08: All-layer seed 1 hit the first validation/checkpoint milestone at step 1000.
+
+**Run and milestone evidence**
+
+- active run: `main-001-all_layer-seed-1`
+- retained validation row at step `1000` in `artifacts/results/main-001-all_layer-seed-1/metrics.jsonl`
+- printed runner line in `tmux` window `#4`: `main-001-all_layer-seed-1: validation step=1000 nll=0.345686`
+
+**Numbers**
+
+- validation metric: `validation_mean_nll = 0.34568629786299837`
+- checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:4/weights/main-001-all_layer-seed-1-step-1000`
+- validation token count on this milestone row: `936583`
+
+**Cross-condition reference at step 1000**
+
+- `attention_only-seed-0`: `0.3468661579136847`
+- `attention_only-seed-1`: `0.3467035731733388`
+- `attention_only-seed-2`: `0.34653612333243416`
+- `all_layer-seed-0`: `0.3459276755590434`
+- `all_layer-seed-1`: `0.34568629786299837` — lowest so far at this checkpoint
+
+**Next**
+
+Continue 15-minute cadence monitoring on all-layer seed 1 and watch for milestones at steps `2000`, `3169`, `4000`, `5000`, `6000`, and `6338`.
