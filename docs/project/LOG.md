@@ -2373,3 +2373,30 @@ Continue 15-minute cadence monitoring on all-layer seed 2 and watch for mileston
 **Next**
 
 Continue 15-minute cadence monitoring on all-layer seed 2 and watch for milestones at steps `5000`, `6000`, and `6338`.
+
+## 2026-05-09: All-layer seed 2 hit the fifth validation/checkpoint milestone at step 5000.
+
+**Run and milestone evidence**
+
+- active run: `main-001-all_layer-seed-2`
+- retained validation row at step `5000` in `artifacts/results/main-001-all_layer-seed-2/metrics.jsonl`
+- printed runner line in `tmux` window `#4`: `main-001-all_layer-seed-2: validation step=5000 nll=0.345588`
+
+**Numbers**
+
+- validation metric: `validation_mean_nll = 0.34558767552526903`
+- checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:5/weights/main-001-all_layer-seed-2-step-5000`
+- validation token count on this milestone row: `936583`
+
+**Cross-condition reference at step 5000**
+
+- `attention_only-seed-0`: `0.33782604786344844`
+- `attention_only-seed-1`: `0.3379754202999871`
+- `attention_only-seed-2`: `0.33744255415305063`
+- `all_layer-seed-0`: `0.34656007143092127`
+- `all_layer-seed-1`: `0.34660669579029896`
+- `all_layer-seed-2`: `0.34558767552526903` — slight recovery vs the other two all_layer seeds, but still ~`0.008` worse than the attention_only band
+
+**Next**
+
+Continue 15-minute cadence monitoring on all-layer seed 2 and watch for milestones at steps `6000` and `6338`.
