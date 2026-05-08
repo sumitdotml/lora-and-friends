@@ -1627,3 +1627,27 @@ Continue 15-minute cadence monitoring on seed 1 and watch for the step-3169 mile
 **Next**
 
 Resume 15-minute cadence monitoring on seed 1 and watch for milestones at steps `4000`, `5000`, `6000`, and `6338`.
+
+## 2026-05-08: Seed 1 hit the fourth validation/checkpoint milestone at step 4000.
+
+**Run and milestone evidence**
+
+- active run: `main-001-attention_only-seed-1`
+- retained validation row at step `4000` in `artifacts/results/main-001-attention_only-seed-1/metrics.jsonl`
+- printed runner line in `tmux` window `#4`: `main-001-attention_only-seed-1: validation step=4000 nll=0.338706`
+
+**Numbers**
+
+- validation metric: `validation_mean_nll = 0.3387062138585547`
+- checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:1/weights/main-001-attention_only-seed-1-step-4000`
+- validation token count on this milestone row: `936583`
+- milestone row `cost`: `null` (no per-row cost telemetry yet)
+
+**Observed timing behavior**
+
+- step `4000` was followed by the validation/checkpoint block, then training resumed
+- latest observed optimizer step after this milestone: `4074`
+
+**Next**
+
+Resume 15-minute cadence monitoring on seed 1 and watch for milestones at steps `5000`, `6000`, and `6338`.
