@@ -2205,3 +2205,29 @@ Continue 15-minute cadence monitoring on all-layer seed 1 and watch for mileston
 **Next**
 
 Continue 15-minute cadence monitoring on all-layer seed 1 and watch for milestones at steps `6000` and `6338`.
+
+## 2026-05-09: All-layer seed 1 hit the sixth validation/checkpoint milestone at step 6000.
+
+**Run and milestone evidence**
+
+- active run: `main-001-all_layer-seed-1`
+- retained validation row at step `6000` in `artifacts/results/main-001-all_layer-seed-1/metrics.jsonl`
+- printed runner line in `tmux` window `#4`: `main-001-all_layer-seed-1: validation step=6000 nll=0.346753`
+
+**Numbers**
+
+- validation metric: `validation_mean_nll = 0.34675305253441124`
+- checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:4/weights/main-001-all_layer-seed-1-step-6000`
+- validation token count on this milestone row: `936583`
+
+**Cross-condition reference at step 6000**
+
+- `attention_only-seed-0`: `0.3374170395478927`
+- `attention_only-seed-1`: `0.33756054030574645`
+- `attention_only-seed-2`: `0.33728229576529856`
+- `all_layer-seed-0`: `0.34717140110659017`
+- `all_layer-seed-1`: `0.34675305253441124` — both all_layer seeds remain ~`0.0094` worse than the attention_only band at step `6000`
+
+**Next**
+
+Resume 15-minute cadence monitoring on all-layer seed 1 and watch for the final step-6338 milestone and run completion artifacts.
