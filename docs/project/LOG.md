@@ -2129,3 +2129,29 @@ Continue 15-minute cadence monitoring on all-layer seed 1 and watch for mileston
 **Next**
 
 Continue 15-minute cadence monitoring on all-layer seed 1 and watch for milestones at steps `3169`, `4000`, `5000`, `6000`, and `6338`.
+
+## 2026-05-09: All-layer seed 1 hit the third validation/checkpoint milestone at step 3169.
+
+**Run and milestone evidence**
+
+- active run: `main-001-all_layer-seed-1`
+- retained validation row at step `3169` in `artifacts/results/main-001-all_layer-seed-1/metrics.jsonl`
+- printed runner line in `tmux` window `#4`: `main-001-all_layer-seed-1: validation step=3169 nll=0.336556`
+
+**Numbers**
+
+- validation metric: `validation_mean_nll = 0.33655583715915666`
+- checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:4/weights/main-001-all_layer-seed-1-step-3169`
+- validation token count on this milestone row: `936583`
+
+**Cross-condition reference at step 3169 (one-epoch boundary)**
+
+- `attention_only-seed-0`: `0.33616363178874076`
+- `attention_only-seed-1`: `0.33621202263413363`
+- `attention_only-seed-2`: `0.33651007850933906`
+- `all_layer-seed-0`: `0.33611938013674597` — lowest across all five so far
+- `all_layer-seed-1`: `0.33655583715915666` — highest across all five so far; condition advantage at step 3169 is narrow
+
+**Next**
+
+Continue 15-minute cadence monitoring on all-layer seed 1 and watch for milestones at steps `4000`, `5000`, `6000`, and `6338`.
