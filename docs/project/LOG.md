@@ -2231,3 +2231,39 @@ Continue 15-minute cadence monitoring on all-layer seed 1 and watch for mileston
 **Next**
 
 Resume 15-minute cadence monitoring on all-layer seed 1 and watch for the final step-6338 milestone and run completion artifacts.
+
+## 2026-05-09: Completed `main-001-all_layer-seed-1` and started `main-001-all_layer-seed-2`.
+
+**Run completion evidence for all-layer seed 1**
+
+- `tmux` window `#4` printed: `main-001-all_layer-seed-1: validation step=6338 nll=0.344838`
+- completion artifacts now exist in `artifacts/results/main-001-all_layer-seed-1/`: `manifest.json`, `metrics.jsonl`, `sample_render.txt`, `summary.json`
+- `artifacts/results/main-001-all_layer-seed-1/summary.json` reports `status: pass`
+
+**Final milestone and selection numbers (all-layer seed 1)**
+
+- final-step validation row (`step 6338`) `validation_mean_nll = 0.3448380973199015`
+- final-step checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:4/weights/main-001-all_layer-seed-1-step-6338`
+- selected best validation step from summary: `3169`
+- selected checkpoint path from summary: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:4/weights/main-001-all_layer-seed-1-step-3169`
+- selected primary metric from summary: `validation_mean_nll = 0.33655583715915666`
+- summary token counts: train `17227430`, validation `6556081`, total `23783511`
+
+**Cross-seed snapshot of selected checkpoints (5 of 6 runs done)**
+
+- `attention_only-seed-0`: step `3169`, NLL `0.33616363178874076`
+- `attention_only-seed-1`: step `3169`, NLL `0.33621202263413363`
+- `attention_only-seed-2`: step `3169`, NLL `0.33651007850933906`
+- `all_layer-seed-0`: step `3169`, NLL `0.33611938013674597`
+- `all_layer-seed-1`: step `3169`, NLL `0.33655583715915666`
+- all five completed runs selected step `3169`; the per-seed selected NLLs span `0.33612–0.33656`, a tighter range than the cross-condition gap observed at later steps
+
+**Next run start evidence (all-layer seed 2 — final run of the sweep)**
+
+- `tmux` window `#4` printed: `starting main-001-all_layer-seed-2: condition=all_layer seed=2`
+- `artifacts/results/main-001-all_layer-seed-2/manifest.json` created with `status: started`
+- first progress snapshot for all-layer seed 2: `metrics.jsonl` currently has `478` lines, latest `main_optim` row at `step 239`
+
+**Next**
+
+Continue 15-minute cadence monitoring on `main-001-all_layer-seed-2` and log milestones at steps `1000`, `2000`, `3169`, `4000`, `5000`, `6000`, and `6338`. Once seed 2 completes, all six main-001 runs are done and the next workstream is the GSM8K evaluation comparison.
