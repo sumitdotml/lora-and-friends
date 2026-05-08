@@ -1,0 +1,40 @@
+{
+  "artifact_paths": {
+    "manifest": "artifacts/results/main-001-attention_only-seed-0/manifest.json",
+    "metrics": "artifacts/results/main-001-attention_only-seed-0/metrics.jsonl",
+    "sample_render": "artifacts/results/main-001-attention_only-seed-0/sample_render.txt",
+    "summary": "artifacts/results/main-001-attention_only-seed-0/summary.json"
+  },
+  "best_validation_step": 3169,
+  "checkpoint": {
+    "name": "main-001-attention_only-seed-0-step-3169",
+    "path": "tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:0/weights/main-001-attention_only-seed-0-step-3169",
+    "ttl_seconds": 604800
+  },
+  "condition": "attention_only",
+  "dataset": {
+    "train_path": "artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/train.jsonl",
+    "train_rows": 25348,
+    "val_path": "artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/val.jsonl",
+    "val_rows": 2818
+  },
+  "finished_at": "2026-05-07T22:45:22.536513+00:00",
+  "learning_rate": {
+    "min_lr": 2.9999999999999997e-05,
+    "peak_lr": 0.0003,
+    "warmup_steps": 190
+  },
+  "primary_metric": {
+    "name": "validation_mean_nll",
+    "value": 0.33616363178874076
+  },
+  "run_id": "main-001-attention_only-seed-0",
+  "seed": 0,
+  "status": "pass",
+  "token_count": {
+    "optimizer": 17227430,
+    "total": 23783511,
+    "train": 17227430,
+    "validation": 6556081
+  }
+}
