@@ -1361,3 +1361,269 @@ The main training docs now spell out the default launch expansion: `main-001` cr
 - `all_layer`: `3` selected checkpoints after training, one per seed
 - final comparison: mean `GSM8K` accuracy across `3` seeds per condition, with min/max range
 - baseline reference: one retained untouched `Qwen/Qwen3-8B` eval at `artifacts/results/baseline-qwen3-8b-gsm8k-001/`
+
+## 2026-05-08: Started the main comparison run `main-001`.
+
+**Run start evidence**
+
+- `tmux` window `#4` command line: `uv run training/run_main_training.py --run-prefix main-001`
+- `tmux` captured status line: `starting main-001-attention_only-seed-0: condition=attention_only seed=0`
+- first run artifact directory created: `artifacts/results/main-001-attention_only-seed-0/`
+- run manifest created at `2026-05-07T17:30:58.679262+00:00` in `artifacts/results/main-001-attention_only-seed-0/manifest.json`
+
+**Observed progress snapshot**
+
+- current active run: `main-001-attention_only-seed-0`
+- latest retained optimizer step observed in `artifacts/results/main-001-attention_only-seed-0/metrics.jsonl`: `16` (`32` lines: alternating `main_train` and `main_optim` rows)
+- current checkpoint/validation milestones reached: none yet (`1000`, `2000`, `3169`, `4000`, `5000`, `6000`, `6338` pending)
+- no error traceback observed in the captured `tmux` pane at this snapshot
+
+**Next**
+
+Continue 15-minute cadence monitoring on `tmux` window `#4`; escalate immediately if any traceback or stalled-progress condition appears.
+
+## 2026-05-08: Main run hit the first validation/checkpoint milestone at step 1000.
+
+**Run and milestone evidence**
+
+- active run: `main-001-attention_only-seed-0`
+- retained validation row at step `1000` in `artifacts/results/main-001-attention_only-seed-0/metrics.jsonl`
+- printed runner line in `tmux` window `#4`: `main-001-attention_only-seed-0: validation step=1000 nll=0.346866`
+
+**Numbers**
+
+- validation metric: `validation_mean_nll = 0.3468661579136847`
+- checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:0/weights/main-001-attention_only-seed-0-step-1000`
+- validation token count on this milestone row: `936583`
+- milestone row `cost`: `null` (no per-row cost telemetry yet)
+
+**Observed timing behavior**
+
+- `metrics.jsonl` paused at step `1000` during the validation/checkpoint block and resumed afterward
+- step has advanced to `1129` after the step-`1000` milestone write
+
+**Next**
+
+Resume 15-minute monitoring cadence and watch for milestones at steps `2000`, `3169`, `4000`, `5000`, `6000`, and `6338`.
+
+## 2026-05-08: Main run hit the second validation/checkpoint milestone at step 2000.
+
+**Run and milestone evidence**
+
+- active run: `main-001-attention_only-seed-0`
+- retained validation row at step `2000` in `artifacts/results/main-001-attention_only-seed-0/metrics.jsonl`
+- printed runner line in `tmux` window `#4`: `main-001-attention_only-seed-0: validation step=2000 nll=0.341082`
+
+**Numbers**
+
+- validation metric: `validation_mean_nll = 0.3410821743602446`
+- checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:0/weights/main-001-attention_only-seed-0-step-2000`
+- validation token count on this milestone row: `936583`
+- milestone row `cost`: `null` (no per-row cost telemetry yet)
+
+**Observed timing behavior**
+
+- the run paused at step `2000` during the validation/checkpoint block and then resumed
+- step advanced to `2007` after the step-`2000` milestone write
+
+**Next**
+
+Resume 15-minute cadence monitoring and watch for milestones at steps `3169`, `4000`, `5000`, `6000`, and `6338`.
+
+## 2026-05-08: Main run hit the third validation/checkpoint milestone at step 3169.
+
+**Run and milestone evidence**
+
+- active run: `main-001-attention_only-seed-0`
+- retained validation row at step `3169` in `artifacts/results/main-001-attention_only-seed-0/metrics.jsonl`
+- printed runner line in `tmux` window `#4`: `main-001-attention_only-seed-0: validation step=3169 nll=0.336164`
+
+**Numbers**
+
+- validation metric: `validation_mean_nll = 0.33616363178874076`
+- checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:0/weights/main-001-attention_only-seed-0-step-3169`
+- validation token count on this milestone row: `936583`
+- milestone row `cost`: `null` (no per-row cost telemetry yet)
+
+**Observed timing behavior**
+
+- step `3169` was followed by the validation/checkpoint block, then training resumed
+- latest observed optimizer step after this milestone: `3233`
+
+**Next**
+
+Resume 15-minute cadence monitoring and watch for milestones at steps `4000`, `5000`, `6000`, and `6338`.
+
+## 2026-05-08: Main run hit the fourth validation/checkpoint milestone at step 4000.
+
+**Run and milestone evidence**
+
+- active run: `main-001-attention_only-seed-0`
+- retained validation row at step `4000` in `artifacts/results/main-001-attention_only-seed-0/metrics.jsonl`
+- printed runner line in `tmux` window `#4`: `main-001-attention_only-seed-0: validation step=4000 nll=0.339122`
+
+**Numbers**
+
+- validation metric: `validation_mean_nll = 0.3391218371592512`
+- checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:0/weights/main-001-attention_only-seed-0-step-4000`
+- validation token count on this milestone row: `936583`
+- milestone row `cost`: `null` (no per-row cost telemetry yet)
+
+**Observed timing behavior**
+
+- step `4000` was followed by the validation/checkpoint block, then training resumed
+- latest observed optimizer step after this milestone: `4067`
+
+**Next**
+
+Resume 15-minute cadence monitoring and watch for milestones at steps `5000`, `6000`, and `6338`.
+
+## 2026-05-08: Main run hit the fifth validation/checkpoint milestone at step 5000.
+
+**Run and milestone evidence**
+
+- active run: `main-001-attention_only-seed-0`
+- retained validation row at step `5000` in `artifacts/results/main-001-attention_only-seed-0/metrics.jsonl`
+- printed runner line in `tmux` window `#4`: `main-001-attention_only-seed-0: validation step=5000 nll=0.337826`
+
+**Numbers**
+
+- validation metric: `validation_mean_nll = 0.33782604786344844`
+- checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:0/weights/main-001-attention_only-seed-0-step-5000`
+- validation token count on this milestone row: `936583`
+- milestone row `cost`: `null` (no per-row cost telemetry yet)
+
+**Observed timing behavior**
+
+- step `5000` was followed by the validation/checkpoint block, then training resumed
+- latest observed optimizer step after this milestone: `5128`
+
+**Next**
+
+Resume 15-minute cadence monitoring and watch for milestones at steps `6000` and `6338`.
+
+## 2026-05-08: Main run hit the sixth validation/checkpoint milestone at step 6000.
+
+**Run and milestone evidence**
+
+- active run: `main-001-attention_only-seed-0`
+- retained validation row at step `6000` in `artifacts/results/main-001-attention_only-seed-0/metrics.jsonl`
+- printed runner line in `tmux` window `#4`: `main-001-attention_only-seed-0: validation step=6000 nll=0.337417`
+
+**Numbers**
+
+- validation metric: `validation_mean_nll = 0.3374170395478927`
+- checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:0/weights/main-001-attention_only-seed-0-step-6000`
+- validation token count on this milestone row: `936583`
+- milestone row `cost`: `null` (no per-row cost telemetry yet)
+
+**Observed timing behavior**
+
+- step `6000` was followed by the validation/checkpoint block, then training resumed
+- latest observed optimizer step after this milestone: `6163`
+
+**Next**
+
+Resume 15-minute cadence monitoring and watch for the final step `6338` milestone and run completion artifacts.
+
+## 2026-05-08: Completed `main-001-attention_only-seed-0` and started `main-001-attention_only-seed-1`.
+
+**Run completion evidence for seed 0**
+
+- `tmux` window `#4` printed: `main-001-attention_only-seed-0: validation step=6338 nll=0.336447`
+- completion artifacts now exist in `artifacts/results/main-001-attention_only-seed-0/`: `manifest.json`, `metrics.jsonl`, `sample_render.txt`, `summary.json`
+- `artifacts/results/main-001-attention_only-seed-0/manifest.json` now reports `status: pass`
+- `artifacts/results/main-001-attention_only-seed-0/summary.json` now reports `status: pass`
+
+**Final milestone and selection numbers (seed 0)**
+
+- final-step validation row (`step 6338`) `validation_mean_nll = 0.3364468510604867`
+- final-step checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:0/weights/main-001-attention_only-seed-0-step-6338`
+- selected best validation step from summary: `3169`
+- selected checkpoint path from summary: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:0/weights/main-001-attention_only-seed-0-step-3169`
+- selected primary metric from summary: `validation_mean_nll = 0.33616363178874076`
+- summary token counts: train `17227430`, validation `6556081`, total `23783511`
+
+**Next run start evidence (seed 1)**
+
+- `tmux` window `#4` printed: `starting main-001-attention_only-seed-1: condition=attention_only seed=1`
+- `artifacts/results/main-001-attention_only-seed-1/manifest.json` created with `status: started`
+- first progress snapshot for seed 1: `metrics.jsonl` currently has `150` lines, latest `main_optim` row at `step 75`
+
+**Next**
+
+Continue 15-minute cadence monitoring on seed 1 and log milestones at steps `1000`, `2000`, `3169`, `4000`, `5000`, `6000`, and `6338`.
+
+## 2026-05-08: Seed 1 hit the first validation/checkpoint milestone at step 1000.
+
+**Run and milestone evidence**
+
+- active run: `main-001-attention_only-seed-1`
+- retained validation row at step `1000` in `artifacts/results/main-001-attention_only-seed-1/metrics.jsonl`
+- printed runner line in `tmux` window `#4`: `main-001-attention_only-seed-1: validation step=1000 nll=0.346704`
+
+**Numbers**
+
+- validation metric: `validation_mean_nll = 0.3467035731733388`
+- checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:1/weights/main-001-attention_only-seed-1-step-1000`
+- validation token count on this milestone row: `936583`
+- milestone row `cost`: `null` (no per-row cost telemetry yet)
+
+**Observed timing behavior**
+
+- step `1000` was followed by the validation/checkpoint block, then training resumed
+- latest observed optimizer step after this milestone: `1030`
+
+**Next**
+
+Resume 15-minute cadence monitoring on seed 1 and watch for milestones at steps `2000`, `3169`, `4000`, `5000`, `6000`, and `6338`.
+
+## 2026-05-08: Seed 1 hit the second validation/checkpoint milestone at step 2000.
+
+**Run and milestone evidence**
+
+- active run: `main-001-attention_only-seed-1`
+- retained validation row at step `2000` in `artifacts/results/main-001-attention_only-seed-1/metrics.jsonl`
+- printed runner line in `tmux` window `#4`: `main-001-attention_only-seed-1: validation step=2000 nll=0.341034`
+
+**Numbers**
+
+- validation metric: `validation_mean_nll = 0.3410341652366035`
+- checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:1/weights/main-001-attention_only-seed-1-step-2000`
+- validation token count on this milestone row: `936583`
+- milestone row `cost`: `null` (no per-row cost telemetry yet)
+
+**Cross-seed reference (sourced from `summary.json` and seed-1 metrics)**
+
+- seed-0 step-2000 `validation_mean_nll`: `0.3410821743602446`
+- seed-1 step-2000 `validation_mean_nll`: `0.3410341652366035`
+- delta: `-0.0000480091236411` — extremely close, second consecutive milestone where the seeds match within ~1e-4
+
+**Next**
+
+Continue 15-minute cadence monitoring on seed 1 and watch for the step-3169 milestone.
+
+
+## 2026-05-08: Seed 1 hit the third validation/checkpoint milestone at step 3169.
+
+**Run and milestone evidence**
+
+- active run: `main-001-attention_only-seed-1`
+- retained validation row at step `3169` in `artifacts/results/main-001-attention_only-seed-1/metrics.jsonl`
+- printed runner line in `tmux` window `#4`: `main-001-attention_only-seed-1: validation step=3169 nll=0.336212`
+
+**Numbers**
+
+- validation metric: `validation_mean_nll = 0.33621202263413363`
+- checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:1/weights/main-001-attention_only-seed-1-step-3169`
+- validation token count on this milestone row: `936583`
+- milestone row `cost`: `null` (no per-row cost telemetry yet)
+
+**Observed timing behavior**
+
+- step `3169` was followed by the validation/checkpoint block, then training resumed
+- latest observed optimizer step after this milestone: `3227`
+
+**Next**
+
+Resume 15-minute cadence monitoring on seed 1 and watch for milestones at steps `4000`, `5000`, `6000`, and `6338`.

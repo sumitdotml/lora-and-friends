@@ -105,12 +105,13 @@ Initialized on 2026-03-24.
 - prevention_rule: wrap rg patterns containing backticks in single quotes or remove the backtick terms from the shell pattern before running the command
 - validation_check: rerun the search with single-quoted or escaped patterns and confirm it exits with only intended literal matches
 - first_seen: 2026-05-03
-- last_seen: 2026-05-04
-- occurrence_count: 3
+- last_seen: 2026-05-08
+- occurrence_count: 4
 - evidence:
   - command:rg pattern containing legacy artifact-directory labels without shell-safe quoting
   - command:rg pattern containing backticked LOG.md and PROJECT_PLAN.md terms without shell-safe quoting
   - command:rg pattern containing backticked tinker term without shell-safe quoting
+  - command:rg -n with a double-quoted pattern containing backticks for `main-001` triggered shell command substitution (`zsh: command not found: main-001`)
 
 ### MISTAKE-20260503-004
 
@@ -185,3 +186,17 @@ Initialized on 2026-03-24.
 - occurrence_count: 1
 - evidence:
   - file:training/run_main_training.py:475
+
+### MISTAKE-20260508-001
+
+- status: active
+- severity: medium
+- scope_tags: [docs]
+- pattern: log entry recorded a checkpoint URL or other identifier copied by analogy from a sibling run instead of read from the active run's `metrics.jsonl`
+- prevention_rule: when logging a checkpoint or run identifier, read the exact string from the run's `metrics.jsonl` row (or summary/manifest) before pasting it into a log entry; do not extrapolate from a previous seed's path
+- validation_check: every checkpoint URL written into `docs/project/LOG.md` must match a string literally present in the corresponding run's `metrics.jsonl` checkpoint field
+- first_seen: 2026-05-08
+- last_seen: 2026-05-08
+- occurrence_count: 1
+- evidence:
+  - file:docs/project/LOG.md:1567 (deleted in same edit) — wrote `train:0/weights/main-001-attention_only-seed-1-step-1000` by analogy from seed-0; actual `metrics.jsonl` value was `train:1/...`
