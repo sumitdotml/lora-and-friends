@@ -2043,3 +2043,37 @@ Resume 15-minute cadence monitoring on all-layer seed 0 and watch for milestones
 **Next**
 
 Resume 15-minute cadence monitoring on all-layer seed 0 and watch for the final step-6338 milestone and run completion artifacts.
+
+## 2026-05-08: Completed `main-001-all_layer-seed-0` and started `main-001-all_layer-seed-1`.
+
+**Run completion evidence for all-layer seed 0**
+
+- `tmux` window `#4` printed: `main-001-all_layer-seed-0: validation step=6338 nll=0.345460`
+- completion artifacts now exist in `artifacts/results/main-001-all_layer-seed-0/`: `manifest.json`, `metrics.jsonl`, `sample_render.txt`, `summary.json`
+- `artifacts/results/main-001-all_layer-seed-0/summary.json` reports `status: pass`
+
+**Final milestone and selection numbers (all-layer seed 0)**
+
+- final-step validation row (`step 6338`) `validation_mean_nll = 0.3454597575300345`
+- final-step checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:3/weights/main-001-all_layer-seed-0-step-6338`
+- selected best validation step from summary: `3169`
+- selected checkpoint path from summary: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:3/weights/main-001-all_layer-seed-0-step-3169`
+- selected primary metric from summary: `validation_mean_nll = 0.33611938013674597`
+- summary token counts: train `17227430`, validation `6556081`, total `23783511`
+
+**Cross-seed reference for the attention_only baseline (selected checkpoints)**
+
+- `attention_only-seed-0`: step `3169`, `validation_mean_nll = 0.33616363178874076`
+- `attention_only-seed-1`: step `3169`, `validation_mean_nll = 0.33621202263413363`
+- `attention_only-seed-2`: step `3169`, `validation_mean_nll = 0.33651007850933906`
+- `all_layer-seed-0`: step `3169`, `validation_mean_nll = 0.33611938013674597` — all four runs so far selected step `3169`; `all_layer-seed-0` is the lowest of the four by ~`0.00018`
+
+**Next run start evidence (all-layer seed 1)**
+
+- `tmux` window `#4` printed: `starting main-001-all_layer-seed-1: condition=all_layer seed=1`
+- `artifacts/results/main-001-all_layer-seed-1/manifest.json` created with `status: started`
+- first progress snapshot for all-layer seed 1: `metrics.jsonl` currently has `406` lines, latest `main_optim` row at `step 203`
+
+**Next**
+
+Continue 15-minute cadence monitoring on `main-001-all_layer-seed-1` and log milestones at steps `1000`, `2000`, `3169`, `4000`, `5000`, `6000`, and `6338`.
