@@ -2321,3 +2321,31 @@ Continue 15-minute cadence monitoring on all-layer seed 2 and watch for mileston
 **Next**
 
 Continue 15-minute cadence monitoring on all-layer seed 2 and watch for milestones at steps `3169`, `4000`, `5000`, `6000`, and `6338`.
+
+## 2026-05-09: All-layer seed 2 hit the third validation/checkpoint milestone at step 3169.
+
+**Run and milestone evidence**
+
+- active run: `main-001-all_layer-seed-2`
+- retained validation row at step `3169` in `artifacts/results/main-001-all_layer-seed-2/metrics.jsonl`
+- printed runner line in `tmux` window `#4`: `main-001-all_layer-seed-2: validation step=3169 nll=0.336341`
+
+**Numbers**
+
+- validation metric: `validation_mean_nll = 0.33634131648081267`
+- checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:5/weights/main-001-all_layer-seed-2-step-3169`
+- validation token count on this milestone row: `936583`
+
+**Cross-condition reference at step 3169 (all six runs)**
+
+- `attention_only-seed-0`: `0.33616363178874076`
+- `attention_only-seed-1`: `0.33621202263413363`
+- `attention_only-seed-2`: `0.33651007850933906`
+- `all_layer-seed-0`: `0.33611938013674597`
+- `all_layer-seed-1`: `0.33655583715915666`
+- `all_layer-seed-2`: `0.33634131648081267`
+- attention_only mean `~0.33629`, all_layer mean `~0.33634` — the two conditions are tied within `~5e-5` at the one-epoch boundary across all six seeds, while the variance contributions per-condition (`~0.00043` for all_layer vs `~0.00035` for attention_only) overlap
+
+**Next**
+
+Continue 15-minute cadence monitoring on all-layer seed 2 and watch for milestones at steps `4000`, `5000`, `6000`, and `6338`.
