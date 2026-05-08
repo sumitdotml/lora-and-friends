@@ -1675,3 +1675,27 @@ Resume 15-minute cadence monitoring on seed 1 and watch for milestones at steps 
 **Next**
 
 Resume 15-minute cadence monitoring on seed 1 and watch for milestones at steps `6000` and `6338`.
+
+## 2026-05-08: Seed 1 hit the sixth validation/checkpoint milestone at step 6000.
+
+**Run and milestone evidence**
+
+- active run: `main-001-attention_only-seed-1`
+- retained validation row at step `6000` in `artifacts/results/main-001-attention_only-seed-1/metrics.jsonl`
+- printed runner line in `tmux` window `#4`: `main-001-attention_only-seed-1: validation step=6000 nll=0.337561`
+
+**Numbers**
+
+- validation metric: `validation_mean_nll = 0.33756054030574645`
+- checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:1/weights/main-001-attention_only-seed-1-step-6000`
+- validation token count on this milestone row: `936583`
+- milestone row `cost`: `null` (no per-row cost telemetry yet)
+
+**Observed timing behavior**
+
+- step `6000` was followed by the validation/checkpoint block, then training resumed
+- latest observed optimizer step after this milestone: `6056`
+
+**Next**
+
+Resume 15-minute cadence monitoring on seed 1 and watch for the final step `6338` milestone and run completion artifacts.
