@@ -1923,3 +1923,27 @@ Continue 15-minute cadence monitoring on `main-001-all_layer-seed-0` and log mil
 **Next**
 
 Resume 15-minute cadence monitoring on all-layer seed 0 and watch for milestones at steps `2000`, `3169`, `4000`, `5000`, `6000`, and `6338`.
+
+## 2026-05-08: All-layer seed 0 hit the second validation/checkpoint milestone at step 2000.
+
+**Run and milestone evidence**
+
+- active run: `main-001-all_layer-seed-0`
+- retained validation row at step `2000` in `artifacts/results/main-001-all_layer-seed-0/metrics.jsonl`
+- printed runner line in `tmux` window `#4`: `main-001-all_layer-seed-0: validation step=2000 nll=0.342183`
+
+**Numbers**
+
+- validation metric: `validation_mean_nll = 0.342182684437154`
+- checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:3/weights/main-001-all_layer-seed-0-step-2000`
+- validation token count on this milestone row: `936583`
+- milestone row `cost`: `null` (no per-row cost telemetry yet)
+
+**Observed timing behavior**
+
+- step `2000` train/optim rows were followed by a delayed validation/checkpoint row, then training resumed
+- latest observed optimizer step after this milestone: `2046`
+
+**Next**
+
+Resume 15-minute cadence monitoring on all-layer seed 0 and watch for milestones at steps `3169`, `4000`, `5000`, `6000`, and `6338`.
