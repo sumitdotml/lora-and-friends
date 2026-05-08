@@ -1871,3 +1871,31 @@ Resume 15-minute cadence monitoring on seed 2 and watch for milestones at steps 
 **Next**
 
 Resume 15-minute cadence monitoring on seed 2 and watch for the final step `6338` milestone and run completion artifacts.
+
+## 2026-05-08: Completed `main-001-attention_only-seed-2` and started `main-001-all_layer-seed-0`.
+
+**Run completion evidence for seed 2**
+
+- `tmux` window `#4` printed: `main-001-attention_only-seed-2: validation step=6338 nll=0.336658`
+- completion artifacts now exist in `artifacts/results/main-001-attention_only-seed-2/`: `manifest.json`, `metrics.jsonl`, `sample_render.txt`, `summary.json`
+- `artifacts/results/main-001-attention_only-seed-2/manifest.json` now reports `status: pass`
+- `artifacts/results/main-001-attention_only-seed-2/summary.json` now reports `status: pass`
+
+**Final milestone and selection numbers (seed 2)**
+
+- final-step validation row (`step 6338`) `validation_mean_nll = 0.3366583420042444`
+- final-step checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:2/weights/main-001-attention_only-seed-2-step-6338`
+- selected best validation step from summary: `3169`
+- selected checkpoint path from summary: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:2/weights/main-001-attention_only-seed-2-step-3169`
+- selected primary metric from summary: `validation_mean_nll = 0.33651007850933906`
+- summary token counts: train `17227430`, validation `6556081`, total `23783511`
+
+**Next run start evidence (all-layer seed 0)**
+
+- `tmux` window `#4` printed: `starting main-001-all_layer-seed-0: condition=all_layer seed=0`
+- `artifacts/results/main-001-all_layer-seed-0/manifest.json` now reports `status: started`
+- first progress snapshot for all-layer seed 0: `metrics.jsonl` currently has `2` lines, latest `main_optim` row at `step 1`
+
+**Next**
+
+Continue 15-minute cadence monitoring on `main-001-all_layer-seed-0` and log milestones at steps `1000`, `2000`, `3169`, `4000`, `5000`, `6000`, and `6338`.
