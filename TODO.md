@@ -444,25 +444,43 @@ Record the failure mode in `docs/project/LOG.md`, rerun with the frozen fallback
 
 ### 13. Generate Final Tables And Charts
 
-Status: not started.
+Status: planned on 2026-05-10.
 
 What this means:
-Create the final reporting table and charts from retained local artifacts after the baseline and LoRA results exist. The source files are `artifacts/results/<run_id>/metrics.jsonl`, `summary.json`, and `predictions.jsonl`.
+Build the final reporting tables and charts from retained local artifacts. Source files are `artifacts/results/<run_id>/metrics.jsonl`, `summary.json`, and `predictions.jsonl`. Each derived artifact lands under `artifacts/figures/<fig_name>/` with a rendered figure (PDF + PNG), the plotted dataframe (CSV or JSON), a grayscale PNG preview, and a provenance JSON listing input-file SHA-256 hashes, the git commit, and the source-of-truth rule.
 
 It matters because:
-The write-up needs clear result presentation, but tables and charts should be derived from retained artifacts rather than hand-copied numbers or a dashboard-only record.
+The write-up needs clear, reproducible result presentation. Tables and charts are derived views; the retained JSONL/JSON artifacts remain canonical.
 
 Done when:
-The final write-up has a primary comparison table, a `GSM8K` accuracy chart by condition, a validation-loss diagnostic chart, and a cost/efficiency table. Each table or chart can be traced back to retained local JSONL/JSON artifacts.
+Eight retained derived artifacts exist under `artifacts/figures/`: primary comparison table, cost/efficiency table, GSM8K dot/range chart, paired-seed slope plot, validation-NLL checkpoint diagnostic, LR-selection line plot, prediction-disagreement appendix table, and throughput-probe appendix plot. Each output directory contains the figure files, the plotted data, the grayscale preview, and the provenance JSON.
 
 If it fails:
-Do not treat the write-up numbers as final. Regenerate the table or chart from the retained artifacts, and if a derived output disagrees with `metrics.jsonl`, `summary.json`, or `predictions.jsonl`, the retained JSONL/JSON artifact wins.
+Do not treat write-up numbers as final. Regenerate the figure or table from retained artifacts. If a derived output disagrees with `metrics.jsonl`, `summary.json`, or `predictions.jsonl`, the retained JSONL/JSON artifact wins.
 
-- [ ] Generate the primary comparison table from retained summaries and metrics.
-- [ ] Generate the `GSM8K` accuracy chart by condition.
-- [ ] Generate the validation-loss diagnostic chart over steps or tokens.
-- [ ] Generate the cost/efficiency table from retained token, cost, and checkpoint-size fields when available.
-- [ ] Keep W&B optional and non-canonical if it is used for live curve inspection.
+Locked design decisions:
+
+- Palette: baseline `#666666`, attention_only `#1f77b4`, all_layer `#ff7f0e`. Markers: baseline = gray dashed reference line; attention_only = blue circle; all_layer = orange square.
+- Accuracy chart axis: y restricted to `[0.80, 0.92]`; truncation called out in the caption.
+- Reduction rule (frozen in `docs/freeze/run_protocol.md`): per-condition mean and min/max range across 3 seeds; no statistical-significance language with N=3.
+- Caption template: every figure caption discloses N seeds, selected-checkpoint rule, benchmark size, decoding setup, and what the intervals represent.
+- Accessibility: every figure passes a grayscale render check and a deuteranopia + protanopia + tritanopia colorblind simulation. Pass condition: condition identity recoverable without color via marker shape, line style, or annotation.
+- Code shape: `figures/helpers.py` for shared utilities (artifact reading, hashing, save-with-provenance, palette/marker constants); one `figures/fig_NN_<name>.py` per deliverable, each exposing `build(output_dir)`; thin orchestrator at `scripts/make_figures.py`. No registry, no plugin loader, no dynamic discovery.
+
+Build order (each item is one `figures/fig_NN_<name>.py`):
+
+- [ ] 01 — Primary comparison table. Columns: `condition`, `target_modules`, `adapter_size_mb`, `seeds`, `mean_accuracy`, `min_accuracy`, `max_accuracy`, `delta_vs_baseline`, `extraction_failures`, `eval_tokens`. Source: `baseline-qwen3-8b-gsm8k-001/summary.json` and the six `checkpoint-*-gsm8k-2026*/summary.json`.
+- [ ] 02 — Cost/efficiency table. Columns: `condition`, `adapter_size_mb`, `train_tokens_per_run`, `validation_tokens_per_run`, `eval_tokens_per_run`, `mean_accuracy`, `extraction_failures`. Source: `main-001-<condition>-seed-<seed>/summary.json` for train/val tokens; the six eval directories for eval tokens.
+- [ ] 03 — GSM8K accuracy dot/range chart. X = condition (`baseline`, `attention_only`, `all_layer`); Y = accuracy in `[0.80, 0.92]`. Mean = large dot; individual seeds = small jittered dots; min/max = whiskers. Baseline as gray dashed reference line. Source: same as 01.
+- [ ] 04 — Paired-seed slope plot. One slope segment per seed from `attention_only` to `all_layer`; correct-count delta annotated per seed (+7, +6, +5 across seeds 0/1/2). Source: per-seed `predictions.jsonl` joined by `benchmark_index`.
+- [ ] 05 — Validation NLL checkpoint-selection diagnostic. X = optimizer step; Y = validation mean NLL. Faint per-seed lines + bold per-condition mean line; vertical marker at step `3169`. Source: `main-001-<condition>-seed-<seed>/metrics.jsonl`.
+- [ ] 06 — LR-selection line plot. X = LR on log scale (`1e-4`, `3e-4`, `1e-3`); Y = validation mean NLL; one line per condition; outlined marker at `3e-4`. Source: `lr-select-001-<condition>-lr-<lr>/summary.json`.
+- [ ] 07 — Prediction-disagreement appendix table. Per seed: `attention_only_only`, `all_layer_only`, `both_correct`, `both_wrong`. Source: paired `predictions.jsonl` (already computed in `artifacts/results/main-001-_gsm8k_eval/comparison.md`).
+- [ ] 08 — Throughput-probe appendix plot. X = request shape (`single_datum_calls`, `batched_datums`, `batched_datums_pipelined`); Y = seconds per optimizer step. Source: `throughput-probe-*/summary.json`.
+
+Out of scope for this phase:
+
+- W&B integration. Live training curves remained optional and non-canonical; no W&B export is part of the §13 deliverable.
 
 ## Mapping Of The Missing Prerequisites
 
