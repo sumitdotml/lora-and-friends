@@ -2427,3 +2427,52 @@ Continue 15-minute cadence monitoring on all-layer seed 2 and watch for mileston
 **Next**
 
 Resume 15-minute cadence monitoring on all-layer seed 2 and watch for the final step-6338 milestone and run completion artifacts. After this run finishes, all six main-001 runs are complete and the next workstream is the GSM8K evaluation comparison.
+
+## 2026-05-09: Completed `main-001-all_layer-seed-2`; entire `main-001` six-run sweep finished.
+
+**Run completion evidence for all-layer seed 2**
+
+- `tmux` window `#4` printed: `main-001-all_layer-seed-2: validation step=6338 nll=0.346559`
+- completion artifacts now exist in `artifacts/results/main-001-all_layer-seed-2/`: `manifest.json`, `metrics.jsonl`, `sample_render.txt`, `summary.json`
+- `artifacts/results/main-001-all_layer-seed-2/summary.json` reports `status: pass`
+- training process `56384` exited; `tmux` window `#4` is back at the shell prompt
+
+**Final milestone and selection numbers (all-layer seed 2)**
+
+- final-step validation row (`step 6338`) `validation_mean_nll = 0.34655864845661416`
+- final-step checkpoint path: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:5/weights/main-001-all_layer-seed-2-step-6338`
+- selected best validation step from summary: `3169`
+- selected checkpoint path from summary: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:5/weights/main-001-all_layer-seed-2-step-3169`
+- selected primary metric from summary: `validation_mean_nll = 0.33634131648081267`
+- summary token counts: train `17227430`, validation `6556081`, total `23783511`
+
+**Sweep-wide selected checkpoints (all six runs, every run picked the one-epoch boundary at step `3169`)**
+
+- `attention_only-seed-0`: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:0/weights/main-001-attention_only-seed-0-step-3169`, NLL `0.33616363178874076`
+- `attention_only-seed-1`: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:1/weights/main-001-attention_only-seed-1-step-3169`, NLL `0.33621202263413363`
+- `attention_only-seed-2`: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:2/weights/main-001-attention_only-seed-2-step-3169`, NLL `0.33651007850933906`
+- `all_layer-seed-0`: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:3/weights/main-001-all_layer-seed-0-step-3169`, NLL `0.33611938013674597`
+- `all_layer-seed-1`: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:4/weights/main-001-all_layer-seed-1-step-3169`, NLL `0.33655583715915666`
+- `all_layer-seed-2`: `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:5/weights/main-001-all_layer-seed-2-step-3169`, NLL `0.33634131648081267`
+
+**Per-condition validation_mean_nll summary at the selected checkpoints**
+
+- `attention_only` mean NLL `0.33629524431073782`, range `0.00034644672059830`
+- `all_layer` mean NLL `0.33633884459223843`, range `0.00043645702241069`
+- delta of means `+0.00004360028150061` (all_layer marginally worse, well inside the per-condition range)
+- across all six selected checkpoints the spread is `0.33611938–0.33655584`, span `~0.00044`
+
+**Sweep-wide post-3169 overfit observation (informal but consistent)**
+
+- attention_only seeds at step `4000`: NLL deltas `+0.0018` to `+0.0029` vs step `3169`
+- all_layer seeds at step `4000`: NLL deltas `+0.00894` to `+0.00982` vs step `3169` (about `~3×` larger)
+- this affects only checkpoints past the one-epoch boundary; the selection rule ignores those, so the comparison at the selected step is essentially tied
+- the actual condition signal will come from the GSM8K eval, not from validation NLL
+
+**TTL note**
+
+- every retained checkpoint URI from this sweep has `ttl_seconds: 604800` (`7` days from each run's `finished_at`); the last-finished run completed at `2026-05-09T00:23:15Z`, so all six checkpoints are valid through approximately `2026-05-16T00:23:15Z`
+
+**Next**
+
+The frozen completion condition for the main-001 sweep is met. The next workstream is the GSM8K evaluation comparison: extend `scripts/run_gsm8k_eval.py` (or its replacement) to consume each run's selected checkpoint URI and produce per-run benchmark predictions, then aggregate per-condition mean and range. Until that wiring exists there is no further training-side monitoring to do.

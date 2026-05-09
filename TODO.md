@@ -2,9 +2,11 @@
 
 ## Current Phase
 
-Execution design is converged. Dataset curation is done. Results, eval, LoRA defaults, and the small LR-selection protocol are frozen. The next work is finding the fastest safe Tinker training batch shape before writing the long-running main comparison runner.
+The frozen `main-001` six-run sweep finished on `2026-05-09`. Every run selected the one-epoch checkpoint at step `3169` and recorded `status: pass` in its `summary.json` under `artifacts/results/main-001-<condition>-seed-<seed>/`. The selected checkpoints span `validation_mean_nll = 0.3361–0.3366` (attention_only mean `0.33630`, all_layer mean `0.33634`).
 
-`TODO.md` is now the only live execution tracker for this phase.
+The next active workstream is the frozen `GSM8K` evaluation comparison: take each run's selected checkpoint URI from its `summary.json`, generate per-run predictions under the frozen `--concurrency 16` policy (with `--concurrency 4` as the documented fallback), and produce per-condition mean and range. Use the retained baseline at `artifacts/results/baseline-qwen3-8b-gsm8k-001/` as the untouched-model reference. The current `scripts/run_gsm8k_eval.py` only takes `base_model`; it needs a small change to also load a Tinker checkpoint URI before this phase can run.
+
+`TODO.md` is the only live execution tracker for this phase.
 
 ## Locked Context
 
@@ -415,7 +417,7 @@ Record the failure and cost impact in `docs/project/LOG.md`, use the `$25` corre
 - [x] Run the small LR-selection sweep.
 - [x] Select the best LR per condition: `3e-4` for `attention_only`, `3e-4` for `all_layer`.
 - [x] Run the fast-batch LR-selection pilot.
-- [ ] Run the main comparison.
+- [x] Run the main comparison. (Six runs completed `2026-05-08` to `2026-05-09`; all selected step `3169`; per-run `summary.json` files exist under `artifacts/results/main-001-<condition>-seed-<seed>/`.)
 - [ ] Evaluate all checkpoints under the frozen `GSM8K` contract.
 - [ ] Use `--concurrency 16` for benchmark evals, or record a fallback to `--concurrency 4` if Tinker requires it.
 - [ ] Save results in the retained schema.
