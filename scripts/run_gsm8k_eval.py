@@ -2,9 +2,12 @@
 """Evaluate Qwen3 checkpoints on GSM8K under the frozen project contract.
 
 Usage:
-  uv run --with datasets python scripts/run_gsm8k_eval.py --self-test
-  uv run --with datasets python scripts/run_gsm8k_eval.py --limit 10
-  uv run --with datasets python scripts/run_gsm8k_eval.py
+  uv run scripts/run_gsm8k_eval.py --self-test
+  uv run scripts/run_gsm8k_eval.py --limit 10
+  uv run scripts/run_gsm8k_eval.py \
+      --checkpoint-path tinker://run-id/sampler_weights/step-3169 \
+      --condition attention_only --seed 0 --limit 10
+  uv run scripts/run_gsm8k_eval.py
 """
 
 from __future__ import annotations
@@ -34,6 +37,7 @@ SYSTEM_PROMPT = (
 )
 MAX_NEW_TOKENS = 512
 BOXED_LOCATOR = re.compile(r"\\boxed\s*\{")
+STEP_LOCATOR = re.compile(r"\bstep-(\d+)\b")
 
 
 @dataclass(frozen=True)
@@ -83,7 +87,19 @@ class Prediction:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default=DEFAULT_MODEL)
+    parser.add_argument(
+        "--checkpoint-path",
+        help=(
+            "Tinker sampler checkpoint path to evaluate "
+            "(e.g., tinker://run-id/sampler_weights/final)."
+        ),
+    )
     parser.add_argument("--condition", default=DEFAULT_CONDITION)
+    parser.add_argument(
+        "--seed",
+        type=int,
+        help="Explicit seed label for metrics/summary; required when --checkpoint-path is set.",
+    )
     parser.add_argument("--limit", type=int)
     parser.add_argument("--concurrency", type=int, default=4)
     parser.add_argument("--run-id")
@@ -107,8 +123,58 @@ def load_dotenv(path: Path) -> None:
 def run_id_for(model: str, limit: int | None) -> str:
     timestamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
     suffix = f"-limit-{limit}" if limit is not None else ""
-    model_name = model.rsplit("/", 1)[-1].lower()
-    return f"baseline-{model_name}-gsm8k-{timestamp}{suffix}"
+    target_name = target_slug(model)
+    prefix = "checkpoint" if model.startswith("tinker://") else "baseline"
+    return f"{prefix}-{target_name}-gsm8k-{timestamp}{suffix}"
+
+
+def eval_target(args: argparse.Namespace) -> str:
+    return args.checkpoint_path if args.checkpoint_path is not None else args.model
+
+
+def target_slug(target: str) -> str:
+    """Build a stable, readable slug from a model id or tinker checkpoint path."""
+
+    if target.startswith("tinker://"):
+        body = target[len("tinker://") :]
+        # this ensures the run-id plus checkpoint identifier to avoid collisions like ".../final".
+        if "/" in body:
+            run_id, rest = body.split("/", 1)
+            label = f"{run_id}-{rest}"
+        else:
+            label = body
+    else:
+        label = target.rsplit("/", 1)[-1]
+    lowered = label.lower().replace("_", "-").replace(":", "-")
+    normalized = re.sub(r"[^a-z0-9-]+", "-", lowered)
+    normalized = re.sub(r"-{2,}", "-", normalized).strip("-")
+    return normalized[:80] if normalized else "target"
+
+
+def parse_step_from_target(target: str) -> int | None:
+    """Parse step only when a literal step-<digits> token is present."""
+
+    match = STEP_LOCATOR.search(target)
+    if match is None:
+        return None
+    return int(match.group(1))
+
+
+def resolved_step(args: argparse.Namespace) -> int | None:
+    return parse_step_from_target(eval_target(args))
+
+
+def validate_args(args: argparse.Namespace) -> None:
+    if args.checkpoint_path is not None and args.condition == DEFAULT_CONDITION:
+        raise ValueError(
+            "--condition is required when --checkpoint-path is set; "
+            f"default '{DEFAULT_CONDITION}' is baseline-only."
+        )
+    if args.checkpoint_path is not None and args.seed is None:
+        raise ValueError(
+            "--seed is required when --checkpoint-path is set; "
+            "record the training seed that produced this checkpoint."
+        )
 
 
 def prepare_output_dir(output_dir: Path, overwrite: bool) -> None:
@@ -249,7 +315,9 @@ def normalize_answer(text: str) -> str:
     return " ".join(stripped.split())
 
 
-def answers_match(prediction: str | None, reference: str) -> tuple[bool, str | None, str]:
+def answers_match(
+    prediction: str | None, reference: str
+) -> tuple[bool, str | None, str]:
     normalized_reference = normalize_answer(reference)
     if prediction is None:
         return False, None, normalized_reference
@@ -308,7 +376,9 @@ async def sample_one(
     )
     sequence = result.sequences[0]
     generated_text = tokenizer.decode(sequence.tokens)
-    stop_reason = str(sequence.stop_reason) if sequence.stop_reason is not None else None
+    stop_reason = (
+        str(sequence.stop_reason) if sequence.stop_reason is not None else None
+    )
     return score_completion(
         example=example,
         generated_text=generated_text,
@@ -325,9 +395,14 @@ async def run_predictions(
     import tinker
 
     service_client = tinker.ServiceClient()
-    sampling_client = await service_client.create_sampling_client_async(
-        base_model=args.model
-    )
+    if args.checkpoint_path is not None:
+        sampling_client = await service_client.create_sampling_client_async(
+            model_path=args.checkpoint_path
+        )
+    else:
+        sampling_client = await service_client.create_sampling_client_async(
+            base_model=args.model
+        )
     tokenizer = sampling_client.get_tokenizer()
     sampling_params = tinker.types.SamplingParams(
         max_tokens=MAX_NEW_TOKENS,
@@ -359,10 +434,10 @@ def metric_row(
     accuracy = correct / total if total else 0.0
     return {
         "run_id": run_id,
-        "checkpoint": args.model,
+        "checkpoint": eval_target(args),
         "condition": args.condition,
-        "seed": None,
-        "step": None,
+        "seed": args.seed,
+        "step": resolved_step(args),
         "split": DEFAULT_SPLIT,
         "loss": None,
         "eval_metric": {"name": "gsm8k_accuracy", "value": accuracy},
@@ -388,9 +463,10 @@ def summary(
     return {
         "run_id": run_id,
         "created_at": datetime.now(UTC).isoformat(),
-        "checkpoint": args.model,
+        "checkpoint": eval_target(args),
         "condition": args.condition,
-        "seed": None,
+        "seed": args.seed,
+        "step": resolved_step(args),
         "dataset": {
             "name": "GSM8K",
             "source": "openai/gsm8k",
@@ -433,7 +509,9 @@ def summary(
             "eval_contract": str(Path("docs/freeze/eval_contract.md")),
             "results_schema": str(Path("docs/freeze/results_schema.md")),
             "eval_contract_sha256": sha256_file(ROOT / "docs/freeze/eval_contract.md"),
-            "results_schema_sha256": sha256_file(ROOT / "docs/freeze/results_schema.md"),
+            "results_schema_sha256": sha256_file(
+                ROOT / "docs/freeze/results_schema.md"
+            ),
         },
     }
 
@@ -447,7 +525,9 @@ def write_artifacts(
     for prediction in predictions:
         append_jsonl(output_dir / "predictions.jsonl", prediction.as_json())
     append_jsonl(output_dir / "metrics.jsonl", metric_row(run_id, args, predictions))
-    write_json(output_dir / "summary.json", summary(run_id, args, output_dir, predictions))
+    write_json(
+        output_dir / "summary.json", summary(run_id, args, output_dir, predictions)
+    )
 
 
 def run_self_test() -> None:
@@ -464,6 +544,8 @@ def run_self_test() -> None:
     assert extract_final_boxed("no boxed answer") is None
     assert answers_match("42.0", "42")[0]
     assert not answers_match(None, "42")[0]
+    assert parse_step_from_target("tinker://run/sampler_weights/step-3169") == 3169
+    assert parse_step_from_target("tinker://run/sampler_weights/final") is None
     scored = score_completion(
         example=example,
         generated_text=r"Reasoning here. Final answer: \boxed{42.0}",
@@ -482,7 +564,8 @@ async def async_main() -> None:
         return
 
     load_dotenv(ROOT / ".env")
-    run_id = args.run_id or run_id_for(args.model, args.limit)
+    validate_args(args)
+    run_id = args.run_id or run_id_for(eval_target(args), args.limit)
     output_dir = args.output_dir or ROOT / "artifacts/results" / run_id
     prepare_output_dir(output_dir, args.overwrite)
 
