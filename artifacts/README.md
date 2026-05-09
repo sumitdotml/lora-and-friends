@@ -127,7 +127,7 @@ flowchart TD
   rendered_dataset["8. Fine-tuning-ready rendered dataset<br/>artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking<br/>chat schema with system/user/assistant messages"]
   train_file["rendered train.jsonl<br/>actual fine-tuning input<br/>25,348 rows"]
   val_file["rendered val.jsonl<br/>actual validation input<br/>2,818 rows"]
-  tinker["Next planned consumer<br/>Tinker smoke pass / SFT runs<br/>not completed yet"]
+  tinker["Tinker smoke pass / Baseline GSM8K evaluation / Main LoRA runs"]
 
   upstream --> source_filter --> quality_gate --> accepted_rows --> grouped_split --> raw_dataset
   raw_dataset --> renderer --> rendered_dataset
