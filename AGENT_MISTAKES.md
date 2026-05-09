@@ -60,11 +60,12 @@ Initialized on 2026-03-24.
 - prevention_rule: never run multiple git stage or commit commands in parallel against the same repository
 - validation_check: if two git commands would both write `.git/index` or create `.git/index.lock`, run them sequentially
 - first_seen: 2026-04-22
-- last_seen: 2026-05-05
-- occurrence_count: 2
+- last_seen: 2026-05-09
+- occurrence_count: 3
 - evidence:
   - file:.git/index.lock:1
   - command:parallel git diff check and git add caused index lock/permission failure during reporting-output commit
+  - command:parallel git commit calls during commit-separation task triggered `.git/index.lock` contention
 
 ### MISTAKE-20260503-001
 
