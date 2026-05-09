@@ -2513,3 +2513,94 @@ Selected sampler-format checkpoint URIs (literal, read from the REST API respons
 
 - End-to-end probe with the `attention_only-seed-0` sampler URI under `--limit 1 --concurrency 1`: exit `0`, `1/1` correct on GSM8K example `0` (reference `18`, extracted `18`), `stop_reason` `stop`, prompt `104` / generated `194` / total `298` tokens. The retained `step` field in the metric row read `3169` (parsed from the URI), `seed` read `0` (from the flag), and `condition` read `attention_only` (from the flag). Confirms the full pipeline (sampler URI -> tokenizer -> Tinker sample -> boxed-answer extraction -> scoring -> retained artifacts) works against a real LoRA checkpoint.
 - Next: launch the six-run benchmark sweep at `--concurrency 16` per the frozen policy in `TODO.md` §12; reductions and per-condition mean/range against the retained baseline `baseline-qwen3-8b-gsm8k-001` follow as derived artifacts.
+
+## 2026-05-10: GSM8K eval results for the six `main-001` checkpoints
+
+- Sweep launched at `2026-05-10T01:05:19` local via `scripts/run_main_001_eval_sweep.sh` at `--concurrency 16`, no `--limit`. Tee log: `/tmp/main-001-sweep-20260510-010518.log`.
+- Reference baseline: `baseline-qwen3-8b-gsm8k-001` accuracy `0.8453373768006065` (`1115/1319`).
+- Comparison artifact for this eval sweep: `artifacts/results/main-001-_gsm8k_eval/comparison.md`.
+- Per-run results below are literal values pulled from each run's `summary.json`.
+- Note: each eval summary records `git.dirty: true` because the sweep generated retained result directories while previous result directories were still untracked, and `docs/project/LOG.md` was already modified during the sequence. The eval contract hashes, checkpoint URIs, seed, step, prediction count, and metric rows are still retained in each output directory.
+
+### Run 1/6 — `attention_only-seed-0` (wall `10m23s`)
+
+- `run_id`: `checkpoint-34787659-c710-5816-bcbb-6bc9110a23d2-train-0-sampler-weights-export-main-001-att-gsm8k-20260509-160519`
+- artifact dir: `artifacts/results/checkpoint-34787659-c710-5816-bcbb-6bc9110a23d2-train-0-sampler-weights-export-main-001-att-gsm8k-20260509-160519`
+- artifact files: `summary.json`, `metrics.jsonl`, `predictions.jsonl`
+- `checkpoint`: `tinker://34787659-c710-5816-bcbb-6bc9110a23d2:train:0/sampler_weights/export-main-001-attention_only-seed-0-step-3169`
+- `step`: `3169`
+- accuracy: `0.9044730856709629` (`1193/1319`)
+- extraction failures: `6`
+- tokens: prompt `132,306` + generated `227,687` = total `359,993`
+- delta vs baseline: `+0.0591357088703564` (`+5.914` pp)
+
+### Run 2/6 — `attention_only-seed-1` (wall `10m31s`)
+
+- `run_id`: `checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-0-sampler-weights-export-main-001-att-gsm8k-20260509-161542`
+- artifact dir: `artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-0-sampler-weights-export-main-001-att-gsm8k-20260509-161542`
+- artifact files: `summary.json`, `metrics.jsonl`, `predictions.jsonl`
+- `checkpoint`: `tinker://36b8a78c-22a0-515a-aa6f-a757765df553:train:0/sampler_weights/export-main-001-attention_only-seed-1-step-3169`
+- `step`: `3169`
+- accuracy: `0.9067475360121304` (`1196/1319`)
+- extraction failures: `2`
+- tokens: prompt `132,306` + generated `227,606` = total `359,912`
+- delta vs baseline: `+0.0614101592115239` (`+6.141` pp)
+
+### Run 3/6 — `attention_only-seed-2` (wall `9m51s`)
+
+- `run_id`: `checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-1-sampler-weights-export-main-001-att-gsm8k-20260509-162613`
+- artifact dir: `artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-1-sampler-weights-export-main-001-att-gsm8k-20260509-162613`
+- artifact files: `summary.json`, `metrics.jsonl`, `predictions.jsonl`
+- `checkpoint`: `tinker://36b8a78c-22a0-515a-aa6f-a757765df553:train:1/sampler_weights/export-main-001-attention_only-seed-2-step-3169`
+- `step`: `3169`
+- accuracy: `0.9052312357846853` (`1194/1319`)
+- extraction failures: `5`
+- tokens: prompt `132,306` + generated `225,171` = total `357,477`
+- delta vs baseline: `+0.0598938589840788` (`+5.989` pp)
+
+### Run 4/6 — `all_layer-seed-0` (wall `10m12s`)
+
+- `run_id`: `checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-2-sampler-weights-export-main-001-all-gsm8k-20260509-163604`
+- artifact dir: `artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-2-sampler-weights-export-main-001-all-gsm8k-20260509-163604`
+- artifact files: `summary.json`, `metrics.jsonl`, `predictions.jsonl`
+- `checkpoint`: `tinker://36b8a78c-22a0-515a-aa6f-a757765df553:train:2/sampler_weights/export-main-001-all_layer-seed-0-step-3169`
+- `step`: `3169`
+- accuracy: `0.8991660348749052` (`1186/1319`)
+- extraction failures: `5`
+- tokens: prompt `132,306` + generated `223,017` = total `355,323`
+- delta vs baseline: `+0.0538286580742987` (`+5.383` pp)
+
+### Run 5/6 — `all_layer-seed-1` (wall `9m31s`)
+
+- `run_id`: `checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-3-sampler-weights-export-main-001-all-gsm8k-20260509-164616`
+- artifact dir: `artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-3-sampler-weights-export-main-001-all-gsm8k-20260509-164616`
+- artifact files: `summary.json`, `metrics.jsonl`, `predictions.jsonl`
+- `checkpoint`: `tinker://36b8a78c-22a0-515a-aa6f-a757765df553:train:3/sampler_weights/export-main-001-all_layer-seed-1-step-3169`
+- `step`: `3169`
+- accuracy: `0.9021986353297953` (`1190/1319`)
+- extraction failures: `4`
+- tokens: prompt `132,306` + generated `225,710` = total `358,016`
+- delta vs baseline: `+0.0568612585291888` (`+5.686` pp)
+
+### Run 6/6 — `all_layer-seed-2` (wall `9m27s`)
+
+- `run_id`: `checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-4-sampler-weights-export-main-001-all-gsm8k-20260509-165547`
+- artifact dir: `artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-4-sampler-weights-export-main-001-all-gsm8k-20260509-165547`
+- artifact files: `summary.json`, `metrics.jsonl`, `predictions.jsonl`
+- `checkpoint`: `tinker://36b8a78c-22a0-515a-aa6f-a757765df553:train:4/sampler_weights/export-main-001-all_layer-seed-2-step-3169`
+- `step`: `3169`
+- accuracy: `0.9014404852160728` (`1189/1319`)
+- extraction failures: `8`
+- tokens: prompt `132,306` + generated `224,215` = total `356,521`
+- delta vs baseline: `+0.0561031084154663` (`+5.610` pp)
+
+### Reduction across seeds (frozen rule: mean and min/max range per condition)
+
+- `attention_only`: mean `0.9054839524892596`, min `0.9044730856709629` (seed 0), max `0.9067475360121304` (seed 1), range `0.0022744503411676`. Mean delta vs baseline: `+6.015` pp.
+- `all_layer`: mean `0.9009350518069245`, min `0.8991660348749052` (seed 0), max `0.9021986353297953` (seed 1), range `0.0030326004548901`. Mean delta vs baseline: `+5.560` pp.
+
+### Headline observation
+
+- `attention_only` mean exceeds `all_layer` mean by `0.0045489006823352` (`0.455` pp).
+- The two conditions' seed ranges do not overlap: `min(attention_only) = 0.9044730856709629` is greater than `max(all_layer) = 0.9021986353297953` by `0.0022744503411676`. So at rank `r=8`, exported adapter `lora_alpha=32`, peak LR `3e-4`, two-epoch budget on `openmath_original_clean`, attention-only LoRA outperforms all-layer LoRA at every seed pairing in the `3 x 3` cross. With three seeds per condition, this is the literal direction the data points; statistical interpretation is governed by the frozen null-result rule in `docs/freeze/run_protocol.md`.
+- Total sweep wall time: `59m55s` summed across the six per-run wall times. Total eval tokens across the sweep: `2,147,242`.
