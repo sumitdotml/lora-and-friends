@@ -106,13 +106,14 @@ Initialized on 2026-03-24.
 - prevention_rule: wrap rg patterns containing backticks in single quotes or remove the backtick terms from the shell pattern before running the command
 - validation_check: rerun the search with single-quoted or escaped patterns and confirm it exits with only intended literal matches
 - first_seen: 2026-05-03
-- last_seen: 2026-05-08
-- occurrence_count: 4
+- last_seen: 2026-05-10
+- occurrence_count: 5
 - evidence:
   - command:rg pattern containing legacy artifact-directory labels without shell-safe quoting
   - command:rg pattern containing backticked LOG.md and PROJECT_PLAN.md terms without shell-safe quoting
   - command:rg pattern containing backticked tinker term without shell-safe quoting
   - command:rg -n with a double-quoted pattern containing backticks for `main-001` triggered shell command substitution (`zsh: command not found: main-001`)
+  - command:rg -n with a double-quoted pattern containing backticked Markdown table text triggered shell command substitution while inspecting `main-001-_gsm8k_eval/comparison.md`
 
 ### MISTAKE-20260503-004
 
