@@ -405,7 +405,7 @@ Do not start main comparison runs; missing rules would make the study vulnerable
 
 ### 12. Run Small LR-Selection, Then Main Comparison
 
-Status: main comparison done; selected-checkpoint benchmark eval pending.
+Status: done on 2026-05-10.
 
 What this means:
 Execute the frozen small LR-selection runs, select the best learning rate per condition by the frozen rule, run the full attention-only and all-layer LoRA comparison, then evaluate the six selected checkpoints (one per run at step `3169`) under the frozen `GSM8K` contract.
@@ -423,9 +423,9 @@ Record the failure and cost impact in `docs/project/LOG.md`, use the `$25` corre
 - [x] Select the best LR per condition: `3e-4` for `attention_only`, `3e-4` for `all_layer`.
 - [x] Run the fast-batch LR-selection pilot.
 - [x] Run the main comparison. (Six runs completed `2026-05-08` to `2026-05-09`; all selected step `3169`; per-run `summary.json` files exist under `artifacts/results/main-001-<condition>-seed-<seed>/`.)
-- [ ] Evaluate the six selected `main-001` checkpoints under the frozen `GSM8K` contract.
-- [ ] Use `--concurrency 16` for benchmark evals, or record a fallback to `--concurrency 4` if Tinker requires it.
-- [ ] Save results in the retained schema.
+- [x] Evaluate the six selected `main-001` checkpoints under the frozen `GSM8K` contract.
+- [x] Use `--concurrency 16` for benchmark evals, or record a fallback to `--concurrency 4` if Tinker requires it.
+- [x] Save results in the retained schema.
 
 Task:
 Run the selected-checkpoint `GSM8K` comparison for the six `main-001` runs.
