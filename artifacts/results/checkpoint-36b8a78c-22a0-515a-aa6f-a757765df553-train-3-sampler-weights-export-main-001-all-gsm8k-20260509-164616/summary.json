@@ -1,0 +1,61 @@
+{
+  "artifact_paths": {
+    "metrics": "artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-3-sampler-weights-export-main-001-all-gsm8k-20260509-164616/metrics.jsonl",
+    "predictions": "artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-3-sampler-weights-export-main-001-all-gsm8k-20260509-164616/predictions.jsonl",
+    "summary": "artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-3-sampler-weights-export-main-001-all-gsm8k-20260509-164616/summary.json"
+  },
+  "checkpoint": "tinker://36b8a78c-22a0-515a-aa6f-a757765df553:train:3/sampler_weights/export-main-001-all_layer-seed-1-step-3169",
+  "condition": "all_layer",
+  "contracts": {
+    "eval_contract": "docs/freeze/eval_contract.md",
+    "eval_contract_sha256": "1608a723824cba4d6d6818c5d5b963abb75008312f4595a9a3d62c5b0510fe61",
+    "results_schema": "docs/freeze/results_schema.md",
+    "results_schema_sha256": "5b92c94957e9cf7a46b9b090a70bf03ba0011855e543a04d364323d35e4748ff"
+  },
+  "created_at": "2026-05-09T16:55:47.146649+00:00",
+  "dataset": {
+    "config": "main",
+    "examples": 1319,
+    "name": "GSM8K",
+    "source": "openai/gsm8k",
+    "split": "test"
+  },
+  "extraction_failures": 4,
+  "generation": {
+    "enable_thinking": false,
+    "max_new_tokens": 512,
+    "stop": null,
+    "temperature": 0,
+    "top_p": null
+  },
+  "git": {
+    "dirty": true,
+    "sha": "25923b3323555af8bd818d1a5ebafd192747b0fe",
+    "status_short": [
+      "M docs/project/LOG.md",
+      "?? artifacts/results/checkpoint-34787659-c710-5816-bcbb-6bc9110a23d2-train-0-sampler-weights-export-main-001-att-gsm8k-20260509-160519/",
+      "?? artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-0-sampler-weights-export-main-001-att-gsm8k-20260509-161542/",
+      "?? artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-1-sampler-weights-export-main-001-att-gsm8k-20260509-162613/",
+      "?? artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-2-sampler-weights-export-main-001-all-gsm8k-20260509-163604/",
+      "?? artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-3-sampler-weights-export-main-001-all-gsm8k-20260509-164616/"
+    ]
+  },
+  "primary_metric": {
+    "correct": 1190,
+    "name": "gsm8k_accuracy",
+    "total": 1319,
+    "value": 0.9021986353297953
+  },
+  "run_id": "checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-3-sampler-weights-export-main-001-all-gsm8k-20260509-164616",
+  "seed": 1,
+  "step": 3169,
+  "token_count": {
+    "generated": 225710,
+    "prompt": 132306,
+    "total": 358016
+  },
+  "versions": {
+    "tinker": "0.18.2",
+    "tinker_cookbook": "0.1.0"
+  }
+}
