@@ -461,6 +461,8 @@ Do not treat write-up numbers as final. Regenerate the figure or table from reta
 Locked design decisions:
 
 - Palette: baseline `#666666`, attention_only `#1f77b4`, all_layer `#ff7f0e`. Markers: baseline = gray dashed reference line; attention_only = blue circle; all_layer = orange square.
+- Color-extension rule: if any future figure needs more than three categorical colors, use an evenly-spaced subset of `viridis` rather than ad-hoc Tab10 picks. None of the eight §13 figures need this; recorded as a forward rule.
+- Typography and base style: font fallback chain `IBM Plex Sans` -> `Inter` -> `Helvetica Neue` -> `Helvetica` -> `Arial` -> `DejaVu Sans`. Top and right axis spines hidden, frameless legend, light gridlines `#e5e5e5`, axis/text color `#333333`. Concrete `rcParams` configuration lives in `figures/helpers.py:set_paper_style()` and is the single source of truth.
 - Accuracy chart axis: y restricted to `[0.80, 0.92]`; truncation called out in the caption.
 - Reduction rule (frozen in `docs/freeze/run_protocol.md`): per-condition mean and min/max range across 3 seeds; no statistical-significance language with N=3.
 - Caption template: every figure caption discloses N seeds, selected-checkpoint rule, benchmark size, decoding setup, and what the intervals represent.
