@@ -2476,3 +2476,14 @@ Resume 15-minute cadence monitoring on all-layer seed 2 and watch for the final 
 **Next**
 
 The frozen completion condition for the main-001 sweep is met. The next workstream is the GSM8K evaluation comparison: extend `scripts/run_gsm8k_eval.py` (or its replacement) to consume each run's selected checkpoint URI and produce per-run benchmark predictions, then aggregate per-condition mean and range. Until that wiring exists there is no further training-side monitoring to do.
+
+## 2026-05-09: Checkpoint export path used for HF publication
+
+- `main-001` training checkpoints (`weights/...`) were not directly exportable to file/HF in this environment; CLI/API export surfaces returned sampler-only errors for `weights/...`.
+- To publish best checkpoints to Hugging Face, each selected training state checkpoint (`step-3169`) was converted to sampler format via:
+  - `load_state_async(training_checkpoint_path)`
+  - `save_weights_for_sampler_async(export_name)`
+- The six converted sampler checkpoints were then uploaded to HF model repo `sumitdotml/lora-and-friends` (manual `hf upload` path due `tinker checkpoint push-hf` failure in this setup).
+- Published layout on HF branch `checkpoints-best-step-3169-all-seeds`:
+  - `checkpoints/best-checkpoints/attention_only/seed-{0,1,2}/step-3169/`
+  - `checkpoints/best-checkpoints/all_layer/seed-{0,1,2}/step-3169/`

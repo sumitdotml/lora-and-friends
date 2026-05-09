@@ -200,3 +200,17 @@ Initialized on 2026-03-24.
 - occurrence_count: 1
 - evidence:
   - file:docs/project/LOG.md:1567 (deleted in same edit) — wrote `train:0/weights/main-001-attention_only-seed-1-step-1000` by analogy from seed-0; actual `metrics.jsonl` value was `train:1/...`
+
+### MISTAKE-20260509-001
+
+- status: active
+- severity: high
+- scope_tags: [infra]
+- pattern: used a copy command with an unvalidated source directory variable such that empty expansion could target filesystem root
+- prevention_rule: before any recursive copy/sync command, assert the source path variable is non-empty and exists as a directory; abort otherwise
+- validation_check: shell script must include a guard like `[ -n \"$src\" ] && [ -d \"$src\" ]` immediately before copy/sync; if guard fails, command exits non-zero and performs no copy
+- first_seen: 2026-05-09
+- last_seen: 2026-05-09
+- occurrence_count: 1
+- evidence:
+  - command:proposed `rsync -a \"$src\"/ ...` in checkpoint-staging flow without guarding empty `$src`, which risked copying from `/`
