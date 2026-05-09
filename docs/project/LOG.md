@@ -2487,3 +2487,29 @@ The frozen completion condition for the main-001 sweep is met. The next workstre
 - Published layout on HF branch `checkpoints-best-step-3169-all-seeds`:
   - `checkpoints/best-checkpoints/attention_only/seed-{0,1,2}/step-3169/`
   - `checkpoints/best-checkpoints/all_layer/seed-{0,1,2}/step-3169/`
+
+## 2026-05-10: Wired benchmark-eval checkpoint loading and resolved which Tinker URI shape the sampling client accepts
+
+- Extended `scripts/run_gsm8k_eval.py` for the `main-001` benchmark-eval phase: added `--checkpoint-path`, an explicit `--seed` flag, and a `validate_args` guard that fails fast when `--checkpoint-path` is set without an explicit `--condition` (no defaulting to `base`) or without `--seed`. `step` is parsed only from a literal `step-<digits>` token in the URI; missing tokens stay `null` rather than guessed. Run-id slug uses a `checkpoint-` prefix for `tinker://` paths and includes the run-id portion so different runs ending in `/final` (or `/step-3169`) do not collide. Pre-existing baseline path is unchanged.
+- Probed `service_client.create_sampling_client_async(model_path=...)` against a training-state (`weights/...`) URI to settle whether the sampling client accepts training checkpoints directly. It does not. Probe input:
+  - `tinker://0a1ef6bf-6503-5550-95da-db41f4e3a710:train:0/weights/main-001-attention_only-seed-0-step-3169`
+- Server response (literal):
+
+```text
+tinker.BadRequestError: Error code: 400 - {'detail': 'model_path must point to a sampler_weights checkpoint, got weights'}
+```
+
+- The Tinker SDK `0.18.2` docstring example for `create_sampling_client(model_path=...)` is inconsistent with this server behavior; the docstring uses a `weights/...` literal that the server rejects. The cookbook tutorials describe the correct workflow (`save_weights_for_sampler_async` first), but the SDK docstring itself does not.
+- Retrieved all six selected sampler-format checkpoint URIs via `RestClient.list_user_checkpoints_async(limit=200, offset=0)`, filtering for `sampler_weights` plus the `export-main-001-*-step-3169` naming pattern. Five of the six conversions live in one Tinker training session (`36b8a78c-22a0-515a-aa6f-a757765df553`); only seed-0 attention_only lives in the original conversion session (`34787659-c710-5816-bcbb-6bc9110a23d2`) already recorded earlier. Each `train:N` inside `36b8a78c-...` corresponds to a separate `save_weights_for_sampler_async` call within that session, in the order shown below.
+
+Selected sampler-format checkpoint URIs (literal, read from the REST API response):
+
+- `attention_only-seed-0`: `tinker://34787659-c710-5816-bcbb-6bc9110a23d2:train:0/sampler_weights/export-main-001-attention_only-seed-0-step-3169` (`30,797,565` bytes; expires `2026-06-08T12:48:27Z`)
+- `attention_only-seed-1`: `tinker://36b8a78c-22a0-515a-aa6f-a757765df553:train:0/sampler_weights/export-main-001-attention_only-seed-1-step-3169` (`30,797,565` bytes; expires `2026-06-08T12:48:26Z`)
+- `attention_only-seed-2`: `tinker://36b8a78c-22a0-515a-aa6f-a757765df553:train:1/sampler_weights/export-main-001-attention_only-seed-2-step-3169` (`30,797,565` bytes; expires `2026-06-08T12:48:24Z`)
+- `all_layer-seed-0`: `tinker://36b8a78c-22a0-515a-aa6f-a757765df553:train:2/sampler_weights/export-main-001-all_layer-seed-0-step-3169` (`87,508,819` bytes; expires `2026-06-08T12:48:21Z`)
+- `all_layer-seed-1`: `tinker://36b8a78c-22a0-515a-aa6f-a757765df553:train:3/sampler_weights/export-main-001-all_layer-seed-1-step-3169` (`87,508,819` bytes; expires `2026-06-08T12:48:19Z`)
+- `all_layer-seed-2`: `tinker://36b8a78c-22a0-515a-aa6f-a757765df553:train:4/sampler_weights/export-main-001-all_layer-seed-2-step-3169` (`87,508,819` bytes; expires `2026-06-08T12:48:17Z`)
+
+- End-to-end probe with the `attention_only-seed-0` sampler URI under `--limit 1 --concurrency 1`: exit `0`, `1/1` correct on GSM8K example `0` (reference `18`, extracted `18`), `stop_reason` `stop`, prompt `104` / generated `194` / total `298` tokens. The retained `step` field in the metric row read `3169` (parsed from the URI), `seed` read `0` (from the flag), and `condition` read `attention_only` (from the flag). Confirms the full pipeline (sampler URI -> tokenizer -> Tinker sample -> boxed-answer extraction -> scoring -> retained artifacts) works against a real LoRA checkpoint.
+- Next: launch the six-run benchmark sweep at `--concurrency 16` per the frozen policy in `TODO.md` §12; reductions and per-condition mean/range against the retained baseline `baseline-qwen3-8b-gsm8k-001` follow as derived artifacts.
