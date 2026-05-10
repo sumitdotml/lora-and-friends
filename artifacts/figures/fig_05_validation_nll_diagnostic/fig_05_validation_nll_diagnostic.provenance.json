@@ -1,0 +1,51 @@
+{
+  "command": "-c",
+  "derived_data": {
+    "bytes": 2550,
+    "path": "artifacts/figures/fig_05_validation_nll_diagnostic/fig_05_validation_nll_diagnostic.data.csv",
+    "sha256": "5acd48534bb4655cc69f5861ddea029d6760ea6cec8b4d5a17225ceda0f83ec2"
+  },
+  "fig_name": "fig_05_validation_nll_diagnostic",
+  "figure": {
+    "bytes": 21483,
+    "path": "artifacts/figures/fig_05_validation_nll_diagnostic/fig_05_validation_nll_diagnostic.pdf",
+    "sha256": "d9768bee8a53a457356aabfbba03e03711ac4d3563f02a857e71dbf004d8b18d"
+  },
+  "generated_at_utc": "2026-05-10T08:36:31.584180+00:00",
+  "git_commit": "39ee5643095345cbfed23777dbc60216ab3ecb20",
+  "git_dirty": true,
+  "inputs": [
+    {
+      "bytes": 4592288,
+      "path": "artifacts/results/main-001-all_layer-seed-0/metrics.jsonl",
+      "sha256": "b8ce2909c6056e8e67824c5d738c01b87b18d632ac8e9215316b65ef16b2caef"
+    },
+    {
+      "bytes": 4592325,
+      "path": "artifacts/results/main-001-all_layer-seed-1/metrics.jsonl",
+      "sha256": "dc56ebe71ab1146e6d867c6419ce25667d5f9fbea92534acc372b306afd2a60b"
+    },
+    {
+      "bytes": 4592256,
+      "path": "artifacts/results/main-001-all_layer-seed-2/metrics.jsonl",
+      "sha256": "fbd5ae5bbde9fa93afd95f0744409ced18504c81ec34b316fc936beffbd229a3"
+    },
+    {
+      "bytes": 4718794,
+      "path": "artifacts/results/main-001-attention_only-seed-0/metrics.jsonl",
+      "sha256": "17ae25df197b142fadcbca2cae9da7ea387a12943057d4f51937a4b3d5258f1c"
+    },
+    {
+      "bytes": 4718818,
+      "path": "artifacts/results/main-001-attention_only-seed-1/metrics.jsonl",
+      "sha256": "aa65b1976d71a4d5b965789c91374ab6bc864603380017ad5b4aedd5f801c2c6"
+    },
+    {
+      "bytes": 4718653,
+      "path": "artifacts/results/main-001-attention_only-seed-2/metrics.jsonl",
+      "sha256": "df1b4f01a44e7058b0e1a8a96f8e1149acfb61564036e58e7ee1185a7e28c950"
+    }
+  ],
+  "script": "figures/fig_05_validation_nll_diagnostic.py",
+  "source_of_truth_rule": "If this figure or table disagrees with retained JSONL/JSON artifacts, retained artifacts win."
+}
