@@ -1,0 +1,4 @@
+seed,attention_only_only,all_layer_only,both_correct,both_wrong,disagreement_delta
+0,54,47,1139,79,7
+1,49,43,1147,80,6
+2,46,41,1148,84,5
