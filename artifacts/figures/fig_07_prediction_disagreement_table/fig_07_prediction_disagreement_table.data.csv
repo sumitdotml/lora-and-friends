@@ -1,0 +1,4 @@
+Seed,"Attn correct, All-layer wrong","All-layer correct, Attn wrong",Δ (Attn − All),Both correct,Both wrong
+0,54,47,+7,1139,79
+1,49,43,+6,1147,80
+2,46,41,+5,1148,84

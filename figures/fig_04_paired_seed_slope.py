@@ -58,7 +58,6 @@ def build(output_root: Path) -> None:
     predictions = {k: read_jsonl(eval_dirs[k] / "predictions.jsonl") for k in eval_dirs}
 
     paired = _pair_predictions(predictions)
-    examples = _find_disagree_examples(predictions)
 
     fig, axes = plt.subplots(1, len(SEEDS), figsize=(8.5, 4.4), sharey=True)
 
@@ -128,7 +127,7 @@ def build(output_root: Path) -> None:
     plt.close(fig)
 
     caption_path = fig_dir / f"{FIG_NAME}.md"
-    caption_path.write_text(_caption_markdown(paired, examples), encoding="utf-8")
+    caption_path.write_text(_caption_markdown(paired), encoding="utf-8")
 
     write_provenance(
         fig_dir, FIG_NAME,
@@ -169,32 +168,6 @@ def _pair_predictions(
     return out
 
 
-def _find_disagree_examples(
-    predictions: dict[tuple[str, int], list[dict[str, Any]]],
-) -> dict[int, dict[str, tuple]]:
-    """Return (benchmark_index, att_row, all_row) for the first att-wins and
-    first all-wins disagreement per seed, sorted by benchmark_index."""
-    out: dict[int, dict[str, tuple]] = {}
-    for seed in SEEDS:
-        att_by_idx = {r["benchmark_index"]: r for r in predictions[("attention_only", seed)]}
-        all_by_idx = {r["benchmark_index"]: r for r in predictions[("all_layer", seed)]}
-        att_wins = [
-            (i, att_by_idx[i], all_by_idx[i])
-            for i in sorted(att_by_idx)
-            if att_by_idx[i]["correct"] and not all_by_idx[i]["correct"]
-        ]
-        all_wins = [
-            (i, att_by_idx[i], all_by_idx[i])
-            for i in sorted(att_by_idx)
-            if all_by_idx[i]["correct"] and not att_by_idx[i]["correct"]
-        ]
-        out[seed] = {
-            "att_only_only": att_wins[0] if att_wins else None,
-            "all_layer_only": all_wins[0] if all_wins else None,
-        }
-    return out
-
-
 def _build_plotted_data(paired: dict[int, dict[str, int]]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for seed in SEEDS:
@@ -210,54 +183,16 @@ def _build_plotted_data(paired: dict[int, dict[str, int]]) -> list[dict[str, Any
     return rows
 
 
-def _caption_markdown(
-    paired: dict[int, dict[str, int]],
-    examples: dict[int, dict[str, tuple]],
-) -> str:
+def _caption_markdown(paired: dict[int, dict[str, int]]) -> str:
     deltas = ", ".join(
         f"+{paired[s]['attention_only_only'] - paired[s]['all_layer_only']}"
         for s in SEEDS
     )
-
-    example_sections: list[str] = []
-    for seed in SEEDS:
-        ex = examples[seed]
-        parts: list[str] = [f"### Seed {seed}"]
-        for label, key in (
-            ("attention-only correct, all-layer wrong", "att_only_only"),
-            ("all-layer correct, attention-only wrong", "all_layer_only"),
-        ):
-            if ex[key] is None:
-                continue
-            idx, att_row, all_row = ex[key]
-            parts.append(f"\n#### {label} (benchmark_index {idx})\n")
-            parts.append(f"**Question:** {att_row['question']}\n")
-            parts.append(f"**Reference answer:** {att_row['reference_answer']}\n")
-            parts.append(
-                f"**attention-only** → extracted `{att_row['extracted_answer']}` "
-                f"({'correct' if att_row['correct'] else 'wrong'})\n"
-            )
-            parts.append(
-                f"**all-layer** → extracted `{all_row['extracted_answer']}` "
-                f"({'correct' if all_row['correct'] else 'wrong'})\n"
-            )
-            parts.append(
-                f"\n_attention-only generation:_\n\n"
-                f"```\n{att_row['generated_text'].replace('<|im_end|>', '').strip()}\n```\n"
-            )
-            parts.append(
-                f"\n_all-layer generation:_\n\n"
-                f"```\n{all_row['generated_text'].replace('<|im_end|>', '').strip()}\n```\n"
-            )
-        example_sections.append("\n".join(parts))
-
-    examples_block = "\n\n---\n\n".join(example_sections)
-
     return f"""# Figure 4: Per-seed prediction disagreement on GSM8K
 
 ## Caption
 
-Per-seed prediction disagreement between attention-only and all-layer LoRA on the GSM8K test set ({TOTAL_EXAMPLES:,} examples). Each panel covers one training seed; the blue bar counts examples where attention-only is correct and all-layer is wrong, and the orange hatched bar counts the reverse. The blue bar is taller in every panel, with disagreement deltas of {deltas} examples across seeds 0, 1, 2 — so attention-only wins not by a uniform shift in net accuracy but because it is correct on more questions that all-layer misses than the reverse. Agreement counts (both correct, both wrong) are annotated under each panel; the full per-seed contingency is in fig_07.
+Per-seed prediction disagreement between attention-only and all-layer LoRA on the GSM8K test set ({TOTAL_EXAMPLES:,} examples). Each panel covers one training seed; the blue bar counts examples where attention-only is correct and all-layer is wrong, and the orange hatched bar counts the reverse. The blue bar is taller in every panel, with disagreement deltas of {deltas} examples across seeds 0, 1, 2 — so attention-only wins not by a uniform shift in net accuracy but because it is correct on more questions that all-layer misses than the reverse. Agreement counts (both correct, both wrong) are annotated under each panel.
 
 ## Marker encoding
 
@@ -273,9 +208,7 @@ Per-seed prediction disagreement between attention-only and all-layer LoRA on th
 - Provenance and input SHA-256 hashes: `{FIG_NAME}.provenance.json`.
 - Rendered: `{FIG_NAME}.pdf`, `{FIG_NAME}.png`, `{FIG_NAME}.grayscale.png`.
 
-## Disagreement examples
+## Appendix
 
-One example per direction per seed — lowest `benchmark_index` satisfying the condition. Each entry shows the question, reference answer, each model's extracted answer, and the full generation. Sourced from the six retained `predictions.jsonl` files; provenance hashes are in `{FIG_NAME}.provenance.json`.
-
-{examples_block}
+For the full per-seed contingency table and one concrete disagreement example per direction per seed (complete question text and both models' full generations), see [Figure 7](../fig_07_prediction_disagreement_table/fig_07_prediction_disagreement_table.md).
 """
