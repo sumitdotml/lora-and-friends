@@ -7,8 +7,10 @@ requires-python = ">=3.12"
 dependencies = [
     "datasets>=4.8.5",
     "marimo>=0.23.1",
+    "matplotlib>=3.10.9",
     "numpy>=2.4.4",
     "orjson>=3.11.8",
+    "pillow>=12.2.0",
     "tinker>=0.18.2",
     "tinker-cookbook>=0.1.0",
     "torch>=2.11.0",
