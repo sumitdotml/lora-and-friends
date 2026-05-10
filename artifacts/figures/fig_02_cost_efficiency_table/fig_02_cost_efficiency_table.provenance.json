@@ -1,0 +1,86 @@
+{
+  "command": "-c",
+  "derived_data": {
+    "bytes": 297,
+    "path": "artifacts/figures/fig_02_cost_efficiency_table/fig_02_cost_efficiency_table.data.csv",
+    "sha256": "0fcb6df152051f25744f9a398aa6f7547fd820e4db2593b5b3192a2ef3919346"
+  },
+  "fig_name": "fig_02_cost_efficiency_table",
+  "figure": {
+    "bytes": 855,
+    "path": "artifacts/figures/fig_02_cost_efficiency_table/fig_02_cost_efficiency_table.md",
+    "sha256": "be0db186e0e3f425f80434e2ed291c18b1e23bd78494d668df65a3ea1a0686dd"
+  },
+  "generated_at_utc": "2026-05-09T19:38:41.062508+00:00",
+  "git_commit": "46435180920c38631fb1cf290a6e1e3958d14ff2",
+  "git_dirty": true,
+  "inputs": [
+    {
+      "bytes": 1533,
+      "path": "artifacts/results/baseline-qwen3-8b-gsm8k-001/summary.json",
+      "sha256": "d8f25106a936bbeeae9f2cfbd7aae7a5c07c33479b6c098f41d672d9569f5228"
+    },
+    {
+      "bytes": 1350,
+      "path": "artifacts/results/main-001-all_layer-seed-0/summary.json",
+      "sha256": "a648554551d8d5123cc6dff8d620e7dc66ca09c6db940536a5a6af314ff20ba9"
+    },
+    {
+      "bytes": 1350,
+      "path": "artifacts/results/main-001-all_layer-seed-1/summary.json",
+      "sha256": "2c2067b2367e902216dffce81e780d9a5a0463f34f8304c11e16c0b6bdabbce4"
+    },
+    {
+      "bytes": 1350,
+      "path": "artifacts/results/main-001-all_layer-seed-2/summary.json",
+      "sha256": "10b1dd20f72598bb11fb4092891b938ff181b0706e041e93ed81674b641bdc7e"
+    },
+    {
+      "bytes": 1390,
+      "path": "artifacts/results/main-001-attention_only-seed-0/summary.json",
+      "sha256": "dac1ea14cd52a39fd16ff0c41d8df9ea8671144aea37d60c5e91e12ee8e69299"
+    },
+    {
+      "bytes": 1390,
+      "path": "artifacts/results/main-001-attention_only-seed-1/summary.json",
+      "sha256": "c01b087da149b21ff4c301946cf919e1087e97d1e57a2aa11a9215936e921f03"
+    },
+    {
+      "bytes": 1390,
+      "path": "artifacts/results/main-001-attention_only-seed-2/summary.json",
+      "sha256": "5cdbf3ca2ff223d40e933ec61be5fec36f7a40cb3ee47e71cdca69bf67dd60ae"
+    },
+    {
+      "bytes": 2545,
+      "path": "artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-2-sampler-weights-export-main-001-all-gsm8k-20260509-163604/summary.json",
+      "sha256": "9459d883019a1d3ddec65b2c6ca756a40fad5ce8380d68933c37b1214d1eeb01"
+    },
+    {
+      "bytes": 2690,
+      "path": "artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-3-sampler-weights-export-main-001-all-gsm8k-20260509-164616/summary.json",
+      "sha256": "b17e9551b38e080a4551e940c9741a2881af4a4eebeeb0cf37076195a736d71f"
+    },
+    {
+      "bytes": 2835,
+      "path": "artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-4-sampler-weights-export-main-001-all-gsm8k-20260509-165547/summary.json",
+      "sha256": "bc3b8cede817f9f18ba77c9bce8cd0d8f59b0541708585a57fe10049e3f57f59"
+    },
+    {
+      "bytes": 2089,
+      "path": "artifacts/results/checkpoint-34787659-c710-5816-bcbb-6bc9110a23d2-train-0-sampler-weights-export-main-001-att-gsm8k-20260509-160519/summary.json",
+      "sha256": "314f1dca3bbe0637e7eb5c0c4d3cdf1bcd4fe3adaeeb1346700ddd5660debabc"
+    },
+    {
+      "bytes": 2265,
+      "path": "artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-0-sampler-weights-export-main-001-att-gsm8k-20260509-161542/summary.json",
+      "sha256": "55e182a10ede6de0c812e01bb89bbe1dd30db5e88661f8698588c915fc44ed2b"
+    },
+    {
+      "bytes": 2410,
+      "path": "artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-1-sampler-weights-export-main-001-att-gsm8k-20260509-162613/summary.json",
+      "sha256": "e62d61986e23d23855deb351e60aa62e01bd3ed8de92baf02d37282c8bb6ab90"
+    }
+  ],
+  "script": "figures/fig_02_cost_efficiency_table.py",
+  "source_of_truth_rule": "If this figure or table disagrees with retained JSONL/JSON artifacts, retained artifacts win."
+}
