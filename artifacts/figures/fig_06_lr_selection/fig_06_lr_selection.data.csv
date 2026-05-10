@@ -1,0 +1,7 @@
+condition,lr,validation_mean_nll
+attention_only,1e-4,0.3786645046540731
+attention_only,3e-4,0.3632619345728878
+attention_only,1e-3,0.3644437038722405
+all_layer,1e-4,0.3648794147648033
+all_layer,3e-4,0.3559855057286731
+all_layer,1e-3,0.37397296784836664
