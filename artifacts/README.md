@@ -162,7 +162,7 @@ Evidence behind the diagram:
 | Render sanity evidence exists for the fixed system prompt and sample renders | `artifacts/audits/openmath_original_clean_render_sanity/report.json`; `artifacts/audits/openmath_original_clean_render_sanity/sample_renders.txt` |
 | Rendered dataset uses `Qwen/Qwen3-8B`, `qwen3_disable_thinking`, and the fixed system prompt | `artifacts/rendered_datasets/openmath_original_clean_qwen3_disable_thinking/manifest.json` |
 | Rendered `train.jsonl` and `val.jsonl` are the fine-tuning and validation inputs | `AGENTS.md`; `TODO.md` locked context |
-| Tinker smoke/SFT run is a next planned consumer, not completed evidence | `TODO.md` marks the thin Tinker smoke pass as `not started` |
+| Tinker smoke/Baseline GSM8K evaluation/Main LoRA runs | Check `TODO.md` for the current status |
 
 Editable presentation version:
 

@@ -444,7 +444,7 @@ Record the failure mode in `docs/project/LOG.md`, rerun with the frozen fallback
 
 ### 13. Generate Final Tables And Charts
 
-Status: planned on 2026-05-10.
+Status: built on 2026-05-10.
 
 What this means:
 Build the final reporting tables and charts from retained local artifacts. Source files are `artifacts/results/<run_id>/metrics.jsonl`, `summary.json`, and `predictions.jsonl`. Each derived artifact lands under `artifacts/figures/<fig_name>/` with a rendered figure (PDF + PNG), the plotted dataframe (CSV or JSON), a grayscale PNG preview, and a provenance JSON listing input-file SHA-256 hashes, the git commit, and the source-of-truth rule.
@@ -453,14 +453,14 @@ It matters because:
 The write-up needs clear, reproducible result presentation. Tables and charts are derived views; the retained JSONL/JSON artifacts remain canonical.
 
 Done when:
-Eight retained derived artifacts exist under `artifacts/figures/`: primary comparison table, cost/efficiency table, GSM8K dot/range chart, paired-seed slope plot, validation-NLL checkpoint diagnostic, LR-selection line plot, prediction-disagreement appendix table, and throughput-probe appendix plot. Each output directory contains the figure files, the plotted data, the grayscale preview, and the provenance JSON.
+Eight retained derived artifacts exist under `artifacts/figures/`: primary comparison table, cost/efficiency table, GSM8K dot/range chart, per-seed prediction-disagreement small-multiples plot, validation-NLL checkpoint diagnostic, LR-selection line plot, prediction-disagreement appendix table, and throughput-probe appendix plot. Each output directory contains the figure files, the plotted data, the grayscale preview, and the provenance JSON.
 
 If it fails:
 Do not treat write-up numbers as final. Regenerate the figure or table from retained artifacts. If a derived output disagrees with `metrics.jsonl`, `summary.json`, or `predictions.jsonl`, the retained JSONL/JSON artifact wins.
 
 Locked design decisions:
 
-- Palette: baseline `#666666`, attention_only `#1f77b4`, all_layer `#ff7f0e`. Markers: baseline = gray dashed reference line; attention_only = blue circle; all_layer = orange square.
+- Palette: baseline `#666666`, attention_only `#1f77b4`, all_layer `#ff7f0e`. Markers: baseline = gray diamond (single point at its own x-position; N=1, no whiskers); attention_only = blue circle; all_layer = orange square. Diamond chosen over circle for baseline so the shape stays distinguishable from attention_only in grayscale, where Tab10 blue desaturates close to the baseline gray.
 - Color-extension rule: if any future figure needs more than three categorical colors, use an evenly-spaced subset of `viridis` rather than ad-hoc Tab10 picks. None of the eight §13 figures need this; recorded as a forward rule.
 - Typography and base style: font fallback chain `IBM Plex Sans` -> `Inter` -> `Helvetica Neue` -> `Helvetica` -> `Arial` -> `DejaVu Sans`. Top and right axis spines hidden, frameless legend, light gridlines `#e5e5e5`, axis/text color `#333333`. Concrete `rcParams` configuration lives in `figures/helpers.py:set_paper_style()` and is the single source of truth.
 - Accuracy chart axis: y restricted to `[0.80, 0.92]`; truncation called out in the caption.
@@ -469,16 +469,24 @@ Locked design decisions:
 - Accessibility: every figure passes a grayscale render check and a deuteranopia + protanopia + tritanopia colorblind simulation. Pass condition: condition identity recoverable without color via marker shape, line style, or annotation.
 - Code shape: `figures/helpers.py` for shared utilities (artifact reading, hashing, save-with-provenance, palette/marker constants); one `figures/fig_NN_<name>.py` per deliverable, each exposing `build(output_dir)`; thin orchestrator at `scripts/make_figures.py`. No registry, no plugin loader, no dynamic discovery.
 
-Build order (each item is one `figures/fig_NN_<name>.py`):
+Build order (each item is one `figures/fig_NN_<name>.py`). Captions are written paper-style: self-contained, no internal repo file paths, suitable for copy-paste under the figure in the final write-up.
 
-- [ ] 01 — Primary comparison table. Columns: `condition`, `target_modules`, `adapter_size_mb`, `seeds`, `mean_accuracy`, `min_accuracy`, `max_accuracy`, `delta_vs_baseline`, `extraction_failures`, `eval_tokens`. Source: `baseline-qwen3-8b-gsm8k-001/summary.json` and the six `checkpoint-*-gsm8k-2026*/summary.json`.
-- [ ] 02 — Cost/efficiency table. Columns: `condition`, `adapter_size_mb`, `train_tokens_per_run`, `validation_tokens_per_run`, `eval_tokens_per_run`, `mean_accuracy`, `extraction_failures`. Source: `main-001-<condition>-seed-<seed>/summary.json` for train/val tokens; the six eval directories for eval tokens.
-- [ ] 03 — GSM8K accuracy dot/range chart. X = condition (`baseline`, `attention_only`, `all_layer`); Y = accuracy in `[0.80, 0.92]`. Mean = large dot; individual seeds = small jittered dots; min/max = whiskers. Baseline as gray dashed reference line. Source: same as 01.
-- [ ] 04 — Paired-seed slope plot. One slope segment per seed from `attention_only` to `all_layer`; correct-count delta annotated per seed (+7, +6, +5 across seeds 0/1/2). Source: per-seed `predictions.jsonl` joined by `benchmark_index`.
-- [ ] 05 — Validation NLL checkpoint-selection diagnostic. X = optimizer step; Y = validation mean NLL. Faint per-seed lines + bold per-condition mean line; vertical marker at step `3169`. Source: `main-001-<condition>-seed-<seed>/metrics.jsonl`.
-- [ ] 06 — LR-selection line plot. X = LR on log scale (`1e-4`, `3e-4`, `1e-3`); Y = validation mean NLL; one line per condition; outlined marker at `3e-4`. Source: `lr-select-001-<condition>-lr-<lr>/summary.json`.
-- [ ] 07 — Prediction-disagreement appendix table. Per seed: `attention_only_only`, `all_layer_only`, `both_correct`, `both_wrong`. Source: paired `predictions.jsonl` (already computed in `artifacts/results/main-001-_gsm8k_eval/comparison.md`).
-- [ ] 08 — Throughput-probe appendix plot. X = request shape (`single_datum_calls`, `batched_datums`, `batched_datums_pipelined`); Y = seconds per optimizer step. Source: `throughput-probe-*/summary.json`.
+- [x] 01 — Primary comparison table. Columns: `condition`, `target_modules`, `adapter_size_mb`, `seeds`, `mean_accuracy`, `min_accuracy`, `max_accuracy`, `delta_vs_baseline`, `extraction_failures`, `eval_tokens`. Source: `baseline-qwen3-8b-gsm8k-001/summary.json` and the six `checkpoint-*-gsm8k-2026*/summary.json`.
+  - Caption: "Primary comparison of GSM8K accuracy on the test set (1,319 examples) across the untouched Qwen3-8B baseline and two LoRA conditions (attention-only, all-layer) at their step-3169 checkpoints. N=3 seeds per LoRA condition; intervals show min/max range across seeds, not statistical confidence intervals. Decoding: greedy, T=0, max 512 new tokens. Scoring: exact match after boxed-answer extraction."
+- [x] 02 — Cost/efficiency table. Columns: `condition`, `adapter_size_mb`, `train_tokens_per_run`, `validation_tokens_per_run`, `eval_tokens_per_run`, `mean_accuracy`, `extraction_failures`. Source: `main-001-<condition>-seed-<seed>/summary.json` for train/val tokens; the six eval directories for eval tokens.
+  - Caption: "Training and evaluation cost per condition on GSM8K. The `_per_run` columns report the mean across three runs per LoRA condition (training-side token counts are deterministic for a fixed dataset and schedule); `extraction_failures` is the sum across runs. Adapter sizes are sampler-format export bytes. N=3 seeds per LoRA condition; selected checkpoint per condition is the validation-NLL minimum at step 3169."
+- [x] 03 — GSM8K accuracy dot/range chart. X = three conditions (`baseline`, `attention_only`, `all_layer`); Y = accuracy in `[0.80, 0.92]`. baseline = single gray diamond (N=1); LoRA conditions = mean (large marker) plus three jittered seed accuracies (small markers). X-axis tick labels hidden; legend identifies conditions. Source: same as 01.
+  - Caption: "GSM8K accuracy by condition on the 1,319-example test set. Untouched Qwen3-8B baseline (gray diamond, N=1) and two LoRA conditions at their step-3169 checkpoints (large marker = mean across 3 seeds, small markers = individual seeds). Y-axis truncated to [0.80, 0.92] to surface seed-level variation; intervals show min/max range across seeds, not statistical confidence intervals."
+- [x] 04 — Per-seed prediction-disagreement small-multiples plot. One panel per seed; two bars per panel — `attention_only_only` (blue, solid) and `all_layer_only` (orange, hatched). Both-right and both-wrong agreement counts as small-grey annotation under each panel. Disagreement deltas (+7, +6, +5 across seeds 0/1/2) read off geometrically from bar-height difference. Source: per-seed `predictions.jsonl` joined by `benchmark_index`. Filename retained as `fig_04_paired_seed_slope.py` for path stability across iterations of the underlying chart. Pairs with fig_07 (full contingency table including agreement counts).
+  - Caption: "Per-seed prediction disagreement between attention-only and all-layer LoRA on the GSM8K test set (1,319 examples). Each panel covers one training seed; the blue bar counts examples where attention-only is correct and all-layer is wrong, and the orange hatched bar counts the reverse. Disagreement deltas across seeds 0, 1, 2 are +7, +6, +5 examples. Attention-only wins not by a uniform shift in net accuracy but because it is correct on more examples that all-layer misses than the reverse. Agreement counts (both correct, both wrong) are annotated under each panel."
+- [x] 05 — Validation NLL checkpoint-selection diagnostic. X = optimizer step; Y = validation mean NLL. Faint per-seed lines + bold per-condition mean line; vertical marker at step `3169`. Source: `main-001-<condition>-seed-<seed>/metrics.jsonl`.
+  - Caption: "Validation negative log-likelihood over training optimizer steps for both LoRA conditions. Faint lines show individual seeds (3 per condition); bold lines show the per-condition mean across seeds. The vertical marker at step 3169 indicates the selected checkpoint, chosen by the frozen rule of minimum validation NLL."
+- [x] 06 — LR-selection line plot. X = LR on log scale (`1e-4`, `3e-4`, `1e-3`); Y = validation mean NLL; one line per condition; outlined marker at `3e-4`. Source: `lr-select-001-<condition>-lr-<lr>/summary.json`.
+  - Caption: "Validation NLL across the learning-rate grid {1e-4, 3e-4, 1e-3} for both LoRA conditions on the small-slice LR-selection sweep (512 train rows, 128 validation rows, seed 7). Lines connect points within a condition; the marker at 3e-4 highlights the selected peak LR for both conditions."
+- [x] 07 — Prediction-disagreement appendix table. Per seed: `attention_only_only`, `all_layer_only`, `both_correct`, `both_wrong`. Source: paired `predictions.jsonl` (already computed in `artifacts/results/main-001-_gsm8k_eval/comparison.md`).
+  - Caption: "Per-seed agreement between attention-only and all-layer predictions on GSM8K test, joined by example index. Columns count examples where attention-only is correct and all-layer is wrong (`attention_only_only`), the reverse (`all_layer_only`), and where the two agree (`both_correct`, `both_wrong`)."
+- [x] 08 — Throughput-probe appendix plot. X = request shape (`single_datum_calls`, `batched_datums`, `batched_datums_pipelined`); Y = seconds per optimizer step. Source: `throughput-probe-*/summary.json`.
+  - Caption: "Wall-clock seconds per optimizer step across three Tinker training-request shapes: single-datum sequential, batched, and batched-pipelined. Probe used `Qwen3-8B` with effective batch size 8."
 
 Out of scope for this phase:
 
