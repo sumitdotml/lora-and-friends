@@ -1,0 +1,10 @@
+kind,condition,seed,accuracy
+baseline,baseline,,0.8453373768006065
+seed,attention_only,0,0.9044730856709629
+seed,attention_only,1,0.9067475360121304
+seed,attention_only,2,0.9052312357846853
+mean,attention_only,,0.9054839524892596
+seed,all_layer,0,0.8991660348749052
+seed,all_layer,1,0.9021986353297953
+seed,all_layer,2,0.9014404852160728
+mean,all_layer,,0.9009350518069245

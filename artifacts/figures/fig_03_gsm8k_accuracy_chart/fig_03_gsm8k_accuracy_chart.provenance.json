@@ -1,0 +1,56 @@
+{
+  "command": "-c",
+  "derived_data": {
+    "bytes": 383,
+    "path": "artifacts/figures/fig_03_gsm8k_accuracy_chart/fig_03_gsm8k_accuracy_chart.data.csv",
+    "sha256": "2bcf14d999d5ba000bca724267e78a6a15e13709288d0eb85e964409347a4193"
+  },
+  "fig_name": "fig_03_gsm8k_accuracy_chart",
+  "figure": {
+    "bytes": 18707,
+    "path": "artifacts/figures/fig_03_gsm8k_accuracy_chart/fig_03_gsm8k_accuracy_chart.pdf",
+    "sha256": "cf51921f97c76450ea4f0611902693923dd58d875a92c9c06222c8769b4993b0"
+  },
+  "generated_at_utc": "2026-05-09T19:38:41.250344+00:00",
+  "git_commit": "46435180920c38631fb1cf290a6e1e3958d14ff2",
+  "git_dirty": true,
+  "inputs": [
+    {
+      "bytes": 1533,
+      "path": "artifacts/results/baseline-qwen3-8b-gsm8k-001/summary.json",
+      "sha256": "d8f25106a936bbeeae9f2cfbd7aae7a5c07c33479b6c098f41d672d9569f5228"
+    },
+    {
+      "bytes": 2545,
+      "path": "artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-2-sampler-weights-export-main-001-all-gsm8k-20260509-163604/summary.json",
+      "sha256": "9459d883019a1d3ddec65b2c6ca756a40fad5ce8380d68933c37b1214d1eeb01"
+    },
+    {
+      "bytes": 2690,
+      "path": "artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-3-sampler-weights-export-main-001-all-gsm8k-20260509-164616/summary.json",
+      "sha256": "b17e9551b38e080a4551e940c9741a2881af4a4eebeeb0cf37076195a736d71f"
+    },
+    {
+      "bytes": 2835,
+      "path": "artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-4-sampler-weights-export-main-001-all-gsm8k-20260509-165547/summary.json",
+      "sha256": "bc3b8cede817f9f18ba77c9bce8cd0d8f59b0541708585a57fe10049e3f57f59"
+    },
+    {
+      "bytes": 2089,
+      "path": "artifacts/results/checkpoint-34787659-c710-5816-bcbb-6bc9110a23d2-train-0-sampler-weights-export-main-001-att-gsm8k-20260509-160519/summary.json",
+      "sha256": "314f1dca3bbe0637e7eb5c0c4d3cdf1bcd4fe3adaeeb1346700ddd5660debabc"
+    },
+    {
+      "bytes": 2265,
+      "path": "artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-0-sampler-weights-export-main-001-att-gsm8k-20260509-161542/summary.json",
+      "sha256": "55e182a10ede6de0c812e01bb89bbe1dd30db5e88661f8698588c915fc44ed2b"
+    },
+    {
+      "bytes": 2410,
+      "path": "artifacts/results/checkpoint-36b8a78c-22a0-515a-aa6f-a757765df553-train-1-sampler-weights-export-main-001-att-gsm8k-20260509-162613/summary.json",
+      "sha256": "e62d61986e23d23855deb351e60aa62e01bd3ed8de92baf02d37282c8bb6ab90"
+    }
+  ],
+  "script": "figures/fig_03_gsm8k_accuracy_chart.py",
+  "source_of_truth_rule": "If this figure or table disagrees with retained JSONL/JSON artifacts, retained artifacts win."
+}
