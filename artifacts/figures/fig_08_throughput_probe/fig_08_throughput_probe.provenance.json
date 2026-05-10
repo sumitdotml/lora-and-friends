@@ -1,0 +1,31 @@
+{
+  "command": "-c",
+  "derived_data": {
+    "bytes": 159,
+    "path": "artifacts/figures/fig_08_throughput_probe/fig_08_throughput_probe.data.csv",
+    "sha256": "895e6cc7a52bef13be1d26100a156a7fd9fe7a9b3c43e3e58d9cb571f387aca3"
+  },
+  "fig_name": "fig_08_throughput_probe",
+  "figure": {
+    "bytes": 20083,
+    "path": "artifacts/figures/fig_08_throughput_probe/fig_08_throughput_probe.pdf",
+    "sha256": "1ba63a605682e884e114ebc2185974423d656ae15c417831c115db5e3436d9aa"
+  },
+  "generated_at_utc": "2026-05-10T09:43:44.775224+00:00",
+  "git_commit": "ded9ff2794c66bd69f844bfd1dfdc221efbc9cb1",
+  "git_dirty": true,
+  "inputs": [
+    {
+      "bytes": 1264,
+      "path": "artifacts/results/throughput-probe-001/summary.json",
+      "sha256": "17c0ed34ae7aec45ae262008000783930a849144bba558821ceeb95275f545cf"
+    },
+    {
+      "bytes": 1057,
+      "path": "artifacts/results/throughput-probe-batch8-pipelined-001/summary.json",
+      "sha256": "a5327cbffcbdf5657e81e4829deb43a7db6ea128224c8c834a70ebe815387e71"
+    }
+  ],
+  "script": "figures/fig_08_throughput_probe.py",
+  "source_of_truth_rule": "If this figure or table disagrees with retained JSONL/JSON artifacts, retained artifacts win."
+}

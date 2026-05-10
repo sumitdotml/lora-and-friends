@@ -1,0 +1,4 @@
+request_shape,seconds_per_optimizer_step
+single_datum_calls,20.22187466151081
+batched_datums,5.201307859155349
+batched_datums_pipelined,2.4104866901249693
