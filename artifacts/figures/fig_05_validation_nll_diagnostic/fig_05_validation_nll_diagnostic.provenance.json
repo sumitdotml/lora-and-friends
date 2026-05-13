@@ -1,5 +1,5 @@
 {
-  "command": "-c",
+  "command": "-",
   "derived_data": {
     "bytes": 2550,
     "path": "artifacts/figures/fig_05_validation_nll_diagnostic/fig_05_validation_nll_diagnostic.data.csv",
@@ -7,12 +7,12 @@
   },
   "fig_name": "fig_05_validation_nll_diagnostic",
   "figure": {
-    "bytes": 21483,
+    "bytes": 17992,
     "path": "artifacts/figures/fig_05_validation_nll_diagnostic/fig_05_validation_nll_diagnostic.pdf",
-    "sha256": "d9768bee8a53a457356aabfbba03e03711ac4d3563f02a857e71dbf004d8b18d"
+    "sha256": "1daa74ce77f6ce71ff7ddcb3aea4fadb3d6734db66819083832034cf78acfd24"
   },
-  "generated_at_utc": "2026-05-10T08:36:31.584180+00:00",
-  "git_commit": "39ee5643095345cbfed23777dbc60216ab3ecb20",
+  "generated_at_utc": "2026-05-13T17:14:47.278440+00:00",
+  "git_commit": "9377048b1884fb8999d0c7c05f3bb21d8e5becce",
   "git_dirty": true,
   "inputs": [
     {
