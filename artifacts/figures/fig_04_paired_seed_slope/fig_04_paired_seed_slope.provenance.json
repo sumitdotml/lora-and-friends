@@ -1,5 +1,5 @@
 {
-  "command": "-c",
+  "command": "-",
   "derived_data": {
     "bytes": 141,
     "path": "artifacts/figures/fig_04_paired_seed_slope/fig_04_paired_seed_slope.data.csv",
@@ -7,12 +7,12 @@
   },
   "fig_name": "fig_04_paired_seed_slope",
   "figure": {
-    "bytes": 21616,
+    "bytes": 21630,
     "path": "artifacts/figures/fig_04_paired_seed_slope/fig_04_paired_seed_slope.pdf",
-    "sha256": "0aa25633958c4e05a792383620afc219eb38828d354fa16f5553fa81a824e07c"
+    "sha256": "81fefff58b3a69452cc696519e640e9fc2eb050ddf9f3d4ffb64af2909d03cbf"
   },
-  "generated_at_utc": "2026-05-10T08:17:21.380846+00:00",
-  "git_commit": "46435180920c38631fb1cf290a6e1e3958d14ff2",
+  "generated_at_utc": "2026-05-13T17:19:36.256449+00:00",
+  "git_commit": "437844ae7d8862b673fba1d1a7af63bfcfbf2035",
   "git_dirty": true,
   "inputs": [
     {

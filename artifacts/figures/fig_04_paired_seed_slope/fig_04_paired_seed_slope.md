@@ -2,7 +2,7 @@
 
 ## Caption
 
-Per-seed prediction disagreement between attention-only and all-layer LoRA on the GSM8K test set (1,319 examples). Each panel covers one training seed; the blue bar counts examples where attention-only is correct and all-layer is wrong, and the orange hatched bar counts the reverse. The blue bar is taller in every panel, with disagreement deltas of +7, +6, +5 examples across seeds 0, 1, 2 — so attention-only wins not by a uniform shift in net accuracy but because it is correct on more questions that all-layer misses than the reverse. Agreement counts (both correct, both wrong) are annotated under each panel; the full per-seed contingency is in fig_07.
+Per-seed prediction disagreement between attention-only and all-layer LoRA on the GSM8K test set (1,319 examples). Each panel covers one training seed; the blue bar counts examples where attention-only is correct and all-layer is wrong, and the orange hatched bar counts the reverse. The blue bar is taller in every panel, with disagreement deltas of +7, +6, +5 examples across seeds 0, 1, 2 — so attention-only wins not by a uniform shift in net accuracy but because it is correct on more questions that all-layer misses than the reverse. Agreement counts (both correct, both wrong) are annotated under each panel.
 
 ## Marker encoding
 

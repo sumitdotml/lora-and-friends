@@ -59,7 +59,7 @@ def build(output_root: Path) -> None:
 
     paired = _pair_predictions(predictions)
 
-    fig, axes = plt.subplots(1, len(SEEDS), figsize=(8.5, 4.4), sharey=True)
+    fig, axes = plt.subplots(1, len(SEEDS), figsize=(8.5, 4.15), sharey=True)
 
     ymax = max(max(paired[s]["attention_only_only"], paired[s]["all_layer_only"]) for s in SEEDS)
     ymax_padded = int(ymax * 1.30)
@@ -84,21 +84,26 @@ def build(output_root: Path) -> None:
                 fontsize=10, color="#333333",
             )
 
-        ax.set_title(f"Seed {seed}")
+        ax.set_title(f"Seed {seed}", fontsize=12.5, pad=8)
         ax.set_xticks([])
         ax.set_xlim(-0.6, 1.6)
         ax.set_ylim(0, ymax_padded)
-        ax.grid(axis="x", visible=False)
+        ax.grid(False)
+        ax.yaxis.grid(True, color="#e7e7e7", linewidth=0.7, zorder=0)
+        ax.spines["left"].set_color("#777777")
+        ax.spines["left"].set_linewidth(0.8)
+        ax.spines["bottom"].set_visible(False)
+        ax.tick_params(axis="y", width=0.8, color="#777777")
 
         agreement = (
             f"both right: {p['both_correct']:,}\n"
             f"both wrong: {p['both_wrong']:,}"
         )
         ax.text(
-            0.5, -0.10, agreement,
+            0.5, -0.075, agreement,
             transform=ax.transAxes,
             ha="center", va="top",
-            fontsize=9, color="#777777",
+            fontsize=8.5, color="#777777",
         )
 
     axes[0].set_ylabel(f"Test examples (of {TOTAL_EXAMPLES:,})")
@@ -115,12 +120,15 @@ def build(output_root: Path) -> None:
     ]
     fig.legend(
         handles=legend_handles,
-        loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.02),
+        loc="lower center", ncol=2, bbox_to_anchor=(0.5, 0.01),
         frameon=False, fontsize=10,
     )
 
-    fig.suptitle("Per-seed prediction disagreement on GSM8K", y=0.99)
-    fig.tight_layout(rect=(0, 0.08, 1, 0.95))
+    fig.suptitle(
+        "Per-seed prediction disagreement on GSM8K",
+        y=0.985, fontsize=14, fontweight="semibold",
+    )
+    fig.tight_layout(rect=(0, 0.12, 1, 0.93))
 
     plotted_data = _build_plotted_data(paired)
     pdf_path, csv_path = save_figure(fig_dir, FIG_NAME, fig, plotted_data)
