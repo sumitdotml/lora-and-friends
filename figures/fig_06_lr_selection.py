@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import matplotlib.pyplot as plt
-from matplotlib.transforms import blended_transform_factory
+from matplotlib.ticker import NullLocator
 
 from figures.helpers import (
     MARKERS,
@@ -51,11 +51,10 @@ def build(output_root: Path) -> None:
 
     selected_lr = LR_VALUES[LR_LABELS.index(SELECTED_LR_LABEL)]
     cond_display = {"attention_only": "attention-only", "all_layer": "all-layer"}
-    callout_y_offset = {"attention_only": -0.0006, "all_layer": 0.0}
+    callout_y_offset = {"attention_only": -0.00065, "all_layer": -0.00065}
+    callout_va = {"attention_only": "top", "all_layer": "top"}
 
-    fig, ax = plt.subplots(figsize=(6.0, 4.5))
-
-    ax.axvline(selected_lr, color="#999999", linestyle="--", linewidth=1.0, zorder=2)
+    fig, ax = plt.subplots(figsize=(6.2, 4.0))
 
     for cond in CONDITIONS:
         color = PALETTE[cond]
@@ -63,14 +62,23 @@ def build(output_root: Path) -> None:
         nlls = [nll_grid[(cond, lr)] for lr in LR_LABELS]
         ax.plot(
             LR_VALUES, nlls,
-            color=color, linewidth=2.0, marker=marker, markersize=8,
-            markeredgecolor="white", markeredgewidth=1.0, zorder=3,
+            color=color, linewidth=1.9, marker=marker, markersize=7.5,
+            markeredgecolor="white", markeredgewidth=0.9, zorder=3,
         )
 
-    label_va = {"attention_only": "center", "all_layer": "top"}
+    for cond in CONDITIONS:
+        color = PALETTE[cond]
+        marker = MARKERS[cond]
+        ax.scatter(
+            [selected_lr], [nll_grid[(cond, SELECTED_LR_LABEL)]],
+            s=74, marker=marker, facecolors="white", edgecolors=color,
+            linewidths=1.35, zorder=4,
+        )
+
+    label_va = {"attention_only": "center", "all_layer": "bottom"}
     for cond in CONDITIONS:
         ax.text(
-            LR_VALUES[0] * 1.18, nll_grid[(cond, "1e-4")],
+            LR_VALUES[0] * 1.16, nll_grid[(cond, "1e-4")],
             cond_display[cond],
             color=PALETTE[cond], fontsize=9,
             va=label_va[cond], ha="left",
@@ -79,25 +87,27 @@ def build(output_root: Path) -> None:
     for cond in CONDITIONS:
         nll = nll_grid[(cond, SELECTED_LR_LABEL)]
         ax.text(
-            selected_lr * 1.05, nll + callout_y_offset[cond],
+            selected_lr * 1.07, nll + callout_y_offset[cond],
             f"{nll:.4f}",
             color=PALETTE[cond], fontsize=8.5,
-            va="top", ha="left",
+            va=callout_va[cond], ha="left",
         )
-
-    trans = blended_transform_factory(ax.transData, ax.transAxes)
-    ax.text(
-        selected_lr * 1.05, 0.99, "selected LR",
-        transform=trans, color="#888888", fontsize=8.5,
-        va="top", ha="left",
-    )
 
     ax.set_xscale("log")
     ax.set_xticks(LR_VALUES)
     ax.set_xticklabels(LR_LABELS)
+    ax.xaxis.set_minor_locator(NullLocator())
+    ax.set_ylim(0.3539, 0.3798)
+    ax.set_yticks([0.360, 0.365, 0.370, 0.375])
     ax.set_xlabel("Peak learning rate")
     ax.set_ylabel("Validation mean NLL")
-    ax.set_title("LR selection: validation NLL across the LR grid")
+    ax.set_title("Learning-rate sweep")
+    ax.grid(False)
+    ax.yaxis.grid(True, color="#e7e7e7", linewidth=0.7)
+    ax.spines["left"].set_color("#777777")
+    ax.spines["left"].set_linewidth(0.8)
+    ax.spines["bottom"].set_color("#777777")
+    ax.spines["bottom"].set_linewidth(0.8)
     fig.tight_layout()
 
     plotted_data = [
@@ -128,7 +138,7 @@ def _caption_markdown(nll_grid: dict[tuple[str, str], float]) -> str:
 
 ## Caption
 
-Validation NLL on the small-slice learning-rate sweep used to select peak LR before the main training runs (512 train rows, 128 validation rows, seed 7). Both attention-only LoRA (blue, circles) and all-layer LoRA (orange, squares) minimize at 3e-4 — the selected peak LR for both conditions, marked by the dashed line. The valley shapes differ sharply: attention-only NLL is nearly flat after the minimum ({att_sel:.4f} at 3e-4, {att_1e3:.4f} at 1e-3, Δ +{att_1e3 - att_sel:.3f}), while all-layer rises steeply ({al_sel:.4f} at 3e-4, {al_1e3:.4f} at 1e-3, Δ +{al_1e3 - al_sel:.3f}), indicating greater LR sensitivity under the higher-capacity adapter.
+Validation NLL on the small-slice learning-rate sweep used to select peak LR before the main training runs (512 train rows, 128 validation rows, seed 7). Both attention-only LoRA (blue, circles) and all-layer LoRA (orange, squares) minimize at 3e-4, highlighted by open markers. The valley shapes differ sharply: attention-only NLL is nearly flat after the minimum ({att_sel:.4f} at 3e-4, {att_1e3:.4f} at 1e-3, Δ +{att_1e3 - att_sel:.3f}), while all-layer rises steeply ({al_sel:.4f} at 3e-4, {al_1e3:.4f} at 1e-3, Δ +{al_1e3 - al_sel:.3f}), indicating greater LR sensitivity under the higher-capacity adapter.
 
 ## Marker encoding
 
@@ -136,7 +146,7 @@ Validation NLL on the small-slice learning-rate sweep used to select peak LR bef
 | --- | --- | --- | --- |
 | `attention_only` | `#1f77b4` | circle (filled) | per-LR validation NLL on the small-slice sweep |
 | `all_layer` | `#ff7f0e` | square (filled) | per-LR validation NLL on the small-slice sweep |
-| dashed vertical line | `#999999` | dashed | selected peak LR (3e-4); NLL values annotated beside each condition's minimum marker |
+| open markers | condition color | outlined circle/square | selected peak LR (3e-4); NLL values annotated beside each condition's minimum marker |
 
 ## Source files
 

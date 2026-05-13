@@ -1,5 +1,5 @@
 {
-  "command": "-c",
+  "command": "-",
   "derived_data": {
     "bytes": 260,
     "path": "artifacts/figures/fig_06_lr_selection/fig_06_lr_selection.data.csv",
@@ -7,12 +7,12 @@
   },
   "fig_name": "fig_06_lr_selection",
   "figure": {
-    "bytes": 16430,
+    "bytes": 15545,
     "path": "artifacts/figures/fig_06_lr_selection/fig_06_lr_selection.pdf",
-    "sha256": "9556af9e9bd97b10c069534be3d8f7e998180b4faea657d7ba8974d1d2f45f25"
+    "sha256": "12696a69f13102097aff213c014047ebc0dbb4e6ed5555aaa4b62bbd69d61238"
   },
-  "generated_at_utc": "2026-05-10T08:57:00.825047+00:00",
-  "git_commit": "9ddade301f26e3f032d20b82ab970b749fc63c8c",
+  "generated_at_utc": "2026-05-13T16:43:08.433778+00:00",
+  "git_commit": "7262a1c77efe9db012e5274dfaaf8c05f43b48a8",
   "git_dirty": true,
   "inputs": [
     {
