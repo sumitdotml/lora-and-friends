@@ -1,15 +1,17 @@
-# Figure 8: Throughput probe: seconds per optimizer step by request shape
+# Figure 8: Throughput by request shape
 
 ## Caption
 
-Pipelined batched training calls deliver a 8.4× throughput improvement over sequential single-datum calls on Qwen3-8B with attention-only LoRA (effective batch size 8). Batching alone — submitting all 8 examples in one API call — accounts for 3.9× of the speedup; pipelining, which submits the next batch before awaiting the prior optimizer step, contributes an additional 2.2× by overlapping communication with computation. Measured wall-clock seconds per optimizer step: sequential 20.2 s, batched 5.2 s, pipelined 2.4 s. The pipelined shape was adopted for all main training runs.
+Wall-clock seconds per optimizer step for Qwen3-8B attention-only LoRA at effective batch size 8. Batching cuts the step time from 20.2 s to 5.2 s, and pipelined batching lowers it to 2.4 s (8.4× faster than sequential).
 
 ## Marker encoding
 
 | element | color | shape | what is plotted |
 | --- | --- | --- | --- |
-| bars | `#1f77b4` | filled rectangle | mean wall-clock seconds per optimizer step over 16 probe steps |
-| value labels | `#333333` | text above bar | seconds per optimizer step rounded to two decimals |
+| sequential | `#d95f02` | horizontal rectangle | mean wall-clock seconds per optimizer step over 16 probe steps |
+| batched | `#1b9e77` | horizontal rectangle | mean wall-clock seconds per optimizer step over 16 probe steps |
+| pipelined | `#7570b3` | horizontal rectangle | mean wall-clock seconds per optimizer step over 16 probe steps |
+| value labels | `#333333` | text at bar end | seconds per optimizer step and speedup versus sequential |
 
 ## Source files
 

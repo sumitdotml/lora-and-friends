@@ -216,3 +216,18 @@ Initialized on 2026-03-24.
 - occurrence_count: 1
 - evidence:
   - command:proposed `rsync -a \"$src\"/ ...` in checkpoint-staging flow without guarding empty `$src`, which risked copying from `/`
+
+### MISTAKE-20260514-001
+
+- status: active
+- severity: low
+- scope_tags: [code]
+- pattern: used matplotlib vertical bar api with horizontal bar arguments
+- prevention_rule: when changing chart orientation, update both the plotting function and the argument order before running the figure build
+- validation_check: run the edited figure builder and require it to complete without a matplotlib api exception
+- first_seen: 2026-05-14
+- last_seen: 2026-05-14
+- occurrence_count: 1
+- evidence:
+  - file:figures/fig_08_throughput_probe.py:69
+  - command:first fig_08 rebuild failed with `TypeError: Axes.bar() got multiple values for argument 'height'`

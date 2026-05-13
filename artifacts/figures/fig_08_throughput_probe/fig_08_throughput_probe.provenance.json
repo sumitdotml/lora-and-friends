@@ -1,5 +1,5 @@
 {
-  "command": "-c",
+  "command": "-",
   "derived_data": {
     "bytes": 159,
     "path": "artifacts/figures/fig_08_throughput_probe/fig_08_throughput_probe.data.csv",
@@ -7,12 +7,12 @@
   },
   "fig_name": "fig_08_throughput_probe",
   "figure": {
-    "bytes": 20083,
+    "bytes": 19733,
     "path": "artifacts/figures/fig_08_throughput_probe/fig_08_throughput_probe.pdf",
-    "sha256": "1ba63a605682e884e114ebc2185974423d656ae15c417831c115db5e3436d9aa"
+    "sha256": "895f2eeb8d8ad1ee95b55eb98b9fe5ed5a4eb937123bacfd2a453c0f6c88210b"
   },
-  "generated_at_utc": "2026-05-10T09:43:44.775224+00:00",
-  "git_commit": "ded9ff2794c66bd69f844bfd1dfdc221efbc9cb1",
+  "generated_at_utc": "2026-05-13T16:32:44.464686+00:00",
+  "git_commit": "4795ed2f72b26cb99fe45a815ca1cc5360456b51",
   "git_dirty": true,
   "inputs": [
     {

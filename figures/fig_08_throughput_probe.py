@@ -15,7 +15,6 @@ from pathlib import Path
 from typing import Any
 
 import matplotlib.pyplot as plt
-from matplotlib.transforms import blended_transform_factory
 
 from figures.helpers import (
     ROOT,
@@ -55,50 +54,44 @@ def build(output_root: Path) -> None:
     if missing:
         raise RuntimeError(f"missing seconds_per_optimizer_step for shapes: {missing}")
 
-    x = list(range(len(REQUEST_SHAPES)))
     values = [secs_per_step[shape] for shape in REQUEST_SHAPES]
     baseline = values[0]
     multipliers = [
         "1×" if (baseline / v) < 1.05 else f"{baseline / v:.1f}×"
         for v in values
     ]
+    labels = ["Sequential", "Batched", "Pipelined"]
+    y = list(range(len(REQUEST_SHAPES)))
 
-    fig, ax = plt.subplots(figsize=(6.5, 4.5))
+    fig, ax = plt.subplots(figsize=(6.3, 3.8))
 
-    ax.axhline(baseline, color="#bbbbbb", linestyle="--", linewidth=0.8, zorder=1)
-
-    bar_colors = ["#74c0dc", "#2d8fbf", "#1a5e8a"]
-    bars = ax.bar(
-        x, values,
-        width=0.40, color=bar_colors, edgecolor="white", linewidth=1.0, zorder=3,
+    bar_colors = ["#d95f02", "#1b9e77", "#7570b3"]
+    bars = ax.barh(
+        y, values,
+        height=0.52, color=bar_colors, edgecolor="white", linewidth=1.0, zorder=3,
     )
     for rect, value, mult in zip(bars, values, multipliers):
-        cx = rect.get_x() + rect.get_width() / 2
+        cy = rect.get_y() + rect.get_height() / 2
+        label = f"{value:.1f} s"
+        if mult != "1×":
+            label = f"{label}  ({mult} faster)"
         ax.annotate(
-            f"{value:.1f} s",
-            xy=(cx, value), xytext=(0, 4), textcoords="offset points",
-            ha="center", va="bottom", fontsize=8.5, color="#888888",
-        )
-        ax.annotate(
-            mult,
-            xy=(cx, value), xytext=(0, 17), textcoords="offset points",
-            ha="center", va="bottom", fontsize=10, color="#333333",
+            label,
+            xy=(value, cy), xytext=(7, 0), textcoords="offset points",
+            ha="left", va="center", fontsize=9.5, color="#333333",
         )
 
-    trans = blended_transform_factory(ax.transAxes, ax.transData)
-    ax.text(0.99, baseline, "baseline", transform=trans,
-            ha="right", va="bottom", color="#bbbbbb", fontsize=8)
-
-    ax.text(0.02, 0.97, "lower = faster", transform=ax.transAxes,
-            fontsize=8, color="#aaaaaa", va="top", ha="left", style="italic")
-
-    ax.set_xticks(x)
-    ax.set_xticklabels(["Sequential", "Batched", "Pipelined"])
-    ax.set_xlim(-0.6, len(REQUEST_SHAPES) - 0.4)
-    ax.set_ylim(0, max(values) * 1.35)
-    ax.set_ylabel("Seconds per optimizer step")
-    ax.set_xlabel("Request shape")
-    ax.set_title("Throughput probe: seconds per optimizer step by request shape")
+    ax.set_yticks(y)
+    ax.set_yticklabels(labels)
+    ax.invert_yaxis()
+    ax.set_xlim(0, max(values) * 1.18)
+    ax.set_xlabel("Seconds per optimizer step (lower = faster)")
+    ax.set_title("Throughput by request shape")
+    ax.grid(axis="y", visible=False)
+    ax.tick_params(axis="y", length=0)
+    ax.spines["left"].set_visible(False)
+    ax.spines["bottom"].set_color("#777777")
+    ax.spines["bottom"].set_linewidth(0.8)
     fig.tight_layout()
 
     plotted_data = [
@@ -124,18 +117,20 @@ def _caption_markdown(secs_per_step: dict[str, float]) -> str:
     single = secs_per_step["single_datum_calls"]
     batched = secs_per_step["batched_datums"]
     pipelined = secs_per_step["batched_datums_pipelined"]
-    return f"""# Figure 8: Throughput probe: seconds per optimizer step by request shape
+    return f"""# Figure 8: Throughput by request shape
 
 ## Caption
 
-Pipelined batched training calls deliver a {single / pipelined:.1f}× throughput improvement over sequential single-datum calls on Qwen3-8B with attention-only LoRA (effective batch size 8). Batching alone — submitting all 8 examples in one API call — accounts for {single / batched:.1f}× of the speedup; pipelining, which submits the next batch before awaiting the prior optimizer step, contributes an additional {batched / pipelined:.1f}× by overlapping communication with computation. Measured wall-clock seconds per optimizer step: sequential {single:.1f} s, batched {batched:.1f} s, pipelined {pipelined:.1f} s. The pipelined shape was adopted for all main training runs.
+Wall-clock seconds per optimizer step for Qwen3-8B attention-only LoRA at effective batch size 8. Batching cuts the step time from {single:.1f} s to {batched:.1f} s, and pipelined batching lowers it to {pipelined:.1f} s ({single / pipelined:.1f}× faster than sequential).
 
 ## Marker encoding
 
 | element | color | shape | what is plotted |
 | --- | --- | --- | --- |
-| bars | `#1f77b4` | filled rectangle | mean wall-clock seconds per optimizer step over 16 probe steps |
-| value labels | `#333333` | text above bar | seconds per optimizer step rounded to two decimals |
+| sequential | `#d95f02` | horizontal rectangle | mean wall-clock seconds per optimizer step over 16 probe steps |
+| batched | `#1b9e77` | horizontal rectangle | mean wall-clock seconds per optimizer step over 16 probe steps |
+| pipelined | `#7570b3` | horizontal rectangle | mean wall-clock seconds per optimizer step over 16 probe steps |
+| value labels | `#333333` | text at bar end | seconds per optimizer step and speedup versus sequential |
 
 ## Source files
 
