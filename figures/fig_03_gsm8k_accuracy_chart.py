@@ -61,8 +61,13 @@ def build(output_root: Path) -> None:
         for cond in LORA_CONDITIONS
     }
 
-    fig, ax = plt.subplots(figsize=(6.0, 4.5))
+    fig, ax = plt.subplots(figsize=(6.2, 4.1))
     seed_x_offsets = np.linspace(-0.07, 0.07, len(SEEDS))
+    labels = {
+        "baseline":       "baseline",
+        "attention_only": "attention-only",
+        "all_layer":      "all-layer",
+    }
 
     for x, cond in enumerate(ALL_CONDITIONS):
         color = PALETTE[cond]
@@ -72,7 +77,6 @@ def build(output_root: Path) -> None:
                 [x], [baseline_acc],
                 color=color, s=140, marker=marker,
                 edgecolors="white", linewidths=1.6, zorder=4,
-                label=cond,
             )
             continue
 
@@ -88,15 +92,21 @@ def build(output_root: Path) -> None:
             [x], [mean_acc],
             color=color, s=140, marker=marker,
             edgecolors="white", linewidths=1.6, zorder=4,
-            label=cond,
         )
 
-    ax.set_xticks([])
+    ax.set_xticks(range(len(ALL_CONDITIONS)))
+    ax.set_xticklabels([labels[c] for c in ALL_CONDITIONS])
     ax.set_xlim(-0.5, len(ALL_CONDITIONS) - 0.5)
     ax.set_ylim(*Y_RANGE)
     ax.set_ylabel("GSM8K accuracy")
-    ax.set_title("GSM8K accuracy by condition (Qwen3-8B)")
-    ax.legend(loc="lower right")
+    ax.set_title("GSM8K accuracy by condition")
+    ax.grid(False)
+    ax.yaxis.grid(True, color="#e7e7e7", linewidth=0.7)
+    ax.spines["left"].set_color("#777777")
+    ax.spines["left"].set_linewidth(0.8)
+    ax.spines["bottom"].set_color("#777777")
+    ax.spines["bottom"].set_linewidth(0.8)
+    ax.tick_params(axis="both", width=0.8, color="#777777")
     fig.tight_layout()
 
     plotted_data = _build_plotted_data(baseline_acc, seed_accs)
@@ -126,7 +136,7 @@ def _caption_markdown(
 
 ## Caption
 
-GSM8K accuracy by condition on the 1,319-example test set. Untouched Qwen3-8B baseline (gray diamond, N=1) and two LoRA conditions at their step-3169 checkpoints (large marker = mean across 3 seeds, small markers = individual seeds). Mean accuracies: baseline {baseline_acc:.4f}, attention-only {att_mean:.4f}, all-layer {al_mean:.4f}. Y-axis truncated to [0.80, 0.92] to surface seed-level variation; intervals show min/max range across seeds, not statistical confidence intervals.
+GSM8K accuracy by condition on the 1,319-example test set. Untouched Qwen3-8B baseline (gray diamond, N=1) and two LoRA conditions at their step-3169 checkpoints (large marker = mean across 3 seeds, small markers = individual seeds). Mean accuracies: baseline {baseline_acc:.4f}, attention-only {att_mean:.4f}, all-layer {al_mean:.4f}. Y-axis truncated to [0.80, 0.92] to surface seed-level variation; no statistical confidence interval is shown.
 
 ## Marker encoding
 

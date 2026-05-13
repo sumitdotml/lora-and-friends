@@ -1,5 +1,5 @@
 {
-  "command": "-c",
+  "command": "-",
   "derived_data": {
     "bytes": 383,
     "path": "artifacts/figures/fig_03_gsm8k_accuracy_chart/fig_03_gsm8k_accuracy_chart.data.csv",
@@ -7,12 +7,12 @@
   },
   "fig_name": "fig_03_gsm8k_accuracy_chart",
   "figure": {
-    "bytes": 18707,
+    "bytes": 15804,
     "path": "artifacts/figures/fig_03_gsm8k_accuracy_chart/fig_03_gsm8k_accuracy_chart.pdf",
-    "sha256": "cf51921f97c76450ea4f0611902693923dd58d875a92c9c06222c8769b4993b0"
+    "sha256": "6a37240a72d780bc38fa475245e524c45a9893c90b6a641b504d24b390b161e2"
   },
-  "generated_at_utc": "2026-05-09T19:38:41.250344+00:00",
-  "git_commit": "46435180920c38631fb1cf290a6e1e3958d14ff2",
+  "generated_at_utc": "2026-05-13T17:31:57.623114+00:00",
+  "git_commit": "39ed1fc14e55731f3d23035efc0810be22bc938b",
   "git_dirty": true,
   "inputs": [
     {

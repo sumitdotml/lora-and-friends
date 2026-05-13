@@ -2,7 +2,7 @@
 
 ## Caption
 
-GSM8K accuracy by condition on the 1,319-example test set. Untouched Qwen3-8B baseline (gray diamond, N=1) and two LoRA conditions at their step-3169 checkpoints (large marker = mean across 3 seeds, small markers = individual seeds). Mean accuracies: baseline 0.8453, attention-only 0.9055, all-layer 0.9009. Y-axis truncated to [0.80, 0.92] to surface seed-level variation; intervals show min/max range across seeds, not statistical confidence intervals.
+GSM8K accuracy by condition on the 1,319-example test set. Untouched Qwen3-8B baseline (gray diamond, N=1) and two LoRA conditions at their step-3169 checkpoints (large marker = mean across 3 seeds, small markers = individual seeds). Mean accuracies: baseline 0.8453, attention-only 0.9055, all-layer 0.9009. Y-axis truncated to [0.80, 0.92] to surface seed-level variation; no statistical confidence interval is shown.
 
 ## Marker encoding
 
