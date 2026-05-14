@@ -231,3 +231,31 @@ Initialized on 2026-03-24.
 - evidence:
   - file:figures/fig_08_throughput_probe.py:69
   - command:first fig_08 rebuild failed with `TypeError: Axes.bar() got multiple values for argument 'height'`
+
+### MISTAKE-20260514-002
+
+- status: active
+- severity: low
+- scope_tags: [infra]
+- pattern: zsh scalar variable was used as a whitespace-separated list in a guarded copy loop
+- prevention_rule: use an explicit zsh array for multi-file copy loops, then iterate the array so each intended path is checked independently
+- validation_check: guarded copy loop prints or copies each expected file path separately and exits only after all source files exist
+- first_seen: 2026-05-14
+- last_seen: 2026-05-14
+- occurrence_count: 1
+- evidence:
+  - command:initial figure-asset copy for `lora-and-friends` treated all five relative PNG paths as one path and exited with `missing artifacts/figures/fig_03_gsm8k_accuracy_chart/fig_03_gsm8k_accuracy_chart.png fig_04_paired_seed_slope/...`
+
+### MISTAKE-20260514-003
+
+- status: active
+- severity: low
+- scope_tags: [infra]
+- pattern: hf download include globs were passed as positional filenames
+- prevention_rule: pass each Hugging Face CLI include glob with its own `--include` flag and do not also pass the same paths as positional filenames
+- validation_check: dry-run or execute the corrected `hf download REPO --include 'pattern' --local-dir DIR` form and require it to download the intended files without `File not found in repository`
+- first_seen: 2026-05-14
+- last_seen: 2026-05-14
+- occurrence_count: 1
+- evidence:
+  - command:first checkpoint-branch download treated `checkpoints/**` as a literal repository path and failed with `File not found in repository`

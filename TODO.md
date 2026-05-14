@@ -2,13 +2,16 @@
 
 ## Current Phase
 
-The frozen `main-001` six-run sweep finished on `2026-05-09`. Every run selected the one-epoch checkpoint at step `3169` and recorded `status: pass` in its `summary.json` under `artifacts/results/main-001-<condition>-seed-<seed>/`. The selected checkpoints span `validation_mean_nll = 0.3361–0.3366` (attention_only mean `0.33630`, all_layer mean `0.33634`).
+The final `main-001` comparison and reporting pipeline are complete. The six-run sweep finished on `2026-05-09`; every run selected the one-epoch checkpoint at step `3169` and recorded `status: pass` in its `summary.json` under `artifacts/results/main-001-<condition>-seed-<seed>/`. The selected checkpoints span `validation_mean_nll = 0.3361–0.3366` (attention_only mean `0.33630`, all_layer mean `0.33634`).
 
-The next active workstream is the frozen `GSM8K` evaluation comparison: take each run's selected checkpoint URI from its `summary.json`, generate per-run predictions under the frozen `--concurrency 16` policy (with `--concurrency 4` as the documented fallback), and produce per-condition mean and range. Use the retained baseline at `artifacts/results/baseline-qwen3-8b-gsm8k-001/` as the untouched-model reference. The current `scripts/run_gsm8k_eval.py` only takes `base_model`; it needs a small change to also load a Tinker checkpoint URI before this phase can run.
+The selected-checkpoint `GSM8K` evaluation comparison is also complete. The six retained LoRA eval directories live under `artifacts/results/checkpoint-*-gsm8k-*/`, and the retained baseline remains `artifacts/results/baseline-qwen3-8b-gsm8k-001/`. The final reporting figures and tables live under `artifacts/figures/`.
+
+The sibling-site technical article now exists at `../sumit.ml/src/content/research/lora-and-friends.mdx`, with figures copied to `../sumit.ml/src/assets/research/lora-and-friends/`. The article build was checked with `npm run build` in `../sumit.ml`.
 
 Checkpoint retention/export status for this phase:
 
-- Selected `step-3169` checkpoints were converted to sampler format and uploaded to Hugging Face repo `sumitdotml/lora-and-friends` on branch `checkpoints-best-step-3169-all-seeds` under `checkpoints/best-checkpoints/...`.
+- Selected `step-3169` checkpoints were converted to PEFT LoRA adapter exports and are available on the Hugging Face model repo `sumitdotml/lora-and-friends` main branch under `checkpoints/best-checkpoints/...`.
+- The frozen raw and rendered dataset files are available on the Hugging Face dataset repo `sumitdotml/lora-and-friends-dataset`.
 - Tinker `main-001` checkpoints currently use a `30`-day TTL window (training `weights/...` plus sampler exports).
 
 `TODO.md` is the only live execution tracker for this phase.
@@ -427,7 +430,7 @@ Record the failure and cost impact in `docs/project/LOG.md`, use the `$25` corre
 - [x] Use `--concurrency 16` for benchmark evals, or record a fallback to `--concurrency 4` if Tinker requires it.
 - [x] Save results in the retained schema.
 
-Task:
+Completed task record:
 Run the selected-checkpoint `GSM8K` comparison for the six `main-001` runs.
 
 What this means:
@@ -441,6 +444,9 @@ Six per-run eval output directories exist with `summary.json`, `metrics.jsonl`, 
 
 If it fails:
 Record the failure mode in `docs/project/LOG.md`, rerun with the frozen fallback `--concurrency 4` if the failure is backend/concurrency related, and do not change scoring or prompt-contract rules.
+
+Result:
+Done. Six `checkpoint-*-gsm8k-*` eval directories exist, and the reporting figures/tables in `artifacts/figures/` reduce the results into the final comparison.
 
 ### 13. Generate Final Tables And Charts
 
@@ -491,6 +497,30 @@ Build order (each item is one `figures/fig_NN_<name>.py`). Captions are written 
 Out of scope for this phase:
 
 - W&B integration. Live training curves remained optional and non-canonical; no W&B export is part of the §13 deliverable.
+
+### 14. Write The Technical Research Article
+
+Status: done on 2026-05-14.
+
+What this means:
+Turn the final experiment into a sibling-site MDX article, using the retained local figures, tables, result summaries, dataset manifests, audit reports, frozen contracts, and fetched external references.
+
+It matters because:
+The project needs a final technical narrative rather than only a worklog or execution tracker.
+
+Done when:
+`../sumit.ml/src/content/research/lora-and-friends.mdx` exists, uses the same research-page conventions as `expert-emergence-in-moe.mdx`, references copied figure assets under `../sumit.ml/src/assets/research/lora-and-friends/`, includes methods/results/diagnostics/limitations/reproducibility/references/appendix sections, and `npm run build` succeeds in `../sumit.ml`.
+
+If it fails:
+Fix the MDX syntax, missing asset paths, unsupported claims, or style violations before treating the article as publishable.
+
+- [x] Read the existing research article and `Cite`/`Ref` components in `../sumit.ml`.
+- [x] Read `.agents/skills/writing-style/SKILL.md` before drafting.
+- [x] Use retained figures and tables from `artifacts/figures/`.
+- [x] Copy required PNG figures into the sibling site's research asset directory.
+- [x] Cite only external references fetched during article drafting.
+- [x] Run a final style scan for banned dash and reframing patterns.
+- [x] Run `npm run build` in `../sumit.ml`.
 
 ## Mapping Of The Missing Prerequisites
 
