@@ -44,7 +44,7 @@ Suggested citation from the upstream dataset card:
 - Hugging Face license label checked on 2026-05-04: `mit`
 - Project use:
   - benchmark contamination check target
-  - planned final external benchmark
+  - final external benchmark for the retained GSM8K evaluation
 
 The project compares retained `gsm8k`-sourced training rows against the
 `openai/gsm8k` test split to avoid training on held-out benchmark questions.
@@ -88,7 +88,7 @@ Suggested citation from the upstream dataset card:
 - Hugging Face license label checked on 2026-05-04: `apache-2.0`
 - Project use:
   - tokenizer and chat template for rendering and token sizing
-  - planned base model for Tinker-backed SFT and evaluation
+  - base model for the retained Tinker-backed SFT and GSM8K evaluation
 
 This repository does not include Qwen3-8B model weights.
 
@@ -101,6 +101,9 @@ This repository does not include Qwen3-8B model weights.
 - Project dependency: `tinker`
 - Project dependency: `tinker-cookbook`
 - Project use:
-  - planned remote training and sampling backend
+  - remote training backend for LR selection, main SFT runs, and throughput probes
+  - remote sampling backend for baseline and selected-checkpoint GSM8K evaluation
+  - checkpoint storage and sampler-export path for the retained adapter exports
+  - local reference implementation source for renderer and training-runner behavior
 
 This repository does not include Tinker service code or hosted infrastructure.
